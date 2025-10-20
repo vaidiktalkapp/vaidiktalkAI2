@@ -3,19 +3,19 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
-import { Search, Filter, Eye, AlertCircle } from 'lucide-react';
+import { Search, Filter, Eye, Video, TrendingUp, Users, DollarSign, Clock } from 'lucide-react';
 import Link from 'next/link';
 
-export default function AstrologersPage() {
+export default function LivestreamsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
-  // Fetch astrologers list
+  // Fetch streams
   const { data, isLoading } = useQuery({
-    queryKey: ['astrologers', page, search, statusFilter],
+    queryKey: ['streams', page, search, statusFilter],
     queryFn: async () => {
-      const response = await adminApi.getAllAstrologers({
+      const response = await adminApi.getAllStreams({
         page,
         limit: 20,
         search,
@@ -25,58 +25,94 @@ export default function AstrologersPage() {
     },
   });
 
-  // Fetch stats (from registrations)
+  // Fetch stats
   const { data: stats } = useQuery({
-    queryKey: ['astrologer-stats'],
+    queryKey: ['stream-stats'],
     queryFn: async () => {
-      const response = await adminApi.getRegistrationStats();
+      const response = await adminApi.getStreamStats();
       return response.data.data;
     },
   });
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'live':
+        return 'bg-red-100 text-red-800 animate-pulse';
+      case 'scheduled':
+        return 'bg-blue-100 text-blue-800';
+      case 'ended':
+        return 'bg-gray-100 text-gray-800';
+      case 'cancelled':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatDuration = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Astrologers Management</h1>
-          <p className="text-gray-600 mt-1">Manage all astrologers on the platform</p>
+          <h1 className="text-3xl font-bold text-gray-900">Livestream Management</h1>
+          <p className="text-gray-600 mt-1">Monitor and manage all livestreams</p>
         </div>
         <Link
-          href="/astrologers/pending"
-          className="flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+          href="/livestreams/live"
+          className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 animate-pulse"
         >
-          <AlertCircle size={18} className="mr-2" />
-          Pending Approvals ({stats?.waitlist || 0})
+          <Video size={18} className="mr-2" />
+          Live Now ({stats?.liveStreams || 0})
         </Link>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">Total Applications</p>
-          <p className="text-2xl font-bold text-gray-900">{stats?.total || 0}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Streams</p>
+              <p className="text-2xl font-bold text-gray-900">{stats?.totalStreams || 0}</p>
+            </div>
+            <Video className="text-indigo-600" size={32} />
+          </div>
         </div>
         <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">Waitlist</p>
-          <p className="text-2xl font-bold text-yellow-600">{stats?.waitlist || 0}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Live Now</p>
+              <p className="text-2xl font-bold text-red-600">{stats?.liveStreams || 0}</p>
+            </div>
+            <TrendingUp className="text-red-600" size={32} />
+          </div>
         </div>
         <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">In Interviews</p>
-          <p className="text-2xl font-bold text-blue-600">
-            {(stats?.interviews?.round1 || 0) +
-              (stats?.interviews?.round2 || 0) +
-              (stats?.interviews?.round3 || 0) +
-              (stats?.interviews?.round4 || 0)}
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Views</p>
+              <p className="text-2xl font-bold text-green-600">
+                {(stats?.totalViews || 0).toLocaleString()}
+              </p>
+            </div>
+            <Users className="text-green-600" size={32} />
+          </div>
         </div>
         <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">Approved</p>
-          <p className="text-2xl font-bold text-green-600">{stats?.approved || 0}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">Rejected</p>
-          <p className="text-2xl font-bold text-red-600">{stats?.rejected || 0}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Revenue</p>
+              <p className="text-2xl font-bold text-blue-600">
+                ₹{(stats?.totalRevenue || 0).toLocaleString()}
+              </p>
+            </div>
+            <DollarSign className="text-blue-600" size={32} />
+          </div>
         </div>
       </div>
 
@@ -87,7 +123,7 @@ export default function AstrologersPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Search by name, phone, email..."
+              placeholder="Search streams..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -100,9 +136,10 @@ export default function AstrologersPage() {
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="suspended">Suspended</option>
+            <option value="live">Live</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="ended">Ended</option>
+            <option value="cancelled">Cancelled</option>
           </select>
 
           <button
@@ -118,7 +155,7 @@ export default function AstrologersPage() {
         </div>
       </div>
 
-      {/* Astrologers Table */}
+      {/* Streams Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center p-12">
@@ -130,19 +167,22 @@ export default function AstrologersPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Stream
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Astrologer
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Specializations
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ratings
+                    Viewers
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Duration
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Revenue
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
@@ -150,69 +190,57 @@ export default function AstrologersPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {data?.astrologers?.map((astrologer: any) => (
-                  <tr key={astrologer._id} className="hover:bg-gray-50">
+                {data?.streams?.map((stream: any) => (
+                  <tr key={stream._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{stream.title}</div>
+                        <div className="text-sm text-gray-500">{stream.streamId}</div>
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center overflow-hidden">
-                          {astrologer.profilePicture ? (
+                        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                          {stream.hostId?.profilePicture ? (
                             <img
-                              src={astrologer.profilePicture}
-                              alt={astrologer.name}
-                              className="w-full h-full object-cover"
+                              src={stream.hostId.profilePicture}
+                              alt={stream.hostId.name}
+                              className="w-full h-full rounded-full object-cover"
                             />
                           ) : (
-                            <span className="text-purple-600 font-semibold">
-                              {astrologer.name?.charAt(0)}
+                            <span className="text-purple-600 text-xs font-semibold">
+                              {stream.hostId?.name?.charAt(0)}
                             </span>
                           )}
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{astrologer.name}</div>
-                          <div className="text-sm text-gray-500">ID: {astrologer._id.slice(-8)}</div>
-                        </div>
+                        <span className="ml-2 text-sm text-gray-900">{stream.hostId?.name}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{astrologer.phoneNumber}</div>
-                      {astrologer.email && <div className="text-sm text-gray-500">{astrologer.email}</div>}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-wrap gap-1">
-                        {astrologer.specializations?.slice(0, 2).map((spec: string) => (
-                          <span key={spec} className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full">
-                            {spec}
-                          </span>
-                        ))}
-                        {astrologer.specializations?.length > 2 && (
-                          <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
-                            +{astrologer.specializations.length - 2}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          astrologer.accountStatus === 'active'
-                            ? 'bg-green-100 text-green-800'
-                            : astrologer.accountStatus === 'suspended'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {astrologer.accountStatus}
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(stream.status)}`}>
+                        {stream.status === 'live' ? '🔴 LIVE' : stream.status.toUpperCase()}
                       </span>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {stream.status === 'live' ? (
+                        <span className="font-semibold">{stream.viewerCount} watching</span>
+                      ) : (
+                        <span>{stream.totalViews} views</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ⭐ {astrologer.ratings?.average?.toFixed(1) || '0.0'} ({astrologer.ratings?.total || 0})
+                      {stream.duration > 0 ? formatDuration(stream.duration) : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ₹{stream.totalRevenue?.toLocaleString() || 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <Link
-                        href={`/astrologers/${astrologer._id}`}
-                        className="text-indigo-600 hover:text-indigo-900"
+                        href={`/livestreams/${stream.streamId}`}
+                        className="text-indigo-600 hover:text-indigo-900 inline-flex items-center"
                       >
-                        <Eye size={18} className="inline" />
+                        <Eye size={18} className="mr-1" />
+                        View
                       </Link>
                     </td>
                   </tr>

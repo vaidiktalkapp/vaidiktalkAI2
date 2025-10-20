@@ -74,32 +74,125 @@ export const adminApi = {
   updateUserStatus: (userId: string, status: string) =>
     apiClient.patch(`/admin/users/${userId}/status`, { status }),
 
-  // Astrologers
-  getAllAstrologers: (params: any) =>
+  // ==================== REGISTRATIONS (NEW) ====================
+  
+  /**
+   * Get all registrations (waitlist, interviews, approved, rejected)
+   */
+  getAllRegistrations: (params: { page?: number; limit?: number; status?: string; search?: string }) =>
+    apiClient.get('/admin/registrations', { params }),
+
+  /**
+   * Get waitlist registrations
+   */
+  getWaitlist: (params: { page?: number; limit?: number }) =>
+    apiClient.get('/admin/registrations/waitlist', { params }),
+
+  /**
+   * Get registration details
+   */
+  getRegistrationDetails: (registrationId: string) =>
+    apiClient.get(`/admin/registrations/${registrationId}`),
+
+  /**
+   * Shortlist candidate from waitlist (move to interview round 1)
+   */
+  shortlistCandidate: (registrationId: string, notes?: string) =>
+    apiClient.post(`/admin/registrations/${registrationId}/shortlist`, { notes }),
+
+  /**
+   * Complete interview round
+   */
+  completeInterviewRound: (
+    registrationId: string,
+    round: number,
+    data: {
+      passed: boolean;
+      rating?: number;
+      notes?: string;
+      callDuration?: number;
+      callSessionId?: string;
+    }
+  ) =>
+    apiClient.post(`/admin/registrations/${registrationId}/interview/${round}/complete`, data),
+
+  /**
+   * Reject registration
+   */
+  rejectRegistration: (registrationId: string, reason: string, canReapply: boolean = false) =>
+    apiClient.post(`/admin/registrations/${registrationId}/reject`, { reason, canReapply }),
+
+  /**
+   * Get registration stats
+   */
+  getRegistrationStats: () =>
+    apiClient.get('/admin/registrations/stats/summary'),
+
+  // ==================== ASTROLOGERS ====================
+  
+  /**
+   * Get all astrologers (approved profiles)
+   */
+  getAllAstrologers: (params: { page?: number; limit?: number; search?: string; status?: string }) =>
     apiClient.get('/admin/astrologers', { params }),
   
+  /**
+   * Get astrologer stats
+   */
   getAstrologerStats: () =>
     apiClient.get('/admin/astrologers/stats'),
   
-  getPendingAstrologers: (params: any) =>
-    apiClient.get('/admin/astrologers/pending', { params }),
+  /**
+   * Get pending astrologers (waitlist) - Maps to registrations/waitlist
+   */
+  getPendingAstrologers: (params: { page?: number; limit?: number }) =>
+    apiClient.get('/admin/registrations/waitlist', { params }),
   
+  /**
+   * Get astrologer details
+   */
   getAstrologerDetails: (astrologerId: string) =>
     apiClient.get(`/admin/astrologers/${astrologerId}`),
   
-  approveAstrologer: (astrologerId: string, adminNotes?: string) =>
-    apiClient.post(`/admin/astrologers/${astrologerId}/approve`, { adminNotes }),
+  /**
+   * Approve astrologer (shortlist from waitlist)
+   */
+  approveAstrologer: (registrationId: string, adminNotes?: string) =>
+    apiClient.post(`/admin/registrations/${registrationId}/shortlist`, { notes: adminNotes }),
   
-  rejectAstrologer: (astrologerId: string, reason: string) =>
-    apiClient.post(`/admin/astrologers/${astrologerId}/reject`, { reason }),
+  /**
+   * Reject astrologer application
+   */
+  rejectAstrologer: (registrationId: string, reason: string) =>
+    apiClient.post(`/admin/registrations/${registrationId}/reject`, { reason, canReapply: false }),
   
-  updateAstrologerStatus: (astrologerId: string, status: string) =>
-    apiClient.patch(`/admin/astrologers/${astrologerId}/status`, { status }),
+  /**
+   * Update astrologer account status (active/inactive/suspended)
+   */
+  updateAstrologerStatus: (astrologerId: string, status: string, reason?: string) =>
+    apiClient.patch(`/admin/astrologers/${astrologerId}/status`, { status, reason }),
   
-  updateAstrologerPricing: (astrologerId: string, pricing: any) =>
+  /**
+   * Suspend astrologer
+   */
+  suspendAstrologer: (astrologerId: string, reason: string) =>
+    apiClient.post(`/admin/astrologers/${astrologerId}/suspend`, { reason }),
+
+  /**
+   * Activate astrologer
+   */
+  activateAstrologer: (astrologerId: string) =>
+    apiClient.post(`/admin/astrologers/${astrologerId}/activate`),
+  
+  /**
+   * Update astrologer pricing
+   */
+  updateAstrologerPricing: (astrologerId: string, pricing: { chat: number; call: number; videoCall: number }) =>
     apiClient.patch(`/admin/astrologers/${astrologerId}/pricing`, pricing),
   
-  // ✅ NEW: Update astrologer bio
+  /**
+   * Update astrologer bio
+   */
   updateAstrologerBio: (astrologerId: string, bio: string) =>
     apiClient.patch(`/admin/astrologers/${astrologerId}/bio`, { bio }),
 
@@ -144,14 +237,64 @@ export const adminApi = {
   rejectPayout: (payoutId: string, reason: string) =>
     apiClient.post(`/admin/payments/payouts/${payoutId}/reject`, { reason }),
 
-  // ✅ NEW: Admin Management
+  // Admin Management
   getAllAdmins: (params?: any) =>
     apiClient.get('/admin/admins', { params }),
   
   createAdmin: (data: any) =>
     apiClient.post('/admin/auth/create-admin', data),
 
-  // ✅ NEW: Activity Logs
+  // Activity Logs
   getActivityLogs: (params?: any) =>
     apiClient.get('/admin/activity-logs', { params }),
+
+  // ==================== LIVESTREAM ENDPOINTS ====================
+
+  /**
+   * Get all streams
+   */
+  getAllStreams: (params: { page?: number; limit?: number; status?: string; search?: string }) =>
+    apiClient.get('/admin/streams', { params }),
+
+  /**
+   * Get stream statistics
+   */
+  getStreamStats: () =>
+    apiClient.get('/admin/streams/stats'),
+
+  /**
+   * Get currently live streams
+   */
+  getLiveStreams: (params: { page?: number; limit?: number }) =>
+    apiClient.get('/admin/streams/live', { params }),
+
+  /**
+   * Get stream details
+   */
+  getStreamDetails: (streamId: string) =>
+    apiClient.get(`/admin/streams/${streamId}`),
+
+  /**
+   * Force end stream
+   */
+  forceEndStream: (streamId: string, reason: string) =>
+    apiClient.post(`/admin/streams/${streamId}/force-end`, { reason }),
+
+  /**
+   * Get stream analytics
+   */
+  getStreamAnalytics: (streamId: string) =>
+    apiClient.get(`/admin/streams/${streamId}/analytics`),
+
+  /**
+   * Get top performing streams
+   */
+  getTopStreams: (limit: number = 10) =>
+    apiClient.get('/admin/streams/analytics/top-streams', { params: { limit } }),
+
+  /**
+   * Get top earning astrologers from streams
+   */
+  getTopStreamEarners: (limit: number = 10) =>
+    apiClient.get('/admin/streams/analytics/top-earners', { params: { limit } }),
 };

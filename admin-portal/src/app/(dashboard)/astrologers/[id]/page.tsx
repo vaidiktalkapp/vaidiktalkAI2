@@ -16,64 +16,77 @@ export default function AstrologerDetailPage() {
   const [isEditingPricing, setIsEditingPricing] = useState(false);
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
-  const [showApprovalModal, setShowApprovalModal] = useState(false);
-  const [showRejectionModal, setShowRejectionModal] = useState(false);
+  const [showSuspendModal, setShowSuspendModal] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('');
-  const [adminNotes, setAdminNotes] = useState('');
-  const [rejectionReason, setRejectionReason] = useState('');
+  const [suspensionReason, setSuspensionReason] = useState('');
   const [bio, setBio] = useState('');
   
   const [pricing, setPricing] = useState({
-    chatRatePerMinute: 0,
-    callRatePerMinute: 0,
-    videoCallRatePerMinute: 0,
+    chat: 0,
+    call: 0,
+    videoCall: 0,
   });
 
+  // Fetch astrologer details
   const { data: astrologer, isLoading, refetch } = useQuery({
     queryKey: ['astrologer-detail', astrologerId],
     queryFn: async () => {
       const response = await adminApi.getAstrologerDetails(astrologerId);
+      const data = response.data.data;
+      
+      // Initialize pricing
       setPricing({
-        chatRatePerMinute: response.data.data.pricing?.chat || 0,
-        callRatePerMinute: response.data.data.pricing?.call || 0,
-        videoCallRatePerMinute: response.data.data.pricing?.videoCall || 0,
+        chat: data.pricing?.chat || 0,
+        call: data.pricing?.call || 0,
+        videoCall: data.pricing?.videoCall || 0,
       });
-      setBio(response.data.data.bio || '');
-      return response.data.data;
+      
+      // Initialize bio
+      setBio(data.bio || '');
+      
+      return data;
     },
   });
 
+  // Update pricing
   const updatePricingMutation = useMutation({
     mutationFn: () => adminApi.updateAstrologerPricing(astrologerId, pricing),
     onSuccess: () => {
       toast.success('Pricing updated successfully');
       queryClient.invalidateQueries({ queryKey: ['astrologer-detail', astrologerId] });
       setIsEditingPricing(false);
+      refetch();
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to update pricing');
     },
   });
 
+  // Update bio
   const updateBioMutation = useMutation({
-    mutationFn: () => apiClient.patch(`/admin/astrologers/${astrologerId}/bio`, { bio }),
+    mutationFn: () => adminApi.updateAstrologerBio(astrologerId, bio),
     onSuccess: () => {
       toast.success('Bio updated successfully');
       queryClient.invalidateQueries({ queryKey: ['astrologer-detail', astrologerId] });
       setIsEditingBio(false);
+      refetch();
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to update bio');
     },
   });
 
+  // Update account status
   const updateStatusMutation = useMutation({
-    mutationFn: (status: string) => apiClient.patch(`/admin/astrologers/${astrologerId}/status`, { status }),
+    mutationFn: (data: { status: string; reason?: string }) =>
+      adminApi.updateAstrologerStatus(astrologerId, data.status, data.reason),
     onSuccess: () => {
-      toast.success('Status updated successfully');
+      toast.success('Account status updated successfully');
       queryClient.invalidateQueries({ queryKey: ['astrologer-detail', astrologerId] });
       queryClient.invalidateQueries({ queryKey: ['astrologers'] });
       setShowStatusModal(false);
+      setShowSuspendModal(false);
+      setSuspensionReason('');
       refetch();
     },
     onError: (error: any) => {
@@ -81,37 +94,11 @@ export default function AstrologerDetailPage() {
     },
   });
 
-  const approveMutation = useMutation({
-    mutationFn: () => adminApi.approveAstrologer(astrologerId, adminNotes),
-    onSuccess: () => {
-      toast.success('Astrologer approved successfully');
-      queryClient.invalidateQueries({ queryKey: ['astrologer-detail', astrologerId] });
-      queryClient.invalidateQueries({ queryKey: ['pending-astrologers'] });
-      setShowApprovalModal(false);
-      setAdminNotes('');
-      refetch();
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to approve');
-    },
-  });
-
-  const rejectMutation = useMutation({
-    mutationFn: () => adminApi.rejectAstrologer(astrologerId, rejectionReason),
-    onSuccess: () => {
-      toast.success('Astrologer rejected');
-      queryClient.invalidateQueries({ queryKey: ['astrologer-detail', astrologerId] });
-      queryClient.invalidateQueries({ queryKey: ['pending-astrologers'] });
-      setShowRejectionModal(false);
-      setRejectionReason('');
-      refetch();
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to reject');
-    },
-  });
-
   const handleSavePricing = () => {
+    if (pricing.chat < 0 || pricing.call < 0 || pricing.videoCall < 0) {
+      toast.error('Pricing cannot be negative');
+      return;
+    }
     updatePricingMutation.mutate();
   };
 
@@ -124,12 +111,24 @@ export default function AstrologerDetailPage() {
   };
 
   const handleStatusChange = (status: string) => {
-    setSelectedStatus(status);
-    setShowStatusModal(true);
+    if (status === 'suspended') {
+      setShowSuspendModal(true);
+    } else {
+      setSelectedStatus(status);
+      setShowStatusModal(true);
+    }
   };
 
   const confirmStatusChange = () => {
-    updateStatusMutation.mutate(selectedStatus);
+    updateStatusMutation.mutate({ status: selectedStatus });
+  };
+
+  const confirmSuspension = () => {
+    if (!suspensionReason.trim()) {
+      toast.error('Please provide a suspension reason');
+      return;
+    }
+    updateStatusMutation.mutate({ status: 'suspended', reason: suspensionReason });
   };
 
   if (isLoading) {
@@ -140,7 +139,13 @@ export default function AstrologerDetailPage() {
     );
   }
 
-  const isPending = astrologer?.onboarding?.status === 'waitlist';
+  if (!astrologer) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-gray-500">Astrologer not found</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -172,29 +177,33 @@ export default function AstrologerDetailPage() {
               <h2 className="text-2xl font-bold text-gray-900">{astrologer?.name}</h2>
               <p className="text-sm text-gray-500">Astrologer ID: {astrologer?._id}</p>
               <div className="mt-2 flex items-center space-x-2">
-                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                  astrologer?.accountStatus === 'active'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
-                }`}>
+                <span
+                  className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                    astrologer?.accountStatus === 'active'
+                      ? 'bg-green-100 text-green-800'
+                      : astrologer?.accountStatus === 'suspended'
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}
+                >
                   {astrologer?.accountStatus}
                 </span>
-                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                  astrologer?.onboarding?.status === 'approved'
-                    ? 'bg-blue-100 text-blue-800'
-                    : astrologer?.onboarding?.status === 'waitlist'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-red-100 text-red-800'
-                }`}>
-                  {astrologer?.onboarding?.status}
-                </span>
+                {astrologer?.profileCompletion?.isComplete ? (
+                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                    Profile Complete
+                  </span>
+                ) : (
+                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                    Profile Incomplete
+                  </span>
+                )}
               </div>
               <div className="mt-3 flex items-center space-x-4">
                 <div className="flex items-center">
                   <Star className="text-yellow-500 mr-1" size={16} />
-                  <span className="font-semibold">{astrologer?.ratings?.average || 0}</span>
+                  <span className="font-semibold">{astrologer?.ratings?.average?.toFixed(1) || '0.0'}</span>
                   <span className="text-gray-500 text-sm ml-1">
-                    ({astrologer?.ratings?.count || 0} reviews)
+                    ({astrologer?.ratings?.total || 0} reviews)
                   </span>
                 </div>
               </div>
@@ -203,24 +212,6 @@ export default function AstrologerDetailPage() {
 
           {/* Action Buttons */}
           <div className="flex flex-col space-y-2">
-            {isPending && (
-              <>
-                <button
-                  onClick={() => setShowApprovalModal(true)}
-                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                >
-                  <CheckCircle size={18} className="mr-2" />
-                  Approve
-                </button>
-                <button
-                  onClick={() => setShowRejectionModal(true)}
-                  className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                >
-                  <XCircle size={18} className="mr-2" />
-                  Reject
-                </button>
-              </>
-            )}
             {astrologer?.accountStatus === 'active' && (
               <>
                 <button
@@ -232,14 +223,23 @@ export default function AstrologerDetailPage() {
                 </button>
                 <button
                   onClick={() => handleStatusChange('inactive')}
-                  className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
                 >
                   <Ban size={18} className="mr-2" />
                   Deactivate
                 </button>
               </>
             )}
-            {astrologer?.accountStatus !== 'active' && !isPending && (
+            {astrologer?.accountStatus === 'suspended' && (
+              <button
+                onClick={() => handleStatusChange('active')}
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                <CheckCircle size={18} className="mr-2" />
+                Unsuspend
+              </button>
+            )}
+            {astrologer?.accountStatus === 'inactive' && (
               <button
                 onClick={() => handleStatusChange('active')}
                 className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
@@ -284,16 +284,16 @@ export default function AstrologerDetailPage() {
           </div>
         </div>
 
-        {/* Skills & Languages */}
+        {/* Specializations & Languages */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Skills & Languages</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Expertise & Languages</h3>
           <div className="space-y-3">
             <div>
-              <p className="text-sm text-gray-500 mb-2">Skills</p>
+              <p className="text-sm text-gray-500 mb-2">Specializations</p>
               <div className="flex flex-wrap gap-2">
-                {astrologer?.skills?.map((skill: string) => (
-                  <span key={skill} className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
-                    {skill}
+                {astrologer?.specializations?.map((spec: string) => (
+                  <span key={spec} className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                    {spec}
                   </span>
                 ))}
               </div>
@@ -310,7 +310,7 @@ export default function AstrologerDetailPage() {
             </div>
             <div>
               <p className="text-sm text-gray-500">Experience</p>
-              <p className="text-gray-900">{astrologer?.experience || 0} years</p>
+              <p className="text-gray-900">{astrologer?.experienceYears || 0} years</p>
             </div>
           </div>
         </div>
@@ -318,7 +318,7 @@ export default function AstrologerDetailPage() {
         {/* Pricing */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Pricing</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Pricing (per minute)</h3>
             {isEditingPricing ? (
               <button
                 onClick={handleSavePricing}
@@ -340,42 +340,45 @@ export default function AstrologerDetailPage() {
           </div>
           <div className="space-y-3">
             <div>
-              <label className="text-sm text-gray-500">Chat Rate (per minute)</label>
+              <label className="text-sm text-gray-500">Chat Rate</label>
               {isEditingPricing ? (
                 <input
                   type="number"
-                  value={pricing.chatRatePerMinute}
-                  onChange={(e) => setPricing({ ...pricing, chatRatePerMinute: Number(e.target.value) })}
+                  value={pricing.chat}
+                  onChange={(e) => setPricing({ ...pricing, chat: Number(e.target.value) })}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                  min="0"
                 />
               ) : (
-                <p className="text-lg font-semibold text-gray-900">₹{pricing.chatRatePerMinute}</p>
+                <p className="text-lg font-semibold text-gray-900">₹{pricing.chat}</p>
               )}
             </div>
             <div>
-              <label className="text-sm text-gray-500">Call Rate (per minute)</label>
+              <label className="text-sm text-gray-500">Call Rate</label>
               {isEditingPricing ? (
                 <input
                   type="number"
-                  value={pricing.callRatePerMinute}
-                  onChange={(e) => setPricing({ ...pricing, callRatePerMinute: Number(e.target.value) })}
+                  value={pricing.call}
+                  onChange={(e) => setPricing({ ...pricing, call: Number(e.target.value) })}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                  min="0"
                 />
               ) : (
-                <p className="text-lg font-semibold text-gray-900">₹{pricing.callRatePerMinute}</p>
+                <p className="text-lg font-semibold text-gray-900">₹{pricing.call}</p>
               )}
             </div>
             <div>
-              <label className="text-sm text-gray-500">Video Call Rate (per minute)</label>
+              <label className="text-sm text-gray-500">Video Call Rate</label>
               {isEditingPricing ? (
                 <input
                   type="number"
-                  value={pricing.videoCallRatePerMinute}
-                  onChange={(e) => setPricing({ ...pricing, videoCallRatePerMinute: Number(e.target.value) })}
+                  value={pricing.videoCall}
+                  onChange={(e) => setPricing({ ...pricing, videoCall: Number(e.target.value) })}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                  min="0"
                 />
               ) : (
-                <p className="text-lg font-semibold text-gray-900">₹{pricing.videoCallRatePerMinute}</p>
+                <p className="text-lg font-semibold text-gray-900">₹{pricing.videoCall}</p>
               )}
             </div>
           </div>
@@ -392,22 +395,24 @@ export default function AstrologerDetailPage() {
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Total Sessions</p>
+              <p className="text-sm text-gray-500">Total Orders</p>
               <p className="text-xl font-semibold text-gray-900">
-                {astrologer?.stats?.totalSessions || 0}
+                {astrologer?.stats?.totalOrders || 0}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Total Chat Time</p>
+              <p className="text-sm text-gray-500">Total Minutes</p>
               <p className="text-gray-900">
-                {Math.floor((astrologer?.stats?.totalChatTime || 0) / 60)} hours
+                {Math.floor((astrologer?.stats?.totalMinutes || 0) / 60)} hours
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Total Call Time</p>
-              <p className="text-gray-900">
-                {Math.floor((astrologer?.stats?.totalCallTime || 0) / 60)} hours
-              </p>
+              <p className="text-sm text-gray-500">Chat Orders</p>
+              <p className="text-gray-900">{astrologer?.stats?.chatOrders || 0}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Call Orders</p>
+              <p className="text-gray-900">{astrologer?.stats?.callOrders || 0}</p>
             </div>
           </div>
         </div>
@@ -449,102 +454,53 @@ export default function AstrologerDetailPage() {
         )}
       </div>
 
-      {/* Approval Modal */}
-      {showApprovalModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Approve Astrologer
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              You are about to approve <strong>{astrologer?.name}</strong>
-            </p>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Admin Notes (Optional)
-              </label>
-              <textarea
-                value={adminNotes}
-                onChange={(e) => setAdminNotes(e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="Add any notes about this approval..."
-              />
-            </div>
-            <div className="flex space-x-3">
-              <button
-                onClick={() => approveMutation.mutate()}
-                disabled={approveMutation.isPending}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-              >
-                {approveMutation.isPending ? 'Approving...' : 'Confirm Approval'}
-              </button>
-              <button
-                onClick={() => {
-                  setShowApprovalModal(false);
-                  setAdminNotes('');
-                }}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-            </div>
+      {/* Availability Status */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Availability</h3>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <p className="text-sm text-gray-500">Online Status</p>
+            <span
+              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
+                astrologer?.availability?.isOnline ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+              }`}
+            >
+              {astrologer?.availability?.isOnline ? '● Online' : '○ Offline'}
+            </span>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Available for Sessions</p>
+            <span
+              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
+                astrologer?.availability?.isAvailable ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+              }`}
+            >
+              {astrologer?.availability?.isAvailable ? 'Available' : 'Busy'}
+            </span>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Live Stream</p>
+            <span
+              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
+                astrologer?.availability?.isLive ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+              }`}
+            >
+              {astrologer?.availability?.isLive ? '🔴 Live' : 'Not Live'}
+            </span>
           </div>
         </div>
-      )}
-
-      {/* Rejection Modal */}
-      {showRejectionModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Reject Application
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Please provide a reason for rejecting <strong>{astrologer?.name}</strong>
-            </p>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Rejection Reason *
-              </label>
-              <textarea
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="Provide a clear reason for rejection..."
-                required
-              />
-            </div>
-            <div className="flex space-x-3">
-              <button
-                onClick={() => rejectMutation.mutate()}
-                disabled={rejectMutation.isPending || !rejectionReason.trim()}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
-              >
-                {rejectMutation.isPending ? 'Rejecting...' : 'Confirm Rejection'}
-              </button>
-              <button
-                onClick={() => {
-                  setShowRejectionModal(false);
-                  setRejectionReason('');
-                }}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        {astrologer?.availability?.lastActive && (
+          <p className="text-sm text-gray-500 mt-4">
+            Last active: {new Date(astrologer.availability.lastActive).toLocaleString()}
+          </p>
+        )}
+      </div>
 
       {/* Status Change Modal */}
       {showStatusModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Confirm Status Change
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm Status Change</h3>
             <p className="text-gray-600 mb-6">
               Are you sure you want to change the astrologer status to <strong>{selectedStatus}</strong>?
             </p>
@@ -558,6 +514,47 @@ export default function AstrologerDetailPage() {
               </button>
               <button
                 onClick={() => setShowStatusModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Suspension Modal */}
+      {showSuspendModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Suspend Astrologer</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Please provide a reason for suspending <strong>{astrologer?.name}</strong>
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Suspension Reason *</label>
+              <textarea
+                value={suspensionReason}
+                onChange={(e) => setSuspensionReason(e.target.value)}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                placeholder="Provide a clear reason for suspension..."
+                required
+              />
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={confirmSuspension}
+                disabled={updateStatusMutation.isPending || !suspensionReason.trim()}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {updateStatusMutation.isPending ? 'Processing...' : 'Suspend'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowSuspendModal(false);
+                  setSuspensionReason('');
+                }}
                 className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
               >
                 Cancel
