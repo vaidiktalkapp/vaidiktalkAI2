@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
-import { Search, Filter, Eye, Video, TrendingUp, Users, DollarSign, Clock } from 'lucide-react';
+import { Search, Filter, Eye, Video, TrendingUp, Users, DollarSign, Clock, Play } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LivestreamsPage() {
@@ -65,10 +65,16 @@ export default function LivestreamsPage() {
         </div>
         <Link
           href="/livestreams/live"
-          className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 animate-pulse"
+          className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
         >
           <Video size={18} className="mr-2" />
-          Live Now ({stats?.liveStreams || 0})
+          <span className="relative flex items-center">
+            <span className="relative flex h-2 w-2 mr-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+            </span>
+            Live Now ({stats?.liveStreams || 0})
+          </span>
         </Link>
       </div>
 
@@ -235,48 +241,79 @@ export default function LivestreamsPage() {
                       ₹{stream.totalRevenue?.toLocaleString() || 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Link
-                        href={`/livestreams/${stream.streamId}`}
-                        className="text-indigo-600 hover:text-indigo-900 inline-flex items-center"
-                      >
-                        <Eye size={18} className="mr-1" />
-                        View
-                      </Link>
+                      <div className="flex items-center justify-end gap-2">
+                        {/* ✅ WATCH LIVE BUTTON - Only show for live streams */}
+                        {stream.status === 'live' && (
+                          <Link
+                            href={`/livestreams/watch/${stream.streamId}`}
+                            className="inline-flex items-center px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                          >
+                            <Play size={16} className="mr-1" fill="white" />
+                            Watch Live
+                            <span className="relative flex h-2 w-2 ml-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                            </span>
+                          </Link>
+                        )}
+                        
+                        {/* View Details Button */}
+                        <Link
+                          href={`/livestreams/${stream.streamId}`}
+                          className="text-indigo-600 hover:text-indigo-900 inline-flex items-center"
+                        >
+                          <Eye size={18} className="mr-1" />
+                          Details
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
 
+            {/* Empty State */}
+            {data?.streams?.length === 0 && (
+              <div className="text-center py-12">
+                <Video className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">No streams found</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {search || statusFilter ? 'Try adjusting your filters' : 'Streams will appear here when astrologers go live'}
+                </p>
+              </div>
+            )}
+
             {/* Pagination */}
-            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">
-                    Showing page <span className="font-medium">{page}</span> of{' '}
-                    <span className="font-medium">{data?.pagination?.pages || 1}</span>
-                  </p>
-                </div>
-                <div>
-                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                    <button
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      Previous
-                    </button>
-                    <button
-                      onClick={() => setPage((p) => p + 1)}
-                      disabled={page >= data?.pagination?.pages}
-                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      Next
-                    </button>
-                  </nav>
+            {data?.streams?.length > 0 && (
+              <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      Showing page <span className="font-medium">{page}</span> of{' '}
+                      <span className="font-medium">{data?.pagination?.pages || 1}</span>
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                      <button
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        onClick={() => setPage((p) => p + 1)}
+                        disabled={page >= data?.pagination?.pages}
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                    </nav>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </>
         )}
       </div>

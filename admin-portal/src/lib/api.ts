@@ -275,6 +275,12 @@ export const adminApi = {
     apiClient.get(`/admin/streams/${streamId}`),
 
   /**
+   * Get viewer token for admin to watch stream
+   */
+  getViewerToken: (streamId: string) =>
+    apiClient.get(`/admin/streams/${streamId}/viewer-token`),
+
+  /**
    * Force end stream
    */
   forceEndStream: (streamId: string, reason: string) =>
@@ -297,4 +303,6 @@ export const adminApi = {
    */
   getTopStreamEarners: (limit: number = 10) =>
     apiClient.get('/admin/streams/analytics/top-earners', { params: { limit } }),
+
+  
 };
