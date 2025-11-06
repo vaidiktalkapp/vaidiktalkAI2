@@ -13,7 +13,8 @@ import {
   Activity,
   Video, // ✅ NEW
   ClipboardList, // ✅ NEW
-  LogOut
+  LogOut,
+  Bell,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 
@@ -25,6 +26,7 @@ const menuItems = [
   { icon: ClipboardList, label: 'Interviews', href: '/interviews' }, // ✅ NEW
   { icon: ShoppingCart, label: 'Orders', href: '/orders' },
   { icon: Wallet, label: 'Payments', href: '/payments/transactions' },
+  { icon: Bell, label: 'Notifications', href: '/notifications/broadcast' },
   { icon: BarChart3, label: 'Analytics', href: '/analytics' },
   { icon: Shield, label: 'Admins', href: '/admins', requiredPermission: 'ADMINS_VIEW' },
   { icon: Activity, label: 'Activity Logs', href: '/activity-logs' },

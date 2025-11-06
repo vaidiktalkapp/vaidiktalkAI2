@@ -14,7 +14,7 @@ export default function UserDetailPage() {
   const userId = params.id as string;
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [actionType, setActionType] = useState<'block' | 'active' | 'suspended'>('block');
+  const [actionType, setActionType] = useState<'blocked' | 'active' | 'suspended'>('blocked'); // Changed 'block' to 'blocked'
 
   const { data: user, isLoading, refetch } = useQuery({
     queryKey: ['user-detail', userId],
@@ -38,17 +38,13 @@ export default function UserDetailPage() {
     },
   });
 
-  const handleStatusChange = (newStatus: 'block' | 'active' | 'suspended') => {
+  const handleStatusChange = (newStatus: 'blocked' | 'active' | 'suspended') => { // Changed 'block' to 'blocked'
     setActionType(newStatus);
     setShowConfirmModal(true);
   };
 
   const confirmStatusChange = () => {
-    let status = actionType;
-    if (actionType === 'block') {
-      status = 'block';
-    }
-    updateStatusMutation.mutate(status);
+    updateStatusMutation.mutate(actionType);
   };
 
   if (isLoading) {
@@ -93,15 +89,17 @@ export default function UserDetailPage() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900">{user?.name}</h2>
               <p className="text-sm text-gray-500">User ID: {user?._id}</p>
-              <span className={`mt-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user?.accountStatus)}`}>
-                {user?.accountStatus}
+              {/* Changed accountStatus to status */}
+              <span className={`mt-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user?.status)}`}>
+                {user?.status}
               </span>
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex flex-col space-y-2">
-            {user?.accountStatus === 'active' && (
+            {/* Changed accountStatus to status */}
+            {user?.status === 'active' && (
               <>
                 <button
                   onClick={() => handleStatusChange('suspended')}
@@ -111,7 +109,7 @@ export default function UserDetailPage() {
                   Suspend User
                 </button>
                 <button
-                  onClick={() => handleStatusChange('block')}
+                  onClick={() => handleStatusChange('blocked')}
                   className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
                   <Ban size={18} className="mr-2" />
@@ -119,7 +117,8 @@ export default function UserDetailPage() {
                 </button>
               </>
             )}
-            {user?.accountStatus === 'blocked' && (
+            {/* Changed accountStatus to status */}
+            {user?.status === 'blocked' && (
               <button
                 onClick={() => handleStatusChange('active')}
                 className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
@@ -128,7 +127,8 @@ export default function UserDetailPage() {
                 Activate User
               </button>
             )}
-            {user?.accountStatus === 'suspended' && (
+            {/* Changed accountStatus to status */}
+            {user?.status === 'suspended' && (
               <>
                 <button
                   onClick={() => handleStatusChange('active')}
@@ -138,7 +138,7 @@ export default function UserDetailPage() {
                   Activate User
                 </button>
                 <button
-                  onClick={() => handleStatusChange('block')}
+                  onClick={() => handleStatusChange('blocked')} 
                   className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
                   <Ban size={18} className="mr-2" />
@@ -265,8 +265,9 @@ export default function UserDetailPage() {
               Confirm Action
             </h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to {actionType === 'block' ? 'block' : actionType === 'suspended' ? 'suspend' : 'activate'} this user?
-              {actionType === 'block' && <span className="block mt-2 text-red-600 text-sm">This will prevent the user from logging in.</span>}
+              {/* Changed 'block' to 'blocked' */}
+              Are you sure you want to {actionType === 'blocked' ? 'block' : actionType === 'suspended' ? 'suspend' : 'activate'} this user?
+              {actionType === 'blocked' && <span className="block mt-2 text-red-600 text-sm">This will prevent the user from logging in.</span>}
               {actionType === 'suspended' && <span className="block mt-2 text-yellow-600 text-sm">This will temporarily restrict user access.</span>}
             </p>
             <div className="flex space-x-3">
@@ -274,7 +275,7 @@ export default function UserDetailPage() {
                 onClick={confirmStatusChange}
                 disabled={updateStatusMutation.isPending}
                 className={`flex-1 px-4 py-2 text-white rounded-lg ${
-                  actionType === 'block' ? 'bg-red-600 hover:bg-red-700' :
+                  actionType === 'blocked' ? 'bg-red-600 hover:bg-red-700' : // Changed 'block' to 'blocked'
                   actionType === 'suspended' ? 'bg-yellow-600 hover:bg-yellow-700' :
                   'bg-green-600 hover:bg-green-700'
                 } disabled:opacity-50`}

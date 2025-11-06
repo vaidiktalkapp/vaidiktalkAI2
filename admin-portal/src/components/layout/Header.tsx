@@ -1,7 +1,8 @@
 // src/components/layout/Header.tsx
 'use client';
 
-import { Bell, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
+import NotificationBell from '@/components/notifications/NotificationBell';
 
 export default function Header() {
   return (
@@ -19,10 +20,7 @@ export default function Header() {
         </div>
 
         <div className="flex items-center space-x-4">
-          <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-            <Bell size={20} />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
+            <NotificationBell />
         </div>
       </div>
     </header>

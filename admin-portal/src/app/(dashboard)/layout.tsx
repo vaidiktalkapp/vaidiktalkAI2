@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
+import NotificationProvider from '@/components/providers/NotificationProvider';
+
 
 export default function DashboardLayout({
   children,
@@ -43,6 +45,7 @@ export default function DashboardLayout({
   }
 
   return (
+    <NotificationProvider>
     <div className="flex h-screen bg-gray-100">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -52,5 +55,6 @@ export default function DashboardLayout({
         </main>
       </div>
     </div>
+    </NotificationProvider>
   );
 }

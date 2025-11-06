@@ -305,4 +305,126 @@ export const adminApi = {
     apiClient.get('/admin/streams/analytics/top-earners', { params: { limit } }),
 
   
+ // ==================== NOTIFICATIONS ====================
+
+  /**
+   * Broadcast notification to all users
+   */
+  broadcastToAllUsers: (payload: {
+    type: string;
+    title: string;
+    message: string;
+    data?: Record<string, any>;
+    imageUrl?: string;
+    actionUrl?: string;
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
+  }) =>
+    apiClient.post('/admin/notifications/broadcast/all-users', payload),
+
+  /**
+   * Broadcast notification to specific users
+   */
+  broadcastToSpecificUsers: (payload: {
+    userIds: string[];
+    type: string;
+    title: string;
+    message: string;
+    data?: Record<string, any>;
+    imageUrl?: string;
+    actionUrl?: string;
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
+  }) =>
+    apiClient.post('/admin/notifications/broadcast/specific-users', payload),
+
+  /**
+   * Notify astrologer's followers (for livestream notifications)
+   */
+  notifyFollowers: (astrologerId: string, payload: {
+    type: 'stream_started' | 'stream_reminder';
+    title: string;
+    message: string;
+    data?: Record<string, any>;
+    imageUrl?: string;
+    actionUrl?: string;
+  }) =>
+    apiClient.post(`/admin/notifications/notify-followers/${astrologerId}`, payload),
+
+  /**
+   * Schedule notification for future delivery
+   */
+  scheduleNotification: (payload: {
+    scheduledFor: string; // ISO date string
+    type: string;
+    title: string;
+    message: string;
+    data?: Record<string, any>;
+    imageUrl?: string;
+    actionUrl?: string;
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
+    recipientType: 'all_users' | 'all_astrologers' | 'specific_users' | 'followers';
+    specificRecipients?: string[];
+    astrologerId?: string;
+  }) =>
+    apiClient.post('/admin/notifications/schedule', payload),
+
+  /**
+   * Get all scheduled notifications
+   */
+  getScheduledNotifications: (params?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  }) =>
+    apiClient.get('/admin/notifications/scheduled', { params }),
+
+  /**
+   * Get upcoming scheduled notifications (next 24 hours)
+   */
+  getUpcomingNotifications: () =>
+    apiClient.get('/admin/notifications/scheduled/upcoming'),
+
+  /**
+   * Get scheduled notification by ID
+   */
+  getScheduledNotificationById: (scheduleId: string) =>
+    apiClient.get(`/admin/notifications/scheduled/${scheduleId}`),
+
+  /**
+   * Cancel scheduled notification
+   */
+  cancelScheduledNotification: (scheduleId: string) =>
+    apiClient.delete(`/admin/notifications/scheduled/${scheduleId}`),
+
+  /**
+   * Get notification statistics
+   */
+  getNotificationStats: () =>
+    apiClient.get('/admin/notifications/stats'),
+
+  /**
+   * Get real-time connection statistics
+   */
+  getNotificationConnectionStats: () =>
+    apiClient.get('/admin/notifications/stats/connections'),
+
+  /**
+   * Check if specific user is online
+   */
+  checkUserOnline: (userId: string) =>
+    apiClient.get(`/admin/notifications/check-online/${userId}`),
+
+  /**
+   * Test admin notification (Socket.io)
+   */
+  testNotification: () =>
+    apiClient.post('/admin/notifications/test'),
+
+  /**
+   * Broadcast system alert to all admins
+   */
+  sendSystemAlert: (payload: {
+    message: string;
+    data?: any;
+  }) =>
+    apiClient.post('/admin/notifications/system-alert', payload),
 };

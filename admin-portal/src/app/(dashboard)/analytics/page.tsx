@@ -6,6 +6,67 @@ import { adminApi } from '@/lib/api';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Calendar } from 'lucide-react';
 
+// Demo data for development/testing
+const DEMO_REVENUE_DATA = [
+  { _id: '2024-10-22', totalRevenue: 12500, orderCount: 25 },
+  { _id: '2024-10-23', totalRevenue: 15800, orderCount: 32 },
+  { _id: '2024-10-24', totalRevenue: 18200, orderCount: 38 },
+  { _id: '2024-10-25', totalRevenue: 14600, orderCount: 28 },
+  { _id: '2024-10-26', totalRevenue: 21400, orderCount: 45 },
+  { _id: '2024-10-27', totalRevenue: 19800, orderCount: 41 },
+  { _id: '2024-10-28', totalRevenue: 23500, orderCount: 48 },
+];
+
+const DEMO_TOP_ASTROLOGERS = [
+  {
+    _id: 'demo-ast-1',
+    name: 'Pandit Rajesh Sharma',
+    profilePicture: null,
+    stats: { totalSessions: 245, totalEarnings: 125600 }
+  },
+  {
+    _id: 'demo-ast-2',
+    name: 'Dr. Acharya Gupta',
+    profilePicture: null,
+    stats: { totalSessions: 198, totalEarnings: 98400 }
+  },
+  {
+    _id: 'demo-ast-3',
+    name: 'Astrologer Priya Mishra',
+    profilePicture: null,
+    stats: { totalSessions: 176, totalEarnings: 87200 }
+  },
+  {
+    _id: 'demo-ast-4',
+    name: 'Pandit Amit Pandey',
+    profilePicture: null,
+    stats: { totalSessions: 154, totalEarnings: 76500 }
+  },
+  {
+    _id: 'demo-ast-5',
+    name: 'Dr. Sneha Verma',
+    profilePicture: null,
+    stats: { totalSessions: 132, totalEarnings: 65400 }
+  },
+];
+
+const DEMO_USER_GROWTH = [
+  { _id: '2024-10-22', newUsers: 45 },
+  { _id: '2024-10-23', newUsers: 52 },
+  { _id: '2024-10-24', newUsers: 61 },
+  { _id: '2024-10-25', newUsers: 48 },
+  { _id: '2024-10-26', newUsers: 73 },
+  { _id: '2024-10-27', newUsers: 68 },
+  { _id: '2024-10-28', newUsers: 81 },
+];
+
+const DEMO_DASHBOARD_STATS = {
+  users: { total: 12845 },
+  astrologers: { total: 256 },
+  orders: { total: 8934, completed: 7245 },
+  revenue: { total: 1245600 },
+};
+
 export default function AnalyticsPage() {
   const [startDate, setStartDate] = useState(
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -13,7 +74,7 @@ export default function AnalyticsPage() {
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Revenue Analytics
-  const { data: revenueData, isLoading: revenueLoading } = useQuery({
+  const { data: revenueApiData, isLoading: revenueLoading } = useQuery({
     queryKey: ['revenue-analytics', startDate, endDate],
     queryFn: async () => {
       const response = await adminApi.getRevenueAnalytics(startDate, endDate);
@@ -22,7 +83,7 @@ export default function AnalyticsPage() {
   });
 
   // Top Astrologers
-  const { data: topAstrologers, isLoading: astrologersLoading } = useQuery({
+  const { data: topAstrologersApiData, isLoading: astrologersLoading } = useQuery({
     queryKey: ['top-astrologers'],
     queryFn: async () => {
       const response = await adminApi.getTopAstrologers(5);
@@ -31,7 +92,7 @@ export default function AnalyticsPage() {
   });
 
   // User Growth
-  const { data: userGrowth } = useQuery({
+  const { data: userGrowthApiData } = useQuery({
     queryKey: ['user-growth', startDate, endDate],
     queryFn: async () => {
       const response = await adminApi.getUserGrowth(startDate, endDate);
@@ -40,13 +101,19 @@ export default function AnalyticsPage() {
   });
 
   // Dashboard Stats for summary
-  const { data: dashboardStats } = useQuery({
+  const { data: dashboardStatsApiData } = useQuery({
     queryKey: ['dashboard-stats-analytics'],
     queryFn: async () => {
       const response = await adminApi.getDashboardStats();
       return response.data.data;
     },
   });
+
+  // Use demo data if API returns empty or undefined
+  const revenueData = revenueApiData && revenueApiData.length > 0 ? revenueApiData : DEMO_REVENUE_DATA;
+  const topAstrologers = topAstrologersApiData && topAstrologersApiData.length > 0 ? topAstrologersApiData : DEMO_TOP_ASTROLOGERS;
+  const userGrowth = userGrowthApiData && userGrowthApiData.length > 0 ? userGrowthApiData : DEMO_USER_GROWTH;
+  const dashboardStats = dashboardStatsApiData || DEMO_DASHBOARD_STATS;
 
   const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b'];
 
@@ -56,6 +123,11 @@ export default function AnalyticsPage() {
     { name: 'Audio Call', value: Math.floor((dashboardStats?.orders?.completed || 0) * 0.6) },
     { name: 'Video Call', value: Math.floor((dashboardStats?.orders?.completed || 0) * 0.3) },
   ];
+
+  // Check if using demo data
+  const isUsingDemoData = (!revenueApiData || revenueApiData.length === 0) || 
+                          (!topAstrologersApiData || topAstrologersApiData.length === 0) ||
+                          !dashboardStatsApiData;
 
   // ✅ FIX: Properly typed label function using 'any' to avoid recharts type issues
   const renderPieLabel = ({ name, percent }: any) => {
@@ -69,6 +141,11 @@ export default function AnalyticsPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
           <p className="text-gray-600 mt-1">Comprehensive platform analytics and insights</p>
+          {isUsingDemoData && (
+            <div className="mt-2 px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-md inline-block">
+              📊 Showing demo data (API not connected)
+            </div>
+          )}
         </div>
       </div>
 
