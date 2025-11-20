@@ -40,7 +40,10 @@ apiClient.interceptors.response.use(
 export const adminApi = {
   // Auth
   login: (email: string, password: string) =>
-    apiClient.post('/admin/auth/login', { email, password }),
+    apiClient.post('/admin/auth/login', { 
+      email: email.trim(),      // Remove whitespace
+      password: password.trim() // Remove whitespace
+    }),
   
   getProfile: () =>
     apiClient.get('/admin/auth/profile'),
@@ -337,6 +340,23 @@ export const adminApi = {
     apiClient.post('/admin/notifications/broadcast/specific-users', payload),
 
   /**
+
+Send full-screen notification to a single User or Astrologer
+*/
+sendFullScreenNotification: (payload: {
+recipientId: string;
+recipientModel: 'User' | 'Astrologer';
+type: string;
+title: string;
+message: string;
+data?: Record<string, any>;
+imageUrl?: string;
+actionUrl?: string;
+}) =>
+apiClient.post('/admin/notifications/send/fullscreen', payload),
+
+
+  /**
    * Notify astrologer's followers (for livestream notifications)
    */
   notifyFollowers: (astrologerId: string, payload: {
@@ -427,4 +447,94 @@ export const adminApi = {
     data?: any;
   }) =>
     apiClient.post('/admin/notifications/system-alert', payload),
+
+  
+  // ==================== SHOPIFY ORDERS ====================
+
+/**
+ * Get all synced Shopify orders
+ */
+getAllShopifyOrders: (params: { page?: number; limit?: number }) =>
+  apiClient.get('/admin/shopify-orders', { params }),
+
+/**
+ * Get Shopify orders by status (paid, pending, fulfilled, etc.)
+ */
+getShopifyOrdersByStatus: (status: string, params: { page?: number; limit?: number }) =>
+  apiClient.get(`/admin/shopify-orders/status/${status}`, { params }),
+
+/**
+ * Search Shopify orders
+ */
+searchShopifyOrders: (query: string, params: { page?: number; limit?: number }) =>
+  apiClient.get('/admin/shopify-orders/search', { params: { query, ...params } }),
+
+/**
+ * Get Shopify orders statistics
+ */
+getShopifyOrdersStats: () =>
+  apiClient.get('/admin/shopify-orders/stats'),
+
+// ==================== REMEDIES ====================
+
+/**
+ * Get all remedies
+ */
+getAllRemedies: (params: { page?: number; limit?: number; source?: string; status?: string }) =>
+  apiClient.get('/admin/remedies', { params }),
+
+/**
+ * Get remedies by source (manual or shopify_product)
+ */
+getRemediesBySource: (source: string, params: { page?: number; limit?: number }) =>
+  apiClient.get(`/admin/remedies/source/${source}`, { params }),
+
+/**
+ * Get remedies by status
+ */
+getRemediesByStatus: (status: string, params: { page?: number; limit?: number }) =>
+  apiClient.get(`/admin/remedies/status/${status}`, { params }),
+
+/**
+ * Get remedies statistics
+ */
+getRemediesStats: () =>
+  apiClient.get('/admin/remedies/stats'),
+
+/**
+ * Get purchase conversion tracking
+ */
+getPurchaseConversionTracking: () =>
+  apiClient.get('/admin/remedies/conversion-tracking'),
+
+// ==================== ASTROLOGER PERFORMANCE ====================
+
+/**
+ * Get astrologer performance metrics
+ */
+getAstrologerPerformance: (astrologerId: string) =>
+  apiClient.get(`/admin/astrologers/${astrologerId}/performance`),
+
+// ==================== ORDER & REMEDY LINKING ====================
+
+/**
+ * Get order with all suggested remedies
+ */
+getOrderWithRemedies: (orderId: string) =>
+  apiClient.get(`/admin/orders/${orderId}/with-remedies`),
+
+/**
+ * Get user's complete journey
+ */
+getUserJourney: (userId: string) =>
+  apiClient.get(`/admin/users/${userId}/journey`),
+
+// ==================== SYSTEM HEALTH ====================
+
+/**
+ * Get system health and sync status
+ */
+getSystemHealth: () =>
+  apiClient.get('/admin/health'),
+  
 };
