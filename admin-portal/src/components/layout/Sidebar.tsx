@@ -24,6 +24,11 @@ import {
   Server,
   Headphones, // ✅ For Support
   LucideIcon,
+  RefreshCw,
+  Gift,
+  DollarSign,
+  RotateCcw,
+  TrendingUp,
 } from 'lucide-react';
 
 // Define interface for menu items
@@ -68,6 +73,12 @@ const menuCategories: MenuCategory[] = [
         href: '/astrologers', 
         requiredPermission: 'view_astrologers' 
       },
+      {
+  label: 'Reviews',
+  href: '/reviews',
+  icon: Star,
+  requiredPermission: 'view_astrologers' // Optional: show pending count
+},
       { 
         icon: Video, 
         label: 'Livestreams', 
@@ -120,6 +131,13 @@ const menuCategories: MenuCategory[] = [
         href: '/payments/transactions', 
         requiredPermission: 'view_transactions' 
       },
+      {
+        icon: RefreshCw,
+        label: 'Refunds',
+        href: '/orders/refunds',
+        requiredPermission: 'manage_refunds',
+      },
+
     ],
   },
   {
@@ -131,14 +149,55 @@ const menuCategories: MenuCategory[] = [
         href: '/notifications/manage', 
         requiredPermission: 'manage_notifications' 
       },
+      { 
+  href: '/notifications/test-types', 
+  label: 'Test Types', 
+  icon: Bell,
+  requiredPermission: 'manage_notifications'
+},
       {
         icon: Headphones,
-        label: 'Support',
-        href: '/support',
+        label: 'Support Tickets',
+        href: '/support/tickets',
         requiredPermission: 'manage_users', // Support usually needs user mgmt
       }
     ],
   },
+  {
+  category: 'Payments',
+  items: [
+    {
+      icon: DollarSign,
+      label: 'Transactions',
+      href: '/payments/transactions',
+      requiredPermission: 'view_payments',
+    },
+    {
+      icon: TrendingUp,
+      label: 'Payouts',
+      href: '/payments/payouts',
+      requiredPermission: 'view_payouts',
+    },
+    {
+      icon: RefreshCw,
+      label: 'Wallet Refunds',
+      href: '/payments/wallet-refunds',
+      requiredPermission: 'view_payments',
+    },
+    {
+      icon: Gift,
+      label: 'Gift Cards',
+      href: '/payments/gift-cards',
+      requiredPermission: 'view_payments',
+    },
+    {
+      icon: RotateCcw,
+      label: 'Order Refunds',
+      href: '/orders/refunds',
+      requiredPermission: 'manage_refunds',
+    },
+  ],
+},
   {
     category: 'Administration',
     items: [
@@ -160,6 +219,12 @@ const menuCategories: MenuCategory[] = [
         href: '/activity-logs', 
         requiredPermission: 'view_logs' 
       },
+      {
+  icon: BarChart3,
+  label: 'Reports',
+  href: '/reports',
+  requiredPermission: 'view_reports',
+},
     ],
   },
 ];

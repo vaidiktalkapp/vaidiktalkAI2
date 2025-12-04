@@ -42,11 +42,31 @@ export type Permission =
   | 'manage_livestreams'
   | 'view_remedies'
   | 'view_shopify'
+
+  | 'view_payments'
+| 'manage_payments'
+| 'view_payouts'
+| 'approve_payouts'
+| 'reject_payouts'
+| 'manage_refunds'
   
+| 'view_reports'
+| 'export_reports'
   // System
   | 'manage_admins'
+   | 'create_admins'  // ✅ Add this
+  | 'edit_admins'
+  | 'delete_admins'
   | 'view_logs'
-  | 'view_system_health';
+  | 'view_system_health'
+  
+  //support
+  | 'support:tickets:view'
+  | 'support:tickets:edit'
+  | 'support:refund:process'
+  | 'support:payout:approve'
+  | 'support:stats:view'
+
 
 export const ROLE_PERMISSIONS: Record<RoleType, Permission[]> = {
   super_admin: [
@@ -58,7 +78,11 @@ export const ROLE_PERMISSIONS: Record<RoleType, Permission[]> = {
     'view_orders', 'manage_refunds', 'cancel_orders',
     'view_transactions', 'manage_payouts',
     'manage_notifications', 'manage_livestreams', 'view_remedies', 'view_shopify',
-    'manage_admins', 'view_logs', 'view_system_health'
+    'manage_admins', 'view_logs', 'view_system_health',  'support:tickets:view',
+    'support:tickets:edit',
+    'support:refund:process',
+    'support:payout:approve',
+    'support:stats:view'
   ],
   admin: [
     'view_dashboard', 'view_analytics',
@@ -67,7 +91,11 @@ export const ROLE_PERMISSIONS: Record<RoleType, Permission[]> = {
     'view_interviews', 'conduct_interview',
     'view_orders', 'manage_refunds',
     'manage_notifications', 'manage_livestreams', 'view_remedies', 'view_shopify',
-    'view_logs'
+    'view_logs','support:tickets:view',
+    'support:tickets:edit',
+    'support:refund:process',
+    'support:payout:approve',
+    'support:stats:view'
   ],
   moderator: [
     'view_dashboard',
@@ -80,17 +108,26 @@ export const ROLE_PERMISSIONS: Record<RoleType, Permission[]> = {
     'view_dashboard',
     'view_users',
     'view_orders', // Need to see orders to help
-    'view_transactions'
+    'view_transactions','support:tickets:view',
+    'support:tickets:edit',
+    'support:refund:process',
+    'support:payout:approve',
+    'support:stats:view'
   ],
   finance: [
     'view_dashboard', 'view_analytics',
     'view_orders', 'manage_refunds',
-    'view_transactions', 'manage_payouts'
+    'view_transactions', 'manage_payouts','support:tickets:view',
+    'support:tickets:edit',
+    'support:refund:process',
+    'support:payout:approve',
+    'support:stats:view'
   ],
   analyst: [
     'view_dashboard', 'view_analytics',
     'view_users', 'view_astrologers', 'view_orders',
-    'view_remedies', 'view_shopify'
+    'view_remedies', 'view_shopify','support:tickets:view',
+    'support:stats:view'
   ],
   content_manager: [
     'view_dashboard',

@@ -3,14 +3,31 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
-import { Search, RefreshCw } from 'lucide-react';
+import { DataTable, Column } from '@/components/shared/DataTable';
+import { FilterBar } from '@/components/shared/FilterBar';
+import { usePermission } from '@/hooks/use-permission';
+import { DollarSign, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
+
+interface Transaction {
+  _id: string;
+  transactionId: string;
+  userId: { name: string; phoneNumber: string };
+  type: string;
+  amount: number;
+  status: string;
+  description: string;
+  balanceBefore: number;
+  balanceAfter: number;
+  createdAt: string;
+}
 
 export default function TransactionsPage() {
   const [page, setPage] = useState(1);
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const { can } = usePermission();
 
-  const { data: transactions, isLoading } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['transactions', page, typeFilter, statusFilter],
     queryFn: async () => {
       const response = await adminApi.getAllTransactions({
@@ -21,178 +38,162 @@ export default function TransactionsPage() {
       });
       return response.data.data;
     },
+    enabled: can('view_payments'),
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'failed': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const { data: stats } = useQuery({
+    queryKey: ['transaction-stats'],
+    queryFn: async () => {
+      const response = await adminApi.getTransactionStats();
+      return response.data.data;
+    },
+    enabled: can('view_payments'),
+  });
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'recharge': return 'bg-blue-100 text-blue-800';
-      case 'deduction': return 'bg-purple-100 text-purple-800';
-      case 'refund': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const columns: Column<Transaction>[] = [
+    {
+      header: 'Transaction ID',
+      cell: (txn) => (
+        <span className="font-mono text-xs text-gray-600">{txn.transactionId}</span>
+      ),
+    },
+    {
+      header: 'User',
+      cell: (txn) => (
+        <div>
+          <p className="font-medium text-gray-900">{txn.userId?.name || 'N/A'}</p>
+          <p className="text-xs text-gray-500">{txn.userId?.phoneNumber}</p>
+        </div>
+      ),
+    },
+    {
+      header: 'Type',
+      cell: (txn) => {
+        const colors: Record<string, string> = {
+          recharge: 'bg-green-100 text-green-800',
+          deduction: 'bg-red-100 text-red-800',
+          refund: 'bg-blue-100 text-blue-800',
+          bonus: 'bg-purple-100 text-purple-800',
+          giftcard: 'bg-yellow-100 text-yellow-800',
+        };
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[txn.type] || 'bg-gray-100 text-gray-800'}`}>
+            {txn.type}
+          </span>
+        );
+      },
+    },
+    {
+      header: 'Amount',
+      cell: (txn) => {
+        const isCredit = ['recharge', 'refund', 'bonus', 'giftcard'].includes(txn.type);
+        return (
+          <span className={`font-bold ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
+            {isCredit ? '+' : '-'}₹{txn.amount.toLocaleString()}
+          </span>
+        );
+      },
+    },
+    {
+      header: 'Balance',
+      cell: (txn) => (
+        <div className="text-xs text-gray-600">
+          <div>Before: ₹{txn.balanceBefore}</div>
+          <div>After: ₹{txn.balanceAfter}</div>
+        </div>
+      ),
+    },
+    {
+      header: 'Status',
+      cell: (txn) => {
+        const colors: Record<string, string> = {
+          completed: 'bg-green-100 text-green-800',
+          pending: 'bg-yellow-100 text-yellow-800',
+          failed: 'bg-red-100 text-red-800',
+        };
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[txn.status]}`}>
+            {txn.status}
+          </span>
+        );
+      },
+    },
+    {
+      header: 'Date',
+      cell: (txn) => new Date(txn.createdAt).toLocaleString(),
+      className: 'text-gray-500 text-sm',
+    },
+  ];
+
+  if (!can('view_payments')) {
+    return <div className="p-12 text-center text-gray-500">Access Denied</div>;
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Transaction History</h1>
-        <p className="text-gray-600 mt-1">View all wallet transactions</p>
+        <h1 className="text-3xl font-bold text-gray-900">Transactions</h1>
+        <p className="text-gray-600 mt-1">Monitor all wallet transactions</p>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="">All Types</option>
-            <option value="recharge">Recharge</option>
-            <option value="deduction">Deduction</option>
-            <option value="refund">Refund</option>
-          </select>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="">All Status</option>
-            <option value="completed">Completed</option>
-            <option value="pending">Pending</option>
-            <option value="failed">Failed</option>
-          </select>
-
-          <button
-            onClick={() => {
-              setTypeFilter('');
-              setStatusFilter('');
-            }}
-            className="flex items-center justify-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-          >
-            <RefreshCw size={18} className="mr-2" />
-            Reset
-          </button>
-        </div>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <StatCard label="Total Recharged" value={`₹${(stats?.totalRecharge || 0).toLocaleString()}`} icon={TrendingUp} color="text-green-600" />
+        <StatCard label="Total Spent" value={`₹${(stats?.totalSpent || 0).toLocaleString()}`} icon={TrendingDown} color="text-red-600" />
+        <StatCard label="Bonuses Credited" value={`₹${(stats?.totalBonusCredited || 0).toLocaleString()}`} icon={DollarSign} color="text-purple-600" />
+        <StatCard label="Refunds Processed" value={`₹${(stats?.totalOrderRefunds || 0).toLocaleString()}`} icon={RefreshCw} color="text-blue-600" />
       </div>
 
-      {/* Transactions Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        {isLoading ? (
-          <div className="flex items-center justify-center p-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Transaction ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      User
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Amount
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {transactions?.transactions?.map((transaction: any) => (
-                    <tr key={transaction._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {transaction._id.slice(-8)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {transaction.userId?.name || 'N/A'}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {transaction.userId?.phoneNumber}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeColor(transaction.type)}`}>
-                          {transaction.type}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`text-sm font-semibold ${
-                          transaction.type === 'deduction' ? 'text-red-600' : 'text-green-600'
-                        }`}>
-                          {transaction.type === 'deduction' ? '-' : '+'}₹{transaction.amount?.toLocaleString()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(transaction.status)}`}>
-                          {transaction.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(transaction.createdAt).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+      <FilterBar
+        filters={[
+          {
+            value: typeFilter,
+            onChange: (val) => { setTypeFilter(val); setPage(1); },
+            options: [
+              { label: 'Recharge', value: 'recharge' },
+              { label: 'Deduction', value: 'deduction' },
+              { label: 'Refund', value: 'refund' },
+              { label: 'Bonus', value: 'bonus' },
+              { label: 'Gift Card', value: 'giftcard' },
+            ],
+            placeholder: 'All Types',
+          },
+          {
+            value: statusFilter,
+            onChange: (val) => { setStatusFilter(val); setPage(1); },
+            options: [
+              { label: 'Completed', value: 'completed' },
+              { label: 'Pending', value: 'pending' },
+              { label: 'Failed', value: 'failed' },
+            ],
+            placeholder: 'All Status',
+          },
+        ]}
+        onReset={() => { setTypeFilter(''); setStatusFilter(''); setPage(1); }}
+      />
 
-            {/* Pagination */}
-            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">
-                    Showing page <span className="font-medium">{page}</span> of{' '}
-                    <span className="font-medium">{transactions?.pagination?.pages || 1}</span>
-                  </p>
-                </div>
-                <div>
-                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                    <button
-                      onClick={() => setPage(p => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      Previous
-                    </button>
-                    <button
-                      onClick={() => setPage(p => p + 1)}
-                      disabled={page >= transactions?.pagination?.pages}
-                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      Next
-                    </button>
-                  </nav>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
+      <DataTable
+        data={data?.transactions || []}
+        columns={columns}
+        isLoading={isLoading}
+        pagination={{
+          page,
+          totalPages: data?.pagination?.pages || 1,
+          onPageChange: setPage,
+        }}
+      />
+    </div>
+  );
+}
+
+function StatCard({ label, value, icon: Icon, color = 'text-gray-900' }: any) {
+  return (
+    <div className="bg-white rounded-lg shadow p-4 flex items-center justify-between border border-gray-100">
+      <div>
+        <p className="text-sm text-gray-600">{label}</p>
+        <p className={`text-2xl font-bold ${color}`}>{value}</p>
       </div>
+      <Icon className={color} size={32} />
     </div>
   );
 }

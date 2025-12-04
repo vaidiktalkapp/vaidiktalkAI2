@@ -3,15 +3,29 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
-import { Search, Filter, Eye, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import { Eye, Star, Award, AlertCircle } from 'lucide-react';
+import { DataTable, Column } from '@/components/shared/DataTable';
+import { FilterBar } from '@/components/shared/FilterBar';
+import { usePermission } from '@/hooks/use-permission';
+
+interface Astrologer {
+  _id: string;
+  name: string;
+  phoneNumber: string;
+  email: string;
+  profilePicture?: string;
+  specializations: string[];
+  accountStatus: string;
+  ratings: { average: number; total: number };
+}
 
 export default function AstrologersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const { can } = usePermission();
 
-  // Fetch astrologers list
   const { data, isLoading } = useQuery({
     queryKey: ['astrologers', page, search, statusFilter],
     queryFn: async () => {
@@ -25,233 +39,139 @@ export default function AstrologersPage() {
     },
   });
 
-  // Fetch stats (from registrations)
   const { data: stats } = useQuery({
     queryKey: ['astrologer-stats'],
     queryFn: async () => {
-      const response = await adminApi.getRegistrationStats();
+      const response = await adminApi.getRegistrationStats(); // Reusing reg stats for waitlist count
       return response.data.data;
     },
   });
 
+  const columns: Column<Astrologer>[] = [
+    {
+      header: 'Astrologer',
+      cell: (astro) => (
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-purple-100 overflow-hidden flex items-center justify-center shrink-0">
+            {astro.profilePicture ? (
+              <img src={astro.profilePicture} alt={astro.name} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-purple-700 font-bold">{astro.name.charAt(0)}</span>
+            )}
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">{astro.name}</p>
+            <div className="flex items-center gap-1 text-xs text-yellow-600">
+              <Star size={10} fill="currentColor" />
+              <span>{astro.ratings?.average?.toFixed(1) || 'New'}</span>
+              <span className="text-gray-400">({astro.ratings?.total || 0})</span>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: 'Contact',
+      cell: (astro) => (
+        <div className="text-sm">
+          <p className="text-gray-900">{astro.phoneNumber}</p>
+          <p className="text-xs text-gray-500">{astro.email}</p>
+        </div>
+      )
+    },
+    {
+      header: 'Specializations',
+      cell: (astro) => (
+        <div className="flex flex-wrap gap-1 max-w-[200px]">
+          {astro.specializations?.slice(0, 2).map(spec => (
+            <span key={spec} className="text-[10px] px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded border border-purple-100">
+              {spec}
+            </span>
+          ))}
+          {astro.specializations?.length > 2 && (
+            <span className="text-[10px] px-1.5 py-0.5 bg-gray-50 text-gray-600 rounded">
+              +{astro.specializations.length - 2}
+            </span>
+          )}
+        </div>
+      )
+    },
+    {
+      header: 'Status',
+      cell: (astro) => {
+        const statusMap: Record<string, string> = {
+          active: 'bg-green-100 text-green-800',
+          suspended: 'bg-red-100 text-red-800',
+          inactive: 'bg-gray-100 text-gray-800',
+        };
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${statusMap[astro.accountStatus] || 'bg-gray-100'}`}>
+            {astro.accountStatus}
+          </span>
+        );
+      }
+    },
+    {
+      header: 'Actions',
+      className: 'text-right',
+      cell: (astro) => (
+        <div className="flex justify-end">
+          <Link href={`/astrologers/${astro._id}`} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors">
+            <Eye size={18} />
+          </Link>
+        </div>
+      )
+    }
+  ];
+
+  if (!can('view_astrologers')) return <div className="p-12 text-center">Access Denied</div>;
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Astrologers Management</h1>
-          <p className="text-gray-600 mt-1">Manage all astrologers on the platform</p>
+          <h1 className="text-3xl font-bold text-gray-900">Astrologers</h1>
+          <p className="text-gray-600 mt-1">Manage profiles and performance</p>
         </div>
-        <Link
-          href="/astrologers/pending"
-          className="flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
-        >
-          <AlertCircle size={18} className="mr-2" />
-          Pending Approvals ({stats?.waitlist || 0})
+        
+        {/* Pending Action Button */}
+        <Link href="/astrologers/pending" className="flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg hover:bg-yellow-200 transition-colors">
+          <AlertCircle size={18} />
+          <span className="font-medium">Waitlist ({stats?.waitlist || 0})</span>
         </Link>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">Total Applications</p>
-          <p className="text-2xl font-bold text-gray-900">{stats?.total || 0}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">Waitlist</p>
-          <p className="text-2xl font-bold text-yellow-600">{stats?.waitlist || 0}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">In Interviews</p>
-          <p className="text-2xl font-bold text-blue-600">
-            {(stats?.interviews?.round1 || 0) +
-              (stats?.interviews?.round2 || 0) +
-              (stats?.interviews?.round3 || 0) +
-              (stats?.interviews?.round4 || 0)}
-          </p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">Approved</p>
-          <p className="text-2xl font-bold text-green-600">{stats?.approved || 0}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-600">Rejected</p>
-          <p className="text-2xl font-bold text-red-600">{stats?.rejected || 0}</p>
-        </div>
-      </div>
+      <FilterBar 
+        search={{
+          value: search,
+          onChange: (val) => { setSearch(val); setPage(1); },
+          placeholder: "Search astrologers..."
+        }}
+        filters={[
+          {
+            value: statusFilter,
+            onChange: (val) => { setStatusFilter(val); setPage(1); },
+            options: [
+              { label: 'Active', value: 'active' },
+              { label: 'Suspended', value: 'suspended' },
+              { label: 'Inactive', value: 'inactive' }
+            ],
+            placeholder: "All Status"
+          }
+        ]}
+        onReset={() => { setSearch(''); setStatusFilter(''); setPage(1); }}
+      />
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search by name, phone, email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="suspended">Suspended</option>
-          </select>
-
-          <button
-            onClick={() => {
-              setSearch('');
-              setStatusFilter('');
-            }}
-            className="flex items-center justify-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-          >
-            <Filter size={18} className="mr-2" />
-            Clear
-          </button>
-        </div>
-      </div>
-
-      {/* Astrologers Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        {isLoading ? (
-          <div className="flex items-center justify-center p-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-          </div>
-        ) : (
-          <>
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Astrologer
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Specializations
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ratings
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {data?.astrologers?.map((astrologer: any) => (
-                  <tr key={astrologer._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center overflow-hidden">
-                          {astrologer.profilePicture ? (
-                            <img
-                              src={astrologer.profilePicture}
-                              alt={astrologer.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-purple-600 font-semibold">
-                              {astrologer.name?.charAt(0)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{astrologer.name}</div>
-                          <div className="text-sm text-gray-500">ID: {astrologer._id.slice(-8)}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{astrologer.phoneNumber}</div>
-                      {astrologer.email && <div className="text-sm text-gray-500">{astrologer.email}</div>}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-wrap gap-1">
-                        {astrologer.specializations?.slice(0, 2).map((spec: string) => (
-                          <span key={spec} className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full">
-                            {spec}
-                          </span>
-                        ))}
-                        {astrologer.specializations?.length > 2 && (
-                          <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
-                            +{astrologer.specializations.length - 2}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          astrologer.accountStatus === 'active'
-                            ? 'bg-green-100 text-green-800'
-                            : astrologer.accountStatus === 'suspended'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {astrologer.accountStatus}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ⭐ {astrologer.ratings?.average?.toFixed(1) || '0.0'} ({astrologer.ratings?.total || 0})
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Link
-                        href={`/astrologers/${astrologer._id}`}
-                        className="text-indigo-600 hover:text-indigo-900"
-                      >
-                        <Eye size={18} className="inline" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Pagination */}
-            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">
-                    Showing page <span className="font-medium">{page}</span> of{' '}
-                    <span className="font-medium">{data?.pagination?.pages || 1}</span>
-                  </p>
-                </div>
-                <div>
-                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                    <button
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      Previous
-                    </button>
-                    <button
-                      onClick={() => setPage((p) => p + 1)}
-                      disabled={page >= data?.pagination?.pages}
-                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      Next
-                    </button>
-                  </nav>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+      <DataTable
+        data={data?.astrologers || []}
+        columns={columns}
+        isLoading={isLoading}
+        pagination={{
+          page,
+          totalPages: data?.pagination?.pages || 1,
+          onPageChange: setPage
+        }}
+      />
     </div>
   );
 }

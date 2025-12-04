@@ -50,8 +50,6 @@ export default function InterviewDetailPage() {
       setCallDuration('');
       setFailureReason('');
       
-      // Redirect after 2 seconds
-      setTimeout(() => router.push('/interviews'), 2000);
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to complete interview');

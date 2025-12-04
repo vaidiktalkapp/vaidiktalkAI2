@@ -24,17 +24,42 @@ export default function NotificationItem({ notification, onClick }: Props) {
   };
 
   const getTypeIcon = () => {
-    const icons: Record<string, string> = {
-      chat_message: '💬',
-      call_incoming: '📞',
-      order_completed: '✅',
-      payment_success: '💰',
-      stream_started: '🎥',
-      system_announcement: '📢',
-      admin_alert: '⚠️',
-    };
-    return icons[notification.type] || '🔔';
+  const icons: Record<string, string> = {
+    // 🆕 NEW REFINED TYPES
+    call_video: '📹',
+    call_audio: '📞',
+    message_direct: '✉️',
+    chat_group: '💬',
+    live_event_started: '🔴',
+    live_event_reminder: '⏰',
+    system_promotional: '🎁',
+    force_logout: '🔒',
+    
+    // ✅ EXISTING TYPES
+    chat_message: '💬',
+    call_incoming: '📞',
+    call_missed: '📴',
+    call_ended: '📴',
+    order_created: '🛒',
+    order_completed: '✅',
+    payment_success: '💰',
+    wallet_recharged: '💳',
+    remedy_suggested: '🔮',
+    report_ready: '📋',
+    stream_started: '🎥',
+    stream_reminder: '⏰',
+    stream_ended: '🎬',
+    gift_received: '🎁',
+    astrologer_approved: '✅',
+    astrologer_rejected: '❌',
+    payout_processed: '💸',
+    admin_alert: '⚠️',
+    system_announcement: '📢',
+    general: '🔔',
   };
+  return icons[notification.type] || '🔔';
+};
+
 
   return (
     <div

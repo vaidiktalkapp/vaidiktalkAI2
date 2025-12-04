@@ -2,515 +2,344 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminApi, apiClient } from '@/lib/api';
+import { adminApi } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Mail, Phone, Calendar, Star, DollarSign, Edit, Save, Ban, CheckCircle, Shield, XCircle } from 'lucide-react';
+import { 
+  ArrowLeft, Star, DollarSign, TrendingUp, Activity, 
+  MessageCircle, Phone, Video, Settings, Ban, CheckCircle 
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { usePermission } from '@/hooks/use-permission';
+import type { Astrologer, AstrologerPerformance } from '@/types/astrologer';
+import Link from 'next/link';
 
 export default function AstrologerDetailPage() {
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
   const astrologerId = params.id as string;
+  const { can } = usePermission();
 
-  const [isEditingPricing, setIsEditingPricing] = useState(false);
-  const [isEditingBio, setIsEditingBio] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
-  const [showSuspendModal, setShowSuspendModal] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [suspensionReason, setSuspensionReason] = useState('');
-  const [bio, setBio] = useState('');
-  
-  const [pricing, setPricing] = useState({
-    chat: 0,
-    call: 0,
-    videoCall: 0,
-  });
+  const [newStatus, setNewStatus] = useState('');
+  const [statusReason, setStatusReason] = useState('');
 
-  // Fetch astrologer details
-  const { data: astrologer, isLoading, refetch } = useQuery({
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [chatRate, setChatRate] = useState('');
+  const [callRate, setCallRate] = useState('');
+  const [videoRate, setVideoRate] = useState('');
+
+  const [showFeaturesModal, setShowFeaturesModal] = useState(false);
+  const [chatEnabled, setChatEnabled] = useState(false);
+  const [callEnabled, setCallEnabled] = useState(false);
+  const [liveEnabled, setLiveEnabled] = useState(false);
+
+  // Fetch Astrologer Details
+  const { data: astrologer, isLoading } = useQuery<Astrologer>({
     queryKey: ['astrologer-detail', astrologerId],
     queryFn: async () => {
       const response = await adminApi.getAstrologerDetails(astrologerId);
       const data = response.data.data;
       
-      // Initialize pricing
-      setPricing({
-        chat: data.pricing?.chat || 0,
-        call: data.pricing?.call || 0,
-        videoCall: data.pricing?.videoCall || 0,
-      });
+      // Initialize pricing modal values
+      setChatRate(data.pricing?.chat?.toString() || '0');
+      setCallRate(data.pricing?.call?.toString() || '0');
+      setVideoRate(data.pricing?.videoCall?.toString() || '0');
       
-      // Initialize bio
-      setBio(data.bio || '');
+      // Initialize features
+      setChatEnabled(data.isChatEnabled || false);
+      setCallEnabled(data.isCallEnabled || false);
+      setLiveEnabled(data.isLiveStreamEnabled || false);
       
       return data;
     },
   });
 
-  // Update pricing
-  const updatePricingMutation = useMutation({
-    mutationFn: () => adminApi.updateAstrologerPricing(astrologerId, pricing),
-    onSuccess: () => {
-      toast.success('Pricing updated successfully');
-      queryClient.invalidateQueries({ queryKey: ['astrologer-detail', astrologerId] });
-      setIsEditingPricing(false);
-      refetch();
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update pricing');
+  // Fetch Performance Metrics
+  const { data: performance } = useQuery<AstrologerPerformance>({
+    queryKey: ['astrologer-performance', astrologerId],
+    queryFn: async () => {
+      const response = await adminApi.getAstrologerPerformance(astrologerId);
+      return response.data.data;
     },
   });
 
-  // Update bio
-  const updateBioMutation = useMutation({
-    mutationFn: () => adminApi.updateAstrologerBio(astrologerId, bio),
+  // Update Status Mutation
+  const statusMutation = useMutation({
+    mutationFn: () => adminApi.updateAstrologerStatus(astrologerId, newStatus, statusReason),
     onSuccess: () => {
-      toast.success('Bio updated successfully');
+      toast.success('Status updated successfully');
       queryClient.invalidateQueries({ queryKey: ['astrologer-detail', astrologerId] });
-      setIsEditingBio(false);
-      refetch();
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update bio');
-    },
-  });
-
-  // Update account status
-  const updateStatusMutation = useMutation({
-    mutationFn: (data: { status: string; reason?: string }) =>
-      adminApi.updateAstrologerStatus(astrologerId, data.status, data.reason),
-    onSuccess: () => {
-      toast.success('Account status updated successfully');
-      queryClient.invalidateQueries({ queryKey: ['astrologer-detail', astrologerId] });
-      queryClient.invalidateQueries({ queryKey: ['astrologers'] });
       setShowStatusModal(false);
-      setShowSuspendModal(false);
-      setSuspensionReason('');
-      refetch();
+      setStatusReason('');
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to update status');
     },
   });
 
-  const handleSavePricing = () => {
-    if (pricing.chat < 0 || pricing.call < 0 || pricing.videoCall < 0) {
-      toast.error('Pricing cannot be negative');
-      return;
-    }
-    updatePricingMutation.mutate();
-  };
+  // Update Pricing Mutation
+  const pricingMutation = useMutation({
+    mutationFn: () => adminApi.updateAstrologerPricing(astrologerId, {
+      chatRatePerMinute: parseFloat(chatRate),
+      callRatePerMinute: parseFloat(callRate),
+      videoCallRatePerMinute: parseFloat(videoRate),
+    }),
+    onSuccess: () => {
+      toast.success('Pricing updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['astrologer-detail', astrologerId] });
+      setShowPricingModal(false);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update pricing');
+    },
+  });
 
-  const handleSaveBio = () => {
-    if (!bio.trim()) {
-      toast.error('Bio cannot be empty');
-      return;
-    }
-    updateBioMutation.mutate();
-  };
-
-  const handleStatusChange = (status: string) => {
-    if (status === 'suspended') {
-      setShowSuspendModal(true);
-    } else {
-      setSelectedStatus(status);
-      setShowStatusModal(true);
-    }
-  };
-
-  const confirmStatusChange = () => {
-    updateStatusMutation.mutate({ status: selectedStatus });
-  };
-
-  const confirmSuspension = () => {
-    if (!suspensionReason.trim()) {
-      toast.error('Please provide a suspension reason');
-      return;
-    }
-    updateStatusMutation.mutate({ status: 'suspended', reason: suspensionReason });
-  };
+  // Toggle Features Mutation
+  const featuresMutation = useMutation({
+    mutationFn: () => adminApi.toggleAstrologerFeatures(astrologerId, {
+      isChatEnabled: chatEnabled,
+      isCallEnabled: callEnabled,
+      isLiveStreamEnabled: liveEnabled,
+    }),
+    onSuccess: () => {
+      toast.success('Features updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['astrologer-detail', astrologerId] });
+      setShowFeaturesModal(false);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update features');
+    },
+  });
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
 
   if (!astrologer) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-gray-500">Astrologer not found</p>
-      </div>
-    );
+    return <div className="p-12 text-center text-gray-500">Astrologer not found</div>;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-12">
       {/* Header */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => router.back()}
-          className="flex items-center text-gray-600 hover:text-gray-900"
+          className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
         >
           <ArrowLeft size={20} className="mr-2" />
           Back to Astrologers
         </button>
       </div>
 
-      {/* Profile Card */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-4">
-            <div className="w-24 h-24 rounded-full bg-purple-100 flex items-center justify-center overflow-hidden">
-              {astrologer?.profilePicture ? (
-                <img src={astrologer.profilePicture} alt={astrologer.name} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-purple-600 text-3xl font-semibold">
-                  {astrologer?.name?.charAt(0)}
-                </span>
-              )}
-            </div>
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-900">{astrologer?.name}</h2>
-              <p className="text-sm text-gray-500">Astrologer ID: {astrologer?._id}</p>
-              <div className="mt-2 flex items-center space-x-2">
-                <span
-                  className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                    astrologer?.accountStatus === 'active'
-                      ? 'bg-green-100 text-green-800'
-                      : astrologer?.accountStatus === 'suspended'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
-                >
-                  {astrologer?.accountStatus}
-                </span>
-                {astrologer?.profileCompletion?.isComplete ? (
-                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                    Profile Complete
-                  </span>
-                ) : (
-                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                    Profile Incomplete
-                  </span>
-                )}
-              </div>
-              <div className="mt-3 flex items-center space-x-4">
-                <div className="flex items-center">
-                  <Star className="text-yellow-500 mr-1" size={16} />
-                  <span className="font-semibold">{astrologer?.ratings?.average?.toFixed(1) || '0.0'}</span>
-                  <span className="text-gray-500 text-sm ml-1">
-                    ({astrologer?.ratings?.total || 0} reviews)
+      {/* Astrologer Profile Card */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="flex items-start gap-6">
+          {/* Profile Image */}
+          <div className="w-24 h-24 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 text-3xl font-bold flex-shrink-0 overflow-hidden">
+            {astrologer.profilePicture ? (
+              <img src={astrologer.profilePicture} alt={astrologer.name} className="w-full h-full object-cover" />
+            ) : (
+              astrologer.name?.charAt(0).toUpperCase()
+            )}
+          </div>
+
+          {/* Astrologer Info */}
+          <div className="flex-1">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">{astrologer.name}</h2>
+                <p className="text-gray-600 mt-1">{astrologer.phoneNumber}</p>
+                {astrologer.email && <p className="text-gray-500 text-sm">{astrologer.email}</p>}
+                
+                {/* Rating */}
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star 
+                        key={i} 
+                        size={16} 
+                        fill={i < Math.round(astrologer.ratings?.average || 0) ? 'gold' : 'none'} 
+                        className="text-yellow-500" 
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm text-gray-600">
+                    {astrologer.ratings?.average?.toFixed(1) || 'New'} ({astrologer.ratings?.total || 0} reviews)
                   </span>
                 </div>
               </div>
+              <StatusBadge status={astrologer.accountStatus} />
             </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col space-y-2">
-            {astrologer?.accountStatus === 'active' && (
-              <>
-                <button
-                  onClick={() => handleStatusChange('suspended')}
-                  className="flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
-                >
-                  <Shield size={18} className="mr-2" />
-                  Suspend
-                </button>
-                <button
-                  onClick={() => handleStatusChange('inactive')}
-                  className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                >
-                  <Ban size={18} className="mr-2" />
-                  Deactivate
-                </button>
-              </>
-            )}
-            {astrologer?.accountStatus === 'suspended' && (
-              <button
-                onClick={() => handleStatusChange('active')}
-                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                <CheckCircle size={18} className="mr-2" />
-                Unsuspend
-              </button>
-            )}
-            {astrologer?.accountStatus === 'inactive' && (
-              <button
-                onClick={() => handleStatusChange('active')}
-                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                <CheckCircle size={18} className="mr-2" />
-                Activate
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+            {/* Specializations */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {astrologer.specializations?.map((spec) => (
+                <span key={spec} className="px-3 py-1 bg-purple-50 text-purple-700 text-sm rounded-full border border-purple-200">
+                  {spec}
+                </span>
+              ))}
+            </div>
 
-      {/* Details Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Contact Information */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3">
-              <Phone className="text-gray-400" size={20} />
-              <div>
-                <p className="text-sm text-gray-500">Phone Number</p>
-                <p className="text-gray-900">{astrologer?.phoneNumber}</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Mail className="text-gray-400" size={20} />
-              <div>
-                <p className="text-sm text-gray-500">Email</p>
-                <p className="text-gray-900">{astrologer?.email || 'N/A'}</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Calendar className="text-gray-400" size={20} />
-              <div>
-                <p className="text-sm text-gray-500">Joined</p>
-                <p className="text-gray-900">
-                  {new Date(astrologer?.createdAt).toLocaleDateString()}
-                </p>
-              </div>
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <QuickStat label="Experience" value={`${astrologer.experienceYears || 0} years`} />
+              <QuickStat label="Total Orders" value={astrologer.stats?.totalOrders || 0} />
+              <QuickStat label="Earnings" value={`₹${(astrologer.stats?.totalEarnings || 0).toLocaleString()}`} color="text-green-600" />
+              <QuickStat label="Profile" value={`${astrologer.profileCompletion?.percentage || 0}%`} color={astrologer.profileCompletion?.isComplete ? 'text-green-600' : 'text-orange-600'} />
             </div>
           </div>
         </div>
 
-        {/* Specializations & Languages */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Expertise & Languages</h3>
-          <div className="space-y-3">
-            <div>
-              <p className="text-sm text-gray-500 mb-2">Specializations</p>
-              <div className="flex flex-wrap gap-2">
-                {astrologer?.specializations?.map((spec: string) => (
-                  <span key={spec} className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
-                    {spec}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 mb-2">Languages</p>
-              <div className="flex flex-wrap gap-2">
-                {astrologer?.languages?.map((lang: string) => (
-                  <span key={lang} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                    {lang}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Experience</p>
-              <p className="text-gray-900">{astrologer?.experienceYears || 0} years</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Pricing */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Pricing (per minute)</h3>
-            {isEditingPricing ? (
-              <button
-                onClick={handleSavePricing}
-                disabled={updatePricingMutation.isPending}
-                className="flex items-center text-green-600 hover:text-green-700"
-              >
-                <Save size={18} className="mr-1" />
-                Save
-              </button>
-            ) : (
-              <button
-                onClick={() => setIsEditingPricing(true)}
-                className="flex items-center text-indigo-600 hover:text-indigo-700"
-              >
-                <Edit size={18} className="mr-1" />
-                Edit
-              </button>
-            )}
-          </div>
-          <div className="space-y-3">
-            <div>
-              <label className="text-sm text-gray-500">Chat Rate</label>
-              {isEditingPricing ? (
-                <input
-                  type="number"
-                  value={pricing.chat}
-                  onChange={(e) => setPricing({ ...pricing, chat: Number(e.target.value) })}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                  min="0"
-                />
-              ) : (
-                <p className="text-lg font-semibold text-gray-900">₹{pricing.chat}</p>
-              )}
-            </div>
-            <div>
-              <label className="text-sm text-gray-500">Call Rate</label>
-              {isEditingPricing ? (
-                <input
-                  type="number"
-                  value={pricing.call}
-                  onChange={(e) => setPricing({ ...pricing, call: Number(e.target.value) })}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                  min="0"
-                />
-              ) : (
-                <p className="text-lg font-semibold text-gray-900">₹{pricing.call}</p>
-              )}
-            </div>
-            <div>
-              <label className="text-sm text-gray-500">Video Call Rate</label>
-              {isEditingPricing ? (
-                <input
-                  type="number"
-                  value={pricing.videoCall}
-                  onChange={(e) => setPricing({ ...pricing, videoCall: Number(e.target.value) })}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                  min="0"
-                />
-              ) : (
-                <p className="text-lg font-semibold text-gray-900">₹{pricing.videoCall}</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Statistics</h3>
-          <div className="space-y-3">
-            <div>
-              <p className="text-sm text-gray-500">Total Earnings</p>
-              <p className="text-2xl font-bold text-gray-900">
-                ₹{astrologer?.stats?.totalEarnings?.toLocaleString() || 0}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Orders</p>
-              <p className="text-xl font-semibold text-gray-900">
-                {astrologer?.stats?.totalOrders || 0}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Minutes</p>
-              <p className="text-gray-900">
-                {Math.floor((astrologer?.stats?.totalMinutes || 0) / 60)} hours
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Chat Orders</p>
-              <p className="text-gray-900">{astrologer?.stats?.chatOrders || 0}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Call Orders</p>
-              <p className="text-gray-900">{astrologer?.stats?.callOrders || 0}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Bio Editor */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">About / Bio</h3>
-          {isEditingBio ? (
+        {/* Action Buttons */}
+        {can('manage_astrologers') && (
+          <div className="flex gap-3 mt-6 pt-6 border-t border-gray-100">
             <button
-              onClick={handleSaveBio}
-              disabled={updateBioMutation.isPending}
-              className="flex items-center text-green-600 hover:text-green-700"
+              onClick={() => setShowStatusModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
             >
-              <Save size={18} className="mr-1" />
-              Save
+              <Activity size={18} />
+              Change Status
             </button>
-          ) : (
             <button
-              onClick={() => setIsEditingBio(true)}
-              className="flex items-center text-indigo-600 hover:text-indigo-700"
+              onClick={() => setShowPricingModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              <Edit size={18} className="mr-1" />
-              Edit
+              <DollarSign size={18} />
+              Update Pricing
             </button>
-          )}
-        </div>
-        {isEditingBio ? (
-          <textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            rows={6}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="Write about the astrologer's background, expertise, and experience..."
-          />
-        ) : (
-          <p className="text-gray-700 whitespace-pre-wrap">{bio || 'No bio available'}</p>
+            <button
+              onClick={() => setShowFeaturesModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              <Settings size={18} />
+              Manage Features
+            </button>
+          </div>
         )}
       </div>
 
-      {/* Availability Status */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Availability</h3>
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <p className="text-sm text-gray-500">Online Status</p>
-            <span
-              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
-                astrologer?.availability?.isOnline ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-              }`}
-            >
-              {astrologer?.availability?.isOnline ? '● Online' : '○ Offline'}
-            </span>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Available for Sessions</p>
-            <span
-              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
-                astrologer?.availability?.isAvailable ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-              }`}
-            >
-              {astrologer?.availability?.isAvailable ? 'Available' : 'Busy'}
-            </span>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Live Stream</p>
-            <span
-              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
-                astrologer?.availability?.isLive ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-              }`}
-            >
-              {astrologer?.availability?.isLive ? '🔴 Live' : 'Not Live'}
-            </span>
+      {/* Bio */}
+      {astrologer.bio && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">About</h3>
+          <p className="text-gray-700 leading-relaxed">{astrologer.bio}</p>
+        </div>
+      )}
+
+      {/* Performance Metrics */}
+      {performance && (
+        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl shadow-sm border border-indigo-100 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <TrendingUp size={20} /> Performance Metrics
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <MetricCard label="Total Orders" value={performance.performance.totalOrders} />
+            <MetricCard label="Completed" value={performance.performance.completedOrders} color="text-green-600" />
+            <MetricCard label="Revenue" value={`₹${performance.performance.totalRevenue.toLocaleString()}`} color="text-purple-600" />
+            <MetricCard label="Avg Rating" value={performance.performance.averageRating.toFixed(1)} color="text-yellow-600" />
+            <MetricCard label="Completion Rate" value={`${performance.performance.completionRate}%`} color="text-blue-600" />
           </div>
         </div>
-        {astrologer?.availability?.lastActive && (
-          <p className="text-sm text-gray-500 mt-4">
-            Last active: {new Date(astrologer.availability.lastActive).toLocaleString()}
-          </p>
-        )}
+      )}
+
+      {/* Services & Pricing */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <ServiceCard 
+          icon={MessageCircle} 
+          title="Chat" 
+          rate={astrologer.pricing?.chat} 
+          enabled={astrologer.isChatEnabled}
+        />
+        <ServiceCard 
+          icon={Phone} 
+          title="Call" 
+          rate={astrologer.pricing?.call} 
+          enabled={astrologer.isCallEnabled}
+        />
+        <ServiceCard 
+          icon={Video} 
+          title="Livestream" 
+          rate={astrologer.pricing?.videoCall} 
+          enabled={astrologer.isLiveStreamEnabled}
+        />
       </div>
 
-      {/* Status Change Modal */}
+      {/* Recent Orders */}
+      {performance?.recentOrders && performance.recentOrders.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Orders</h3>
+          <div className="space-y-2">
+            {performance.recentOrders.map((order: any) => (
+              <Link 
+                key={order._id} 
+                href={`/orders/${order.orderId}`}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                    {order.userId?.profileImage ? (
+                      <img src={order.userId.profileImage} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-600 font-bold">
+                        {order.userId?.name?.charAt(0) || 'U'}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 group-hover:text-indigo-600">{order.orderId}</p>
+                    <p className="text-xs text-gray-500">{order.type} • {new Date(order.createdAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <StatusBadge status={order.status} />
+                  <span className="font-bold text-gray-900">₹{order.totalAmount}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Status Update Modal */}
       {showStatusModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm Status Change</h3>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to change the astrologer status to <strong>{selectedStatus}</strong>?
-            </p>
-            <div className="flex space-x-3">
+        <Modal title="Update Astrologer Status" onClose={() => setShowStatusModal(false)}>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">New Status</label>
+              <select
+                value={newStatus}
+                onChange={(e) => setNewStatus(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              >
+                <option value="">Select status...</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="blocked">Blocked</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Reason (optional)</label>
+              <textarea
+                value={statusReason}
+                onChange={(e) => setStatusReason(e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="Explain the status change..."
+              />
+            </div>
+            <div className="flex gap-3">
               <button
-                onClick={confirmStatusChange}
-                disabled={updateStatusMutation.isPending}
+                onClick={() => statusMutation.mutate()}
+                disabled={!newStatus || statusMutation.isPending}
                 className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
               >
-                {updateStatusMutation.isPending ? 'Processing...' : 'Confirm'}
+                {statusMutation.isPending ? 'Updating...' : 'Update Status'}
               </button>
               <button
                 onClick={() => setShowStatusModal(false)}
@@ -520,49 +349,184 @@ export default function AstrologerDetailPage() {
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
-      {/* Suspension Modal */}
-      {showSuspendModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Suspend Astrologer</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Please provide a reason for suspending <strong>{astrologer?.name}</strong>
-            </p>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Suspension Reason *</label>
-              <textarea
-                value={suspensionReason}
-                onChange={(e) => setSuspensionReason(e.target.value)}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                placeholder="Provide a clear reason for suspension..."
-                required
+      {/* Pricing Update Modal */}
+      {showPricingModal && (
+        <Modal title="Update Pricing" onClose={() => setShowPricingModal(false)}>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Chat Rate (₹/min)</label>
+              <input
+                type="number"
+                value={chatRate}
+                onChange={(e) => setChatRate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
-            <div className="flex space-x-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Call Rate (₹/min)</label>
+              <input
+                type="number"
+                value={callRate}
+                onChange={(e) => setCallRate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Video Call Rate (₹/min)</label>
+              <input
+                type="number"
+                value={videoRate}
+                onChange={(e) => setVideoRate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
+            <div className="flex gap-3">
               <button
-                onClick={confirmSuspension}
-                disabled={updateStatusMutation.isPending || !suspensionReason.trim()}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                onClick={() => pricingMutation.mutate()}
+                disabled={pricingMutation.isPending}
+                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
               >
-                {updateStatusMutation.isPending ? 'Processing...' : 'Suspend'}
+                {pricingMutation.isPending ? 'Updating...' : 'Update Pricing'}
               </button>
               <button
-                onClick={() => {
-                  setShowSuspendModal(false);
-                  setSuspensionReason('');
-                }}
+                onClick={() => setShowPricingModal(false)}
                 className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
               >
                 Cancel
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
+
+      {/* Features Toggle Modal */}
+      {showFeaturesModal && (
+        <Modal title="Manage Features" onClose={() => setShowFeaturesModal(false)}>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <MessageCircle size={20} className="text-blue-600" />
+                <span className="font-medium">Chat Enabled</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={chatEnabled}
+                onChange={(e) => setChatEnabled(e.target.checked)}
+                className="w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Phone size={20} className="text-green-600" />
+                <span className="font-medium">Call Enabled</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={callEnabled}
+                onChange={(e) => setCallEnabled(e.target.checked)}
+                className="w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Video size={20} className="text-red-600" />
+                <span className="font-medium">Livestream Enabled</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={liveEnabled}
+                onChange={(e) => setLiveEnabled(e.target.checked)}
+                className="w-5 h-5 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <button
+                onClick={() => featuresMutation.mutate()}
+                disabled={featuresMutation.isPending}
+                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {featuresMutation.isPending ? 'Updating...' : 'Update Features'}
+              </button>
+              <button
+                onClick={() => setShowFeaturesModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// Helper Components
+function StatusBadge({ status }: { status: string }) {
+  const colors: Record<string, string> = {
+    active: 'bg-green-100 text-green-800',
+    inactive: 'bg-yellow-100 text-yellow-800',
+    blocked: 'bg-red-100 text-red-800',
+    deleted: 'bg-gray-100 text-gray-800',
+    completed: 'bg-green-100 text-green-800',
+    pending: 'bg-yellow-100 text-yellow-800',
+    cancelled: 'bg-red-100 text-red-800',
+  };
+  return (
+    <span className={`px-3 py-1 text-sm font-semibold rounded-full capitalize ${colors[status] || 'bg-gray-100 text-gray-800'}`}>
+      {status}
+    </span>
+  );
+}
+
+function QuickStat({ label, value, color = 'text-gray-900' }: any) {
+  return (
+    <div>
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className={`font-bold ${color}`}>{value}</p>
+    </div>
+  );
+}
+
+function MetricCard({ label, value, color = 'text-gray-900' }: any) {
+  return (
+    <div className="bg-white rounded-lg p-4 shadow-sm">
+      <p className="text-xs text-gray-500 mb-1">{label}</p>
+      <p className={`text-xl font-bold ${color}`}>{value}</p>
+    </div>
+  );
+}
+
+function ServiceCard({ icon: Icon, title, rate, enabled }: any) {
+  return (
+    <div className={`bg-white rounded-xl shadow-sm border p-6 ${enabled ? 'border-green-200' : 'border-gray-200'}`}>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Icon size={24} className={enabled ? 'text-green-600' : 'text-gray-400'} />
+          <h4 className="font-semibold text-gray-900">{title}</h4>
+        </div>
+        {enabled ? (
+          <CheckCircle size={20} className="text-green-600" />
+        ) : (
+          <Ban size={20} className="text-gray-400" />
+        )}
+      </div>
+      <p className="text-2xl font-bold text-gray-900">₹{rate || 0}<span className="text-sm text-gray-500">/min</span></p>
+      <p className="text-xs text-gray-500 mt-1">{enabled ? 'Active' : 'Disabled'}</p>
+    </div>
+  );
+}
+
+function Modal({ title, children, onClose }: any) {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
+        {children}
+      </div>
     </div>
   );
 }

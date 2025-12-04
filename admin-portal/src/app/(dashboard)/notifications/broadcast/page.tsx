@@ -257,18 +257,43 @@ return (
             Notification Type <span className="text-red-500">*</span>
           </label>
           <select
-            value={formData.type}
-            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            required
-          >
-            <option value="system_announcement">📢 System Announcement</option>
-            <option value="general">📬 General Notification</option>
-            <option value="call_incoming">📞 Incoming Call</option>
-            <option value="order_completed">✅ Order Update</option>
-            <option value="payment_success">💰 Payment Update</option>
-            <option value="stream_started">🎥 Livestream Alert</option>
-          </select>
+  value={formData.type}
+  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+  required
+>
+  {/* 🆕 NEW REFINED TYPES */}
+  <optgroup label="📞 Call Notifications">
+    <option value="call_video">📹 Video Call</option>
+    <option value="call_audio">📞 Audio Call</option>
+  </optgroup>
+
+  <optgroup label="💬 Message & Chat">
+    <option value="message_direct">✉️ Direct Message</option>
+    <option value="chat_group">💬 Group Chat</option>
+  </optgroup>
+
+  <optgroup label="🎥 Live Events">
+    <option value="live_event_started">🔴 Live Event Started</option>
+    <option value="live_event_reminder">⏰ Event Reminder</option>
+  </optgroup>
+
+  <optgroup label="📢 System & Security">
+    <option value="system_promotional">🎁 Promotional</option>
+    <option value="force_logout">🔒 Force Logout</option>
+  </optgroup>
+
+  {/* ✅ KEEP EXISTING TYPES */}
+  <optgroup label="Legacy Types">
+    <option value="system_announcement">📢 System Announcement</option>
+    <option value="general">📬 General Notification</option>
+    <option value="call_incoming">📞 Incoming Call (Old)</option>
+    <option value="order_completed">✅ Order Update</option>
+    <option value="payment_success">💰 Payment Update</option>
+    <option value="stream_started">🎥 Livestream Alert</option>
+  </optgroup>
+</select>
+
         </div>
 
         <div>

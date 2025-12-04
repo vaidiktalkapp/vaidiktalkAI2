@@ -74,8 +74,6 @@ export const adminApi = {
   getUserDetails: (userId: string) =>
     apiClient.get(`/admin/users/${userId}`),
   
-  updateUserStatus: (userId: string, status: string) =>
-    apiClient.patch(`/admin/users/${userId}/status`, { status }),
 
   // ==================== REGISTRATIONS (NEW) ====================
   
@@ -145,11 +143,6 @@ export const adminApi = {
   getAstrologerStats: () =>
     apiClient.get('/admin/astrologers/stats'),
   
-  /**
-   * Get pending astrologers (waitlist) - Maps to registrations/waitlist
-   */
-  getPendingAstrologers: (params: { page?: number; limit?: number }) =>
-    apiClient.get('/admin/registrations/waitlist', { params }),
   
   /**
    * Get astrologer details
@@ -187,11 +180,6 @@ export const adminApi = {
   activateAstrologer: (astrologerId: string) =>
     apiClient.post(`/admin/astrologers/${astrologerId}/activate`),
   
-  /**
-   * Update astrologer pricing
-   */
-  updateAstrologerPricing: (astrologerId: string, pricing: { chat: number; call: number; videoCall: number }) =>
-    apiClient.patch(`/admin/astrologers/${astrologerId}/pricing`, pricing),
   
   /**
    * Update astrologer bio
@@ -214,31 +202,7 @@ export const adminApi = {
   
   cancelOrder: (orderId: string, reason: string) =>
     apiClient.patch(`/admin/orders/${orderId}/cancel`, { reason }),
-
-  // Payments
-  getAllTransactions: (params: any) =>
-    apiClient.get('/admin/payments/transactions', { params }),
   
-  getTransactionStats: () =>
-    apiClient.get('/admin/payments/transactions/stats'),
-  
-  getAllPayouts: (params: any) =>
-    apiClient.get('/admin/payments/payouts', { params }),
-  
-  getPendingPayouts: () =>
-    apiClient.get('/admin/payments/payouts/pending'),
-  
-  getPayoutStats: () =>
-    apiClient.get('/admin/payments/payouts/stats'),
-  
-  getPayoutDetails: (payoutId: string) =>
-    apiClient.get(`/admin/payments/payouts/${payoutId}`),
-  
-  approvePayout: (payoutId: string, data: any) =>
-    apiClient.post(`/admin/payments/payouts/${payoutId}/approve`, data),
-  
-  rejectPayout: (payoutId: string, reason: string) =>
-    apiClient.post(`/admin/payments/payouts/${payoutId}/reject`, { reason }),
 
   // Admin Management
   getAllAdmins: (params?: any) =>
@@ -537,4 +501,453 @@ getUserJourney: (userId: string) =>
 getSystemHealth: () =>
   apiClient.get('/admin/health'),
   
+// ==================== USERS (EXTENDED) ====================
+
+/**
+ * Update user status with reason
+ */
+updateUserStatus: (userId: string, status: string, reason?: string) =>
+  apiClient.patch(`/admin/users/${userId}/status`, { status, reason }),
+
+/**
+ * Get user activity (orders, transactions, favorites)
+ */
+getUserActivity: (userId: string) =>
+  apiClient.get(`/admin/users/${userId}/activity`),
+
+/**
+ * Get user wallet transactions
+ */
+getUserTransactions: (userId: string, page: number = 1, limit: number = 20) =>
+  apiClient.get(`/admin/users/${userId}/transactions`, { params: { page, limit } }),
+
+/**
+ * Get user orders
+ */
+getUserOrders: (userId: string, page: number = 1, limit: number = 20) =>
+  apiClient.get(`/admin/users/${userId}/orders`, { params: { page, limit } }),
+
+/**
+ * Adjust user wallet balance (admin credit/debit)
+ */
+adjustWalletBalance: (userId: string, amount: number, reason: string) =>
+  apiClient.patch(`/admin/users/${userId}/wallet/adjust`, { amount, reason }),
+
+/**
+ * Search users
+ */
+searchUsers: (query: string, page: number = 1, limit: number = 20) =>
+  apiClient.get('/admin/users/search', { params: { query, page, limit } }),
+
+/**
+ * Get active users count
+ */
+getActiveUsers: () =>
+  apiClient.get('/admin/users/active-now'),
+
+/**
+ * Delete user (soft delete)
+ */
+deleteUser: (userId: string, reason?: string) =>
+  apiClient.delete(`/admin/users/${userId}`, { data: { reason } }),
+
+/**
+ * Restore deleted user
+ */
+restoreUser: (userId: string) =>
+  apiClient.patch(`/admin/users/${userId}/restore`),
+
+/**
+ * Export users to CSV
+ */
+exportUsersCSV: (status?: string) =>
+  apiClient.get('/admin/users/export/csv', { params: { status } }),
+
+// ==================== ASTROLOGERS (EXTENDED) ====================
+
+/**
+ * Get pending astrologers (incomplete profiles)
+ */
+getPendingAstrologers: (page: number = 1, limit: number = 50) =>
+  apiClient.get('/admin/astrologers/pending', { params: { page, limit } }),
+
+/**
+ * Get top performing astrologers
+ */
+getTopPerformingAstrologers: (limit: number = 10) =>
+  apiClient.get('/admin/astrologers/top-performers', { params: { limit } }),
+
+
+/**
+ * Update astrologer pricing
+ */
+updateAstrologerPricing: (astrologerId: string, pricing: { 
+  chatRatePerMinute?: number; 
+  callRatePerMinute?: number; 
+  videoCallRatePerMinute?: number;
+}) =>
+  apiClient.patch(`/admin/astrologers/${astrologerId}/pricing`, pricing),
+
+
+/**
+ * Toggle astrologer features (chat/call/livestream)
+ */
+toggleAstrologerFeatures: (astrologerId: string, features: {
+  isChatEnabled?: boolean;
+  isCallEnabled?: boolean;
+  isLiveStreamEnabled?: boolean;
+}) =>
+  apiClient.patch(`/admin/astrologers/${astrologerId}/features`, features),
+
+/**
+ * Delete astrologer (soft delete)
+ */
+deleteAstrologer: (astrologerId: string, reason?: string) =>
+  apiClient.delete(`/admin/astrologers/${astrologerId}`, { data: { reason } }),
+
+// ==================== REFUNDS ====================
+
+/**
+ * Get all refund requests
+ */
+getAllRefundRequests: (page: number = 1, limit: number = 20, status?: string) =>
+  apiClient.get('/admin/orders/refunds/all', { params: { page, limit, status } }),
+
+/**
+ * Get pending refund requests
+ */
+getPendingRefundRequests: (page: number = 1, limit: number = 20) =>
+  apiClient.get('/admin/orders/refunds/pending', { params: { page, limit } }),
+
+/**
+ * Get refund statistics
+ */
+getRefundStats: () =>
+  apiClient.get('/admin/orders/refunds/stats'),
+
+// ==================== PAYMENTS & TRANSACTIONS ====================
+
+/**
+ * Get all wallet transactions
+ */
+getAllTransactions: (params: { page?: number; limit?: number; type?: string; status?: string; userId?: string }) =>
+  apiClient.get('/admin/payments/transactions', { params }),
+
+/**
+ * Get transaction statistics
+ */
+getTransactionStats: () =>
+  apiClient.get('/admin/payments/transactions/stats'),
+
+// ==================== PAYOUTS ====================
+
+/**
+ * Get all payout requests
+ */
+getAllPayouts: (params: { page?: number; limit?: number; status?: string }) =>
+  apiClient.get('/admin/payments/payouts', { params }),
+
+/**
+ * Get pending payouts
+ */
+getPendingPayouts: () =>
+  apiClient.get('/admin/payments/payouts/pending'),
+
+/**
+ * Get payout statistics
+ */
+getPayoutStats: () =>
+  apiClient.get('/admin/payments/payouts/stats'),
+
+/**
+ * Process payout (mark as processing)
+ */
+processPayout: (payoutId: string, data: { transactionReference?: string; adminNotes?: string }) =>
+  apiClient.post(`/admin/payments/payouts/${payoutId}/process`, data),
+
+/**
+ * Complete payout
+ */
+completePayout: (payoutId: string, data: { transactionReference: string; adminNotes?: string }) =>
+  apiClient.post(`/admin/payments/payouts/${payoutId}/complete`, data),
+
+
+/**
+ * Get payout details
+ */
+getPayoutDetails: (payoutId: string) =>
+  apiClient.get(`/admin/payments/payouts/${payoutId}`),
+
+/**
+ * Approve payout
+ */
+approvePayout: (payoutId: string, data: { transactionReference: string; adminNotes?: string }) =>
+  apiClient.post(`/admin/payments/payouts/${payoutId}/approve`, data),
+
+/**
+ * Reject payout
+ */
+rejectPayout: (payoutId: string, reason: string) =>
+  apiClient.post(`/admin/payments/payouts/${payoutId}/reject`, { reason }),
+
+// ==================== WALLET REFUNDS ====================
+
+/**
+ * Get wallet refund requests
+ */
+getWalletRefundRequests: (params: { page?: number; limit?: number; status?: string; userId?: string }) =>
+  apiClient.get('/admin/payments/wallet-refunds', { params }),
+
+/**
+ * Get wallet refund details
+ */
+getWalletRefundDetails: (refundId: string) =>
+  apiClient.get(`/admin/payments/wallet-refunds/${refundId}`),
+
+/**
+ * Process wallet refund
+ */
+processWalletRefund: (refundId: string, data: { amountApproved: number; paymentReference: string }) =>
+  apiClient.post(`/admin/payments/wallet-refunds/${refundId}/process`, data),
+
+// ==================== GIFT CARDS ====================
+
+/**
+ * Get all gift cards
+ */
+getAllGiftCards: (params: { page?: number; limit?: number; status?: string; search?: string }) =>
+  apiClient.get('/admin/payments/gift-cards', { params }),
+
+/**
+ * Get gift card details
+ */
+getGiftCardDetails: (code: string) =>
+  apiClient.get(`/admin/payments/gift-cards/${code}`),
+
+/**
+ * Create gift card
+ */
+createGiftCard: (data: {
+  code: string;
+  amount: number;
+  currency?: string;
+  maxRedemptions?: number;
+  expiresAt?: string;
+  metadata?: Record<string, any>;
+}) =>
+  apiClient.post('/admin/payments/gift-cards', data),
+
+/**
+ * Update gift card status
+ */
+updateGiftCardStatus: (code: string, status: 'active' | 'disabled' | 'expired') =>
+  apiClient.patch(`/admin/payments/gift-cards/${code}/status`, { status }),
+
+// ==================== REPORTS & ANALYTICS ====================
+
+/**
+ * Get revenue report
+ */
+getRevenueReport: (startDate: string, endDate: string, groupBy?: string) =>
+  apiClient.get('/admin/reports/revenue', { params: { startDate, endDate, groupBy } }),
+
+/**
+ * Get user growth report
+ */
+getUserGrowthReport: (startDate: string, endDate: string) =>
+  apiClient.get('/admin/reports/users', { params: { startDate, endDate } }),
+
+/**
+ * Get astrologer performance report
+ */
+getAstrologerPerformanceReport: (startDate: string, endDate: string, limit?: number) =>
+  apiClient.get('/admin/reports/astrologers', { params: { startDate, endDate, limit } }),
+
+/**
+ * Get orders report
+ */
+getOrdersReport: (startDate: string, endDate: string) =>
+  apiClient.get('/admin/reports/orders', { params: { startDate, endDate } }),
+
+/**
+ * Get payments report
+ */
+getPaymentsReport: (startDate: string, endDate: string) =>
+  apiClient.get('/admin/reports/payments', { params: { startDate, endDate } }),
+
+/**
+ * Get dashboard summary
+ */
+getDashboardSummary: (startDate?: string, endDate?: string) =>
+  apiClient.get('/admin/reports/dashboard-summary', { params: { startDate, endDate } }),
+
+/**
+ * Export revenue report (CSV)
+ */
+exportRevenueReport: (startDate: string, endDate: string) =>
+  apiClient.get('/admin/reports/export/revenue', { 
+    params: { startDate, endDate },
+    responseType: 'blob',
+  }),
+
+/**
+ * Export users report (CSV)
+ */
+exportUsersReport: (status?: string) =>
+  apiClient.get('/admin/reports/export/users', { 
+    params: { status },
+    responseType: 'blob',
+  }),
+
+/**
+ * Export astrologers report (CSV)
+ */
+exportAstrologersReport: () =>
+  apiClient.get('/admin/reports/export/astrologers', { 
+    responseType: 'blob',
+  }),
+
+/**
+ * Export orders report (CSV)
+ */
+exportOrdersReport: (startDate: string, endDate: string) =>
+  apiClient.get('/admin/reports/export/orders', { 
+    params: { startDate, endDate },
+    responseType: 'blob',
+  }),
+
+  // ==================== REVIEWS & RATINGS ====================
+
+/**
+ * Get reviews for moderation
+ */
+getReviews: (params: { status?: string; page?: number; limit?: number }) =>
+  apiClient.get('/admin/reviews', { params }),
+
+/**
+ * Get review moderation statistics
+ */
+getReviewStats: () =>
+  apiClient.get('/admin/reviews/stats'),
+
+/**
+ * Approve a review
+ */
+approveReview: (orderId: string) =>
+  apiClient.patch(`/admin/reviews/${orderId}/approve`),
+
+/**
+ * Reject a review
+ */
+rejectReview: (orderId: string, reason: string) =>
+  apiClient.patch(`/admin/reviews/${orderId}/reject`, { reason }),
+
+/**
+ * Flag a review for manual review
+ */
+flagReview: (orderId: string, reason: string) =>
+  apiClient.patch(`/admin/reviews/${orderId}/flag`, { reason }),
+
+// Call Notification
+sendCallNotification: async (data: {
+  recipientId: string;
+  recipientModel: 'User' | 'Astrologer';
+  callerId: string;
+  callerName: string;
+  callerAvatar?: string;
+  isVideo: boolean;
+  callId: string;
+  roomId?: string;
+}) => {
+  return apiClient.post('/admin/notifications/send/call', data);
+},
+
+// Message Notification
+sendMessageNotification: async (data: {
+  recipientId: string;
+  recipientModel: 'User' | 'Astrologer';
+  senderId: string;
+  senderName: string;
+  senderAvatar?: string;
+  messageText: string;
+  chatId: string;
+  messageId: string;
+}) => {
+  return apiClient.post('/admin/notifications/send/message', data);
+},
+
+// Live Event Notification
+sendLiveEventNotification: async (data: {
+  recipientId: string;
+  recipientModel: 'User' | 'Astrologer';
+  eventId: string;
+  eventName: string;
+  eventType: 'started' | 'reminder';
+  eventStartTime?: string;
+  astrologerId?: string;
+  astrologerName?: string;
+  astrologerAvatar?: string;
+}) => {
+  return apiClient.post('/admin/notifications/send/live-event', data);
+},
+
+// System Notification
+sendSystemNotification: async (data: {
+  recipientId: string;
+  recipientModel: 'User' | 'Astrologer';
+  title: string;
+  message: string;
+  imageUrl?: string;
+  actionUrl?: string;
+  data?: Record<string, any>;
+}) => {
+  return apiClient.post('/admin/notifications/send/system', data);
+},
+
+// Force Logout
+forceLogoutUser: async (data: {
+  recipientId: string;
+  recipientModel: 'User' | 'Astrologer';
+  reason: string;
+}) => {
+  return apiClient.post('/admin/notifications/force-logout', data);
+},
+
+// ===== SUPPORT TICKETS =====
+  getAllSupportTickets: (params: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    category?: string;
+    userType?: string;
+    search?: string;
+  }) => apiClient.get('/admin/support/tickets', { params }),
+
+  getSupportTicketDetails: (ticketId: string) =>
+    apiClient.get(`/admin/support/tickets/${ticketId}`),
+
+  getSupportStats: () =>
+    apiClient.get('/admin/support/tickets/stats'),
+
+  processRefund: (ticketId: string, data: {
+    amount: number;
+    refundType: 'gateway' | 'wallet';
+    reason: string;
+  }) => apiClient.post(`/admin/support/tickets/${ticketId}/process-refund`, data),
+
+  approvePayoutsupport: (ticketId: string, data: { notes?: string }) =>
+    apiClient.post(`/admin/support/tickets/${ticketId}/approve-payout`, data),
+
+  rejectRefund: (ticketId: string, data: { reason: string }) =>
+    apiClient.post(`/admin/support/tickets/${ticketId}/reject-refund`, data),
+
+  rejectPayoutsupport: (ticketId: string, data: { reason: string }) =>
+    apiClient.post(`/admin/support/tickets/${ticketId}/reject-payout`, data),
+
+  updateTicketStatus: (ticketId: string, data: { status: string; notes?: string }) =>
+    apiClient.post(`/admin/support/tickets/${ticketId}/status`, data),
+
+  addInternalNote: (ticketId: string, data: { note: string }) =>
+    apiClient.post(`/admin/support/tickets/${ticketId}/add-note`, data),
+
 };

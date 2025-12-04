@@ -4,33 +4,32 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
-import {
-  ArrowLeft,
-  Mail,
-  Phone,
-  Calendar,
-  Activity,
-  Ban,
-  CheckCircle,
-  XCircle,
-  Shield,
-  ShoppingBag,
-  Sparkles,
+import { 
+  ArrowLeft, User as UserIcon, Wallet, Activity, ShoppingCart, 
+  Ban, CheckCircle, XCircle, DollarSign, TrendingUp, Clock, Star 
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePermission } from '@/hooks/use-permission';
+import type { User, UserActivity } from '@/types/user';
+import Link from 'next/link';
 
 export default function UserDetailPage() {
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
   const userId = params.id as string;
+  const { can } = usePermission();
 
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [actionType, setActionType] = useState<
-    'blocked' | 'active' | 'suspended'
-  >('blocked');
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [newStatus, setNewStatus] = useState('');
+  const [statusReason, setStatusReason] = useState('');
 
-  const { data: user, isLoading, refetch } = useQuery({
+  const [showWalletModal, setShowWalletModal] = useState(false);
+  const [walletAmount, setWalletAmount] = useState('');
+  const [walletReason, setWalletReason] = useState('');
+
+  // Fetch User Details
+  const { data: user, isLoading } = useQuery<User>({
     queryKey: ['user-detail', userId],
     queryFn: async () => {
       const response = await adminApi.getUserDetails(userId);
@@ -38,71 +37,81 @@ export default function UserDetailPage() {
     },
   });
 
-  // ✅ NEW: User journey data
-  const { data: journeyData } = useQuery({
-    queryKey: ['user-journey', userId],
+  // Fetch User Activity
+  const { data: activity } = useQuery<UserActivity>({
+    queryKey: ['user-activity', userId],
     queryFn: async () => {
-      const response = await adminApi.getUserJourney(userId);
+      const response = await adminApi.getUserActivity(userId);
       return response.data.data;
     },
   });
 
-  const updateStatusMutation = useMutation({
-    mutationFn: (newStatus: string) =>
-      adminApi.updateUserStatus(userId, newStatus),
-    onSuccess: () => {
-      toast.success('User status updated successfully');
-      queryClient.invalidateQueries({ queryKey: ['user-detail', userId] });
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      setShowConfirmModal(false);
-      refetch();
-    },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message || 'Failed to update status'
-      );
+  // Fetch Transactions
+  const { data: transactions } = useQuery({
+    queryKey: ['user-transactions', userId],
+    queryFn: async () => {
+      const response = await adminApi.getUserTransactions(userId, 1, 10);
+      return response.data.data;
     },
   });
 
-  const handleStatusChange = (
-    newStatus: 'blocked' | 'active' | 'suspended'
-  ) => {
-    setActionType(newStatus);
-    setShowConfirmModal(true);
-  };
+  // Fetch Orders
+  const { data: orders } = useQuery({
+    queryKey: ['user-orders', userId],
+    queryFn: async () => {
+      const response = await adminApi.getUserOrders(userId, 1, 10);
+      return response.data.data;
+    },
+  });
 
-  const confirmStatusChange = () => {
-    updateStatusMutation.mutate(actionType);
-  };
+  // Update Status Mutation
+  const statusMutation = useMutation({
+    mutationFn: () => adminApi.updateUserStatus(userId, newStatus, statusReason),
+    onSuccess: () => {
+      toast.success('User status updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['user-detail', userId] });
+      setShowStatusModal(false);
+      setStatusReason('');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update status');
+    },
+  });
+
+  // Wallet Adjustment Mutation
+  const walletMutation = useMutation({
+    mutationFn: () => adminApi.adjustWalletBalance(userId, parseFloat(walletAmount), walletReason),
+    onSuccess: () => {
+      toast.success('Wallet adjusted successfully');
+      queryClient.invalidateQueries({ queryKey: ['user-detail', userId] });
+      setShowWalletModal(false);
+      setWalletAmount('');
+      setWalletReason('');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to adjust wallet');
+    },
+  });
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800';
-      case 'blocked':
-        return 'bg-red-100 text-red-800';
-      case 'suspended':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  if (!user) {
+    return <div className="p-12 text-center text-gray-500">User not found</div>;
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-12">
       {/* Header */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => router.back()}
-          className="flex items-center text-gray-600 hover:text-gray-900"
+          className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
         >
           <ArrowLeft size={20} className="mr-2" />
           Back to Users
@@ -110,391 +119,339 @@ export default function UserDetailPage() {
       </div>
 
       {/* User Profile Card */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center">
-              <span className="text-indigo-600 text-2xl font-semibold">
-                {user?.name?.charAt(0) || 'U'}
-              </span>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">{user?.name}</h2>
-              <p className="text-sm text-gray-500">User ID: {user?._id}</p>
-              <span
-                className={`mt-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                  user?.status
-                )}`}
-              >
-                {user?.status}
-              </span>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col space-y-2">
-            {user?.status === 'active' && (
-              <>
-                <button
-                  onClick={() => handleStatusChange('suspended')}
-                  className="flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
-                >
-                  <Shield size={18} className="mr-2" />
-                  Suspend User
-                </button>
-                <button
-                  onClick={() => handleStatusChange('blocked')}
-                  className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                >
-                  <Ban size={18} className="mr-2" />
-                  Block User
-                </button>
-              </>
-            )}
-            {user?.status === 'blocked' && (
-              <button
-                onClick={() => handleStatusChange('active')}
-                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                <CheckCircle size={18} className="mr-2" />
-                Activate User
-              </button>
-            )}
-            {user?.status === 'suspended' && (
-              <>
-                <button
-                  onClick={() => handleStatusChange('active')}
-                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                >
-                  <CheckCircle size={18} className="mr-2" />
-                  Activate User
-                </button>
-                <button
-                  onClick={() => handleStatusChange('blocked')}
-                  className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                >
-                  <Ban size={18} className="mr-2" />
-                  Block User
-                </button>
-              </>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="flex items-start gap-6">
+          {/* Profile Image */}
+          <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-3xl font-bold flex-shrink-0 overflow-hidden">
+            {user.profileImage ? (
+              <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+            ) : (
+              user.name?.charAt(0).toUpperCase()
             )}
           </div>
-        </div>
-      </div>
 
-      {/* Contact Information */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Contact Information
-          </h3>
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3">
-              <Phone className="text-gray-400" size={20} />
+          {/* User Info */}
+          <div className="flex-1">
+            <div className="flex items-start justify-between mb-4">
               <div>
-                <p className="text-sm text-gray-500">Phone Number</p>
-                <p className="text-gray-900">{user?.phoneNumber || 'N/A'}</p>
+                <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
+                <p className="text-gray-600 mt-1">{user.phoneNumber}</p>
+                {user.email && <p className="text-gray-500 text-sm">{user.email}</p>}
               </div>
+              <StatusBadge status={user.status} />
             </div>
-            {user?.email && (
-              <div className="flex items-center space-x-3">
-                <Mail className="text-gray-400" size={20} />
-                <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="text-gray-900">{user.email}</p>
-                </div>
-              </div>
-            )}
-            <div className="flex items-center space-x-3">
-              <Calendar className="text-gray-400" size={20} />
-              <div>
-                <p className="text-sm text-gray-500">Joined</p>
-                <p className="text-gray-900">
-                  {new Date(user?.createdAt).toLocaleDateString()}
-                </p>
-              </div>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <QuickStat label="Wallet Balance" value={`₹${user.wallet.balance.toLocaleString()}`} color="text-green-600" />
+              <QuickStat label="Total Spent" value={`₹${user.wallet.totalSpent.toLocaleString()}`} color="text-purple-600" />
+              <QuickStat label="Total Sessions" value={user.stats.totalSessions} />
+              <QuickStat label="Joined" value={new Date(user.createdAt).toLocaleDateString()} />
             </div>
-            {user?.lastActive && (
-              <div className="flex items-center space-x-3">
-                <Activity className="text-gray-400" size={20} />
-                <div>
-                  <p className="text-sm text-gray-500">Last Active</p>
-                  <p className="text-gray-900">
-                    {new Date(user.lastActive).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Wallet Information */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Wallet Information
+        {/* Action Buttons */}
+        {can('manage_users') && (
+          <div className="flex gap-3 mt-6 pt-6 border-t border-gray-100">
+            <button
+              onClick={() => setShowStatusModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+            >
+              <Activity size={18} />
+              Change Status
+            </button>
+            <button
+              onClick={() => setShowWalletModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              <Wallet size={18} />
+              Adjust Wallet
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatsCard 
+          icon={Wallet} 
+          title="Wallet" 
+          items={[
+            { label: 'Current Balance', value: `₹${user.wallet.balance}` },
+            { label: 'Total Recharged', value: `₹${user.wallet.totalRecharged}` },
+            { label: 'Total Spent', value: `₹${user.wallet.totalSpent}` },
+          ]}
+        />
+        <StatsCard 
+          icon={Activity} 
+          title="Activity" 
+          items={[
+            { label: 'Total Sessions', value: user.stats.totalSessions },
+            { label: 'Minutes Spent', value: user.stats.totalMinutesSpent },
+            { label: 'Total Ratings', value: user.stats.totalRatings },
+          ]}
+        />
+        <StatsCard 
+          icon={UserIcon} 
+          title="Account" 
+          items={[
+            { label: 'Status', value: user.status, valueClass: getStatusColor(user.status) },
+            { label: 'Verified', value: user.isPhoneVerified ? 'Yes' : 'No' },
+            { label: 'Method', value: user.registrationMethod },
+          ]}
+        />
+      </div>
+
+      {/* Recent Transactions */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <DollarSign size={20} /> Recent Transactions
           </h3>
-          <div className="space-y-3">
-            <div>
-              <p className="text-sm text-gray-500">Current Balance</p>
-              <p className="text-2xl font-bold text-gray-900">
-                ₹{user?.wallet?.balance?.toLocaleString() || 0}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Recharged</p>
-              <p className="text-xl font-semibold text-green-600">
-                ₹{user?.wallet?.totalRecharged?.toLocaleString() || 0}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Spent</p>
-              <p className="text-xl font-semibold text-red-600">
-                ₹{user?.wallet?.totalSpent?.toLocaleString() || 0}
-              </p>
-            </div>
-          </div>
+          <Link href={`/users/${userId}/transactions`} className="text-indigo-600 hover:underline text-sm">
+            View All
+          </Link>
         </div>
+        {transactions?.transactions?.length ? (
+          <div className="space-y-2">
+            {transactions.transactions.map((txn: any) => (
+              <div key={txn._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <p className="font-medium text-gray-900 text-sm">{txn.type.replace('_', ' ')}</p>
+                  <p className="text-xs text-gray-500">{new Date(txn.createdAt).toLocaleString()}</p>
+                </div>
+                <span className={`font-bold ${txn.type.includes('credit') || txn.type.includes('recharge') ? 'text-green-600' : 'text-red-600'}`}>
+                  {txn.type.includes('credit') || txn.type.includes('recharge') ? '+' : '-'}₹{txn.amount}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-sm">No transactions yet</p>
+        )}
       </div>
 
-      {/* ✅ NEW: Consultation Orders */}
-      {journeyData?.consultationOrders && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center mb-4">
-            <ShoppingBag className="mr-2 text-indigo-600" size={24} />
-            <h3 className="text-lg font-semibold text-gray-900">
-              Consultation Orders
-            </h3>
-            <span className="ml-2 px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-semibold">
-              {journeyData.consultationOrders.count}
-            </span>
-          </div>
-
-          {journeyData.consultationOrders.orders.length > 0 ? (
-            <div className="space-y-2">
-              {journeyData.consultationOrders.orders.slice(0, 5).map((order: any) => (
-                <div
-                  key={order._id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium text-gray-900">{order.orderId}</p>
-                    <p className="text-sm text-gray-600">
-                      {order.type} with {order.astrologerName}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-gray-900">
-                      ₹{order.totalAmount}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center py-4">No consultation orders</p>
-          )}
+      {/* Recent Orders */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <ShoppingCart size={20} /> Recent Orders
+          </h3>
+          <Link href={`/users/${userId}/orders`} className="text-indigo-600 hover:underline text-sm">
+            View All
+          </Link>
         </div>
-      )}
-
-      {/* ✅ NEW: Suggested Remedies */}
-      {journeyData?.remediesSuggested && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center mb-4">
-            <Sparkles className="mr-2 text-purple-600" size={24} />
-            <h3 className="text-lg font-semibold text-gray-900">
-              Suggested Remedies
-            </h3>
-            <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-semibold">
-              {journeyData.remediesSuggested.count}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div className="text-center p-3 bg-yellow-50 rounded-lg">
-              <p className="text-sm text-gray-600">Accepted</p>
-              <p className="text-2xl font-bold text-yellow-600">
-                {journeyData.remediesSuggested.accepted}
-              </p>
-            </div>
-            <div className="text-center p-3 bg-green-50 rounded-lg">
-              <p className="text-sm text-gray-600">Purchased</p>
-              <p className="text-2xl font-bold text-green-600">
-                {journeyData.remediesSuggested.purchased}
-              </p>
-            </div>
-            <div className="text-center p-3 bg-blue-50 rounded-lg">
-              <p className="text-sm text-gray-600">Conversion Rate</p>
-              <p className="text-2xl font-bold text-blue-600">
-                {journeyData.remediesSuggested.count > 0
-                  ? (
-                      (journeyData.remediesSuggested.purchased /
-                        journeyData.remediesSuggested.count) *
-                      100
-                    ).toFixed(1)
-                  : '0'}
-                %
-              </p>
-            </div>
-          </div>
-
-          {journeyData.remediesSuggested.remedies.length > 0 ? (
-            <div className="space-y-2">
-              {journeyData.remediesSuggested.remedies.slice(0, 5).map((remedy: any) => (
-                <div
-                  key={remedy._id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {remedy.title ||
-                        remedy.shopifyProduct?.productName ||
-                        'Unknown'}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Status: {remedy.status}
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {remedy.isPurchased && (
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
-                        Purchased
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center py-4">No suggested remedies</p>
-          )}
-        </div>
-      )}
-
-      {/* ✅ NEW: Shopify Purchases */}
-      {journeyData?.shopifyPurchases && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center mb-4">
-            <ShoppingBag className="mr-2 text-green-600" size={24} />
-            <h3 className="text-lg font-semibold text-gray-900">
-              Shopify Purchases
-            </h3>
-            <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
-              {journeyData.shopifyPurchases.count}
-            </span>
-          </div>
-
-          {journeyData.shopifyPurchases.orders.length > 0 ? (
-            <div className="space-y-2">
-              {journeyData.shopifyPurchases.orders.slice(0, 5).map((order: any) => (
-                <div
-                  key={order._id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {order.orderNumber}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {new Date(order.shopifyCreatedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <p className="font-semibold text-gray-900">
-                    ₹{parseFloat(order.totalPrice).toLocaleString()}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center py-4">No Shopify purchases</p>
-          )}
-        </div>
-      )}
-
-      {/* Account Statistics */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Account Statistics
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="text-center p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-gray-600">Total Orders</p>
-            <p className="text-2xl font-bold text-blue-600">
-              {user?.stats?.totalOrders || 0}
-            </p>
-          </div>
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <p className="text-sm text-gray-600">Completed</p>
-            <p className="text-2xl font-bold text-green-600">
-              {user?.stats?.completedOrders || 0}
-            </p>
-          </div>
-          <div className="text-center p-4 bg-purple-50 rounded-lg">
-            <p className="text-sm text-gray-600">Total Spent</p>
-            <p className="text-2xl font-bold text-purple-600">
-              ₹{user?.stats?.totalSpent?.toLocaleString() || 0}
-            </p>
-          </div>
-          <div className="text-center p-4 bg-yellow-50 rounded-lg">
-            <p className="text-sm text-gray-600">Avg Order Value</p>
-            <p className="text-2xl font-bold text-yellow-600">
-              ₹{user?.stats?.avgOrderValue?.toLocaleString() || 0}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Confirmation Modal */}
-      {showConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Confirm Action
-            </h3>
-            <p className="text-gray-600 mb-6">
-              {actionType === 'blocked'
-                ? 'block'
-                : actionType === 'suspended'
-                ? 'suspend'
-                : 'activate'}{' '}
-              this user?
-              {actionType === 'blocked' && (
-                <span className="block mt-2 text-red-600 text-sm">
-                  This will prevent the user from logging in.
-                </span>
-              )}
-              {actionType === 'suspended' && (
-                <span className="block mt-2 text-yellow-600 text-sm">
-                  This will temporarily restrict user access.
-                </span>
-              )}
-            </p>
-            <div className="flex space-x-3">
-              <button
-                onClick={confirmStatusChange}
-                disabled={updateStatusMutation.isPending}
-                className={`flex-1 px-4 py-2 text-white rounded-lg ${
-                  actionType === 'blocked'
-                    ? 'bg-red-600 hover:bg-red-700'
-                    : actionType === 'suspended'
-                    ? 'bg-yellow-600 hover:bg-yellow-700'
-                    : 'bg-green-600 hover:bg-green-700'
-                } disabled:opacity-50`}
+        {orders?.orders?.length ? (
+          <div className="space-y-2">
+            {orders.orders.map((order: any) => (
+              <Link 
+                key={order._id} 
+                href={`/orders/${order.orderId}`}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition-colors group"
               >
-                {updateStatusMutation.isPending ? 'Processing...' : 'Confirm'}
+                <div>
+                  <p className="font-medium text-gray-900 text-sm group-hover:text-indigo-600">{order.orderId}</p>
+                  <p className="text-xs text-gray-500">{order.type} • {new Date(order.createdAt).toLocaleDateString()}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <StatusBadge status={order.status} />
+                  <span className="font-bold text-gray-900">₹{order.totalAmount}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-sm">No orders yet</p>
+        )}
+      </div>
+
+     {/* Favorite Astrologers */}
+{activity?.favoriteAstrologers && activity.favoriteAstrologers.length > 0 && (
+  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
+      <Star size={20} className="text-yellow-500" /> Favorite Astrologers
+    </h3>
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {activity.favoriteAstrologers.map((astro: any) => (
+        <Link
+          key={astro._id}
+          href={`/astrologers/${astro._id}`}
+          className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-indigo-50 transition-colors group"
+        >
+          <div className="w-16 h-16 rounded-full bg-purple-100 mb-2 overflow-hidden">
+            {astro.profilePicture ? (
+              <img src={astro.profilePicture} alt={astro.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-purple-700 font-bold">
+                {astro.name.charAt(0)}
+              </div>
+            )}
+          </div>
+          <p className="font-medium text-gray-900 text-sm text-center group-hover:text-indigo-600">{astro.name}</p>
+          <p className="text-xs text-gray-500 mt-1">{astro.specializations?.[0]}</p>
+        </Link>
+      ))}
+    </div>
+  </div>
+)}
+
+
+      {/* Status Update Modal */}
+      {showStatusModal && (
+        <Modal title="Update User Status" onClose={() => setShowStatusModal(false)}>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">New Status</label>
+              <select
+                value={newStatus}
+                onChange={(e) => setNewStatus(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              >
+                <option value="">Select status...</option>
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+                <option value="blocked">Blocked</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Reason *</label>
+              <textarea
+                value={statusReason}
+                onChange={(e) => setStatusReason(e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="Explain why you're changing the status..."
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => statusMutation.mutate()}
+                disabled={!newStatus || !statusReason || statusMutation.isPending}
+                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {statusMutation.isPending ? 'Updating...' : 'Update Status'}
               </button>
               <button
-                onClick={() => setShowConfirmModal(false)}
+                onClick={() => setShowStatusModal(false)}
                 className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
               >
                 Cancel
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
+      )}
+
+      {/* Wallet Adjustment Modal */}
+      {showWalletModal && (
+        <Modal title="Adjust Wallet Balance" onClose={() => setShowWalletModal(false)}>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+              <input
+                type="number"
+                value={walletAmount}
+                onChange={(e) => setWalletAmount(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="Enter amount (use - for debit)"
+              />
+              <p className="text-xs text-gray-500 mt-1">Use positive number to credit, negative to debit</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Reason *</label>
+              <textarea
+                value={walletReason}
+                onChange={(e) => setWalletReason(e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="Explain the adjustment reason..."
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => walletMutation.mutate()}
+                disabled={!walletAmount || !walletReason || walletMutation.isPending}
+                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {walletMutation.isPending ? 'Processing...' : 'Adjust Wallet'}
+              </button>
+              <button
+                onClick={() => setShowWalletModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );
+}
+
+// Helper Components
+function StatusBadge({ status }: { status: string }) {
+  const colors: Record<string, string> = {
+    active: 'bg-green-100 text-green-800',
+    suspended: 'bg-yellow-100 text-yellow-800',
+    blocked: 'bg-red-100 text-red-800',
+    deleted: 'bg-gray-100 text-gray-800',
+    completed: 'bg-green-100 text-green-800',
+    pending: 'bg-yellow-100 text-yellow-800',
+    cancelled: 'bg-red-100 text-red-800',
+  };
+  return (
+    <span className={`px-3 py-1 text-sm font-semibold rounded-full capitalize ${colors[status] || 'bg-gray-100 text-gray-800'}`}>
+      {status}
+    </span>
+  );
+}
+
+function QuickStat({ label, value, color = 'text-gray-900' }: any) {
+  return (
+    <div>
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className={`font-bold ${color}`}>{value}</p>
+    </div>
+  );
+}
+
+function StatsCard({ icon: Icon, title, items }: any) {
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <Icon size={20} /> {title}
+      </h3>
+      <dl className="space-y-3">
+        {items.map((item: any) => (
+          <div key={item.label} className="flex justify-between text-sm">
+            <dt className="text-gray-500">{item.label}:</dt>
+            <dd className={`font-medium ${item.valueClass || 'text-gray-900'}`}>{item.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
+function Modal({ title, children, onClose }: any) {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl p-6 max-w-md w-full">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function getStatusColor(status: string) {
+  const colors: Record<string, string> = {
+    active: 'text-green-600',
+    suspended: 'text-yellow-600',
+    blocked: 'text-red-600',
+    deleted: 'text-gray-600',
+  };
+  return colors[status] || 'text-gray-600';
 }

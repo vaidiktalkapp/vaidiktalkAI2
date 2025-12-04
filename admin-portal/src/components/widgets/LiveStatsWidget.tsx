@@ -9,7 +9,7 @@ export default function LiveStatsWidget() {
   const { data: liveStats } = useQuery({
     queryKey: ['live-stats'],
     queryFn: async () => {
-      const response = await adminApi.getLiveStats();
+      const response = await adminApi.getStreamStats();
       return response.data.data;
     },
     refetchInterval: 5000, // ✅ Real-time refresh

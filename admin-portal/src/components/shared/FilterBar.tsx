@@ -1,62 +1,96 @@
-// src/components/shared/FilterBar.tsx
-import { Search, X, Filter } from 'lucide-react';
+'use client';
 
-interface FilterOption {
+import { Search, X } from 'lucide-react';
+
+export interface FilterOption {
   label: string;
   value: string;
 }
 
-interface FilterSelectProps {
+export interface Filter {
   value: string;
-  onChange: (val: string) => void;
+  onChange: (value: string) => void;
   options: FilterOption[];
+  placeholder?: string;
+  label?: string;
+}
+
+export interface SearchConfig {
+  value: string;
+  onChange: (value: string) => void;
   placeholder?: string;
 }
 
-interface FilterBarProps {
-  search?: {
-    value: string;
-    onChange: (val: string) => void;
-    placeholder?: string;
-  };
-  filters?: FilterSelectProps[];
+export interface FilterBarProps {
+  filters: Filter[];
   onReset?: () => void;
-  actions?: React.ReactNode; // For buttons like "Export" or "Create New"
+  
+  // Support both patterns
+  searchQuery?: string;
+  onSearchChange?: (value: string) => void;
+  searchPlaceholder?: string;
+  search?: SearchConfig;
 }
 
-export function FilterBar({ search, filters, onReset, actions }: FilterBarProps) {
+export function FilterBar({
+  filters,
+  onReset,
+  searchQuery,
+  onSearchChange,
+  searchPlaceholder,
+  search,
+}: FilterBarProps) {
+  // Support both search patterns
+  const finalSearchValue = search?.value ?? searchQuery ?? '';
+  const finalSearchOnChange = search?.onChange ?? onSearchChange;
+  const finalSearchPlaceholder = search?.placeholder ?? searchPlaceholder ?? 'Search...';
+
+  const hasActiveFilters = filters.some((f) => f.value) || (finalSearchValue && finalSearchValue.length > 0);
+
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 space-y-4 md:space-y-0 md:flex md:items-center md:justify-between gap-4">
-      
-      {/* Search and Filters Group */}
-      <div className="flex-1 flex flex-col md:flex-row gap-3">
-        
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+      <div className="flex flex-col md:flex-row gap-4">
         {/* Search Input */}
-        {search && (
-          <div className="relative flex-1 min-w-[240px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input
-              type="text"
-              value={search.value}
-              onChange={(e) => search.onChange(e.target.value)}
-              placeholder={search.placeholder || 'Search...'}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
-            />
+        {finalSearchOnChange && (
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                value={finalSearchValue}
+                onChange={(e) => finalSearchOnChange(e.target.value)}
+                placeholder={finalSearchPlaceholder}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+              {finalSearchValue && (
+                <button
+                  onClick={() => finalSearchOnChange('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Dropdown Filters */}
-        {filters?.map((filter, idx) => (
-          <div key={idx} className="min-w-[160px]">
+        {/* Filter Dropdowns */}
+        {filters.map((filter, index) => (
+          <div key={index} className="min-w-[200px]">
+            {filter.label && (
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {filter.label}
+              </label>
+            )}
             <select
               value={filter.value}
               onChange={(e) => filter.onChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
             >
-              <option value="">{filter.placeholder || 'Filter'}</option>
-              {filter.options.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
+              <option value="">{filter.placeholder || 'All'}</option>
+              {filter.options.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </select>
@@ -64,20 +98,17 @@ export function FilterBar({ search, filters, onReset, actions }: FilterBarProps)
         ))}
 
         {/* Reset Button */}
-        {onReset && (
-          <button
-            onClick={onReset}
-            className="flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-            title="Reset Filters"
-          >
-            <X size={16} className="mr-1" />
-            Reset
-          </button>
+        {hasActiveFilters && onReset && (
+          <div className="flex items-end">
+            <button
+              onClick={onReset}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap"
+            >
+              Reset Filters
+            </button>
+          </div>
         )}
       </div>
-
-      {/* Right Side Actions (Export, Create, etc) */}
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>
   );
 }

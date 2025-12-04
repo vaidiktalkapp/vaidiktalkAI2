@@ -4,6 +4,8 @@
 import { useState } from 'react';
 import { Bell } from 'lucide-react';
 import { useNotifications } from '../providers/NotificationProvider';
+import Link from 'next/link';
+
 
 export default function NotificationBell() {
   const { notifications, unreadCount, markAsRead, clearAll } = useNotifications();
@@ -41,17 +43,29 @@ export default function NotificationBell() {
           {/* Notification Panel */}
           <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl z-50 max-h-[500px] overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="p-4 border-b flex justify-between items-center">
-              <h3 className="font-semibold text-lg">Notifications</h3>
-              {notifications.length > 0 && (
-                <button 
-                  onClick={clearAll}
-                  className="text-sm text-blue-600 hover:underline"
-                >
-                  Clear all
-                </button>
-              )}
-            </div>
+<div className="p-4 border-b">
+  <div className="flex justify-between items-center mb-2">
+    <h3 className="font-semibold text-lg">Notifications</h3>
+    {notifications.length > 0 && (
+      <button 
+        onClick={clearAll}
+        className="text-sm text-blue-600 hover:underline"
+      >
+        Clear all
+      </button>
+    )}
+  </div>
+  {/* 🆕 ADD: View All Link */}
+  <Link
+    href="/notifications"
+    onClick={() => setIsOpen(false)}
+    className="text-sm text-gray-600 hover:text-blue-600 flex items-center gap-1 transition-colors"
+  >
+    <span>View all notifications</span>
+    <span>→</span>
+  </Link>
+</div>
+
 
             {/* Notifications List */}
             <div className="overflow-y-auto flex-1">
