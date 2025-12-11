@@ -254,6 +254,12 @@ export const adminApi = {
     apiClient.post(`/admin/streams/${streamId}/force-end`, { reason }),
 
   /**
+   * ✅ NEW: Force end active call
+   */
+  forceEndCall: (streamId: string) =>
+    apiClient.post(`/admin/streams/${streamId}/call/force-end`),
+
+  /**
    * Get stream analytics
    */
   getStreamAnalytics: (streamId: string) =>

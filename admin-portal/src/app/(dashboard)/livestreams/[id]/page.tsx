@@ -17,7 +17,8 @@ import {
   AlertTriangle,
   Ban,
   Eye,
-  TrendingUp
+  TrendingUp,
+  PhoneOff
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -66,6 +67,23 @@ export default function StreamDetailPage() {
       toast.error(error.response?.data?.message || 'Failed to end stream');
     },
   });
+
+  const forceEndCallMutation = useMutation({
+    mutationFn: () => adminApi.forceEndCall(streamId),
+    onSuccess: () => {
+      toast.success('Call ended successfully');
+      queryClient.invalidateQueries({ queryKey: ['stream-detail', streamId] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to end call');
+    },
+  });
+
+  const handleEndCall = () => {
+    if (confirm('Are you sure you want to disconnect this user from the call? The stream will continue.')) {
+      forceEndCallMutation.mutate();
+    }
+  };
 
   const handleForceEnd = () => {
     if (!endReason.trim()) {
@@ -304,10 +322,23 @@ export default function StreamDetailPage() {
         </div>
       </div>
 
-      {/* Current Call Info */}
+      {/* ✅ UPDATED: Current Call Info with Action Button */}
       {stream?.currentCall?.isOnCall && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Call</h3>
+          <div className="flex justify-between items-start mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Current Call</h3>
+            
+            {/* End Call Button */}
+            <button
+              onClick={handleEndCall}
+              disabled={forceEndCallMutation.isPending}
+              className="flex items-center px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              <PhoneOff size={16} className="mr-2" />
+              {forceEndCallMutation.isPending ? 'Ending...' : 'Force End Call'}
+            </button>
+          </div>
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <p className="text-sm text-gray-600">Caller</p>
@@ -337,15 +368,16 @@ export default function StreamDetailPage() {
               </span>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Camera</p>
-              <span className={`font-semibold ${stream.currentCall.isCameraOn ? 'text-green-600' : 'text-red-600'}`}>
-                {stream.currentCall.isCameraOn ? 'ON' : 'OFF'}
+              <p className="text-sm text-gray-600">Duration</p>
+              <span className="font-semibold text-gray-900 font-mono">
+                {/* Calculate duration simply based on start time */}
+                {stream.currentCall.startedAt ? getLiveDuration(stream.currentCall.startedAt) : '0:00'}
               </span>
             </div>
           </div>
         </div>
       )}
-
+      
       {/* Call Waitlist */}
       {waitlist.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
@@ -385,22 +417,22 @@ export default function StreamDetailPage() {
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {viewers
-            .filter((viewer: any) => viewer.isActive)
-            .slice(0, 20)
-            .map((viewer: any) => (
-              <div key={viewer._id} className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
-                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center overflow-hidden">
-                  {viewer.userId?.profileImage ? (
-                    <img src={viewer.userId.profileImage} alt={viewer.userId.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-purple-600 text-xs font-semibold">
-                      {viewer.userId?.name?.charAt(0)}
-                    </span>
-                  )}
-                </div>
-                <span className="text-sm text-gray-900 truncate">{viewer.userId?.name}</span>
-              </div>
-            ))}
+  .filter((viewer: any) => viewer.isActive)
+  .slice(0, 20)
+  .map((viewer: any) => (
+    <div key={viewer.id} className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
+      <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center overflow-hidden">
+        {viewer.userId?.profileImage ? (
+          <img src={viewer.userId.profileImage} alt={viewer.userId.name} className="w-full h-full object-cover" />
+        ) : (
+          <span className="text-purple-600 text-xs font-semibold">
+            {viewer.userId?.name?.charAt(0)}
+          </span>
+        )}
+      </div>
+      <span className="text-sm text-gray-900 truncate">{viewer.userId?.name}</span>
+    </div>
+  ))}
         </div>
       </div>
 
@@ -422,27 +454,19 @@ export default function StreamDetailPage() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {calls.map((call: any) => (
-                  <tr key={call._id}>
-                    <td className="px-4 py-3 text-sm text-gray-900">{call.userId?.name}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600 capitalize">{call.callType}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600 capitalize">{call.callMode}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{formatDuration(call.duration || 0)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">₹{call.totalCharge || 0}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-2 py-1 text-xs font-semibold rounded ${
-                          call.status === 'completed'
-                            ? 'bg-green-100 text-green-800'
-                            : call.status === 'cancelled'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {call.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+  <tr key={call.id}>
+    <td className="px-4 py-3 text-sm text-gray-900">{call.userId?.name}</td>
+    <td className="px-4 py-3 text-sm text-gray-600 capitalize">{call.callType}</td>
+    <td className="px-4 py-3 text-sm text-gray-600 capitalize">{call.callMode}</td>
+    <td className="px-4 py-3 text-sm text-gray-900">{formatDuration(call.duration || 0)}</td>
+    <td className="px-4 py-3 text-sm text-gray-900">₹{call.totalCharge || 0}</td>
+    <td className="px-4 py-3">
+      <span className={`px-2 py-1 text-xs font-semibold rounded ${call.status === 'completed' ? 'bg-green-100 text-green-800' : call.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
+        {call.status}
+      </span>
+    </td>
+  </tr>
+))}
               </tbody>
             </table>
           </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
-import { ArrowLeft, Users, Clock, DollarSign, Eye, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Users, Clock, Eye, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -76,7 +76,7 @@ export default function LiveStreamsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data?.streams?.map((stream: any) => (
+          {data?.map((stream: any) => (
             <div key={stream._id} className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow">
               {/* Thumbnail */}
               <div className="relative h-48 bg-gradient-to-br from-purple-500 to-pink-500">

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
-import { Search, Filter, Eye, Video, TrendingUp, Users, DollarSign, Clock, Play } from 'lucide-react';
+import { Search, Filter, Eye, Video, TrendingUp, Users, IndianRupee, Clock, Play } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LivestreamsPage() {
@@ -21,6 +21,7 @@ export default function LivestreamsPage() {
         search,
         status: statusFilter || undefined,
       });
+      console.log('✅ Streams fetched:', response.data);
       return response.data.data;
     },
   });
@@ -117,7 +118,7 @@ export default function LivestreamsPage() {
                 ₹{(stats?.totalRevenue || 0).toLocaleString()}
               </p>
             </div>
-            <DollarSign className="text-blue-600" size={32} />
+            <IndianRupee className="text-blue-600" size={32} />
           </div>
         </div>
       </div>
@@ -196,7 +197,7 @@ export default function LivestreamsPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {data?.streams?.map((stream: any) => (
+                {data?.map((stream: any) => (
                   <tr key={stream._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div>

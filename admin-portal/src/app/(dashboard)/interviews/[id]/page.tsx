@@ -255,27 +255,39 @@ export default function InterviewDetailPage() {
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-900">Round {round}</h4>
                   {roundData && roundData.status === 'completed' && (
-                    <div className="mt-2 text-sm">
-                      <p className="text-gray-600">
-                        <strong>Status:</strong> {roundData.passed ? '✅ Passed' : '❌ Failed'}
-                      </p>
-                      {roundData.rating && (
-                        <p className="text-gray-600">
-                          <strong>Rating:</strong> {roundData.rating}/5 ⭐
-                        </p>
-                      )}
-                      {roundData.notes && (
-                        <p className="text-gray-600">
-                          <strong>Notes:</strong> {roundData.notes}
-                        </p>
-                      )}
-                      {roundData.completedAt && (
-                        <p className="text-gray-500 text-xs mt-1">
-                          Completed: {new Date(roundData.completedAt).toLocaleString()}
-                        </p>
-                      )}
-                    </div>
-                  )}
+  <div className="mt-2 text-sm">
+    <p className="text-gray-600">
+      <strong>Status:</strong>{' '}
+      {round === 4
+        ? roundData.approved
+          ? '✅ Approved'
+          : '❌ Rejected'
+        : roundData.passed
+        ? '✅ Passed'
+        : '❌ Failed'}
+    </p>
+
+    {/* Only rounds 1–3 have rating */}
+    {round !== 4 && roundData.rating != null && (
+      <p className="text-gray-600">
+        <strong>Rating:</strong> {roundData.rating}/5 ⭐
+      </p>
+    )}
+
+    {roundData.notes && (
+      <p className="text-gray-600">
+        <strong>Notes:</strong> {roundData.notes}
+      </p>
+    )}
+
+    {roundData.completedAt && (
+      <p className="text-gray-500 text-xs mt-1">
+        Completed: {new Date(roundData.completedAt).toLocaleString()}
+      </p>
+    )}
+  </div>
+)}
+
                   {isCurrent && (
                     <p className="text-blue-600 text-sm mt-1">👉 Currently conducting this round</p>
                   )}
