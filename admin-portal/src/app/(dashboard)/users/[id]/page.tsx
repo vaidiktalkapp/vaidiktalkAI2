@@ -6,11 +6,11 @@ import { adminApi } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
 import { 
   ArrowLeft, User as UserIcon, Wallet, Activity, ShoppingCart, 
-  Ban, CheckCircle, XCircle, DollarSign, TrendingUp, Clock, Star 
+  DollarSign, Star 
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/use-permission';
-import type { User, UserActivity } from '@/types/user';
+import type { User } from '@/types/user'; // Removed UserActivity import
 import Link from 'next/link';
 
 export default function UserDetailPage() {
@@ -29,7 +29,7 @@ export default function UserDetailPage() {
   const [walletReason, setWalletReason] = useState('');
 
   // Fetch User Details
-  const { data: user, isLoading } = useQuery<User>({
+  const { data: user, isLoading } = useQuery<any>({ // using any to accommodate the stats structure
     queryKey: ['user-detail', userId],
     queryFn: async () => {
       const response = await adminApi.getUserDetails(userId);
@@ -37,14 +37,7 @@ export default function UserDetailPage() {
     },
   });
 
-  // Fetch User Activity
-  const { data: activity } = useQuery<UserActivity>({
-    queryKey: ['user-activity', userId],
-    queryFn: async () => {
-      const response = await adminApi.getUserActivity(userId);
-      return response.data.data;
-    },
-  });
+  // Removed "Fetch User Activity" query as requested
 
   // Fetch Transactions
   const { data: transactions } = useQuery({
@@ -84,6 +77,7 @@ export default function UserDetailPage() {
     onSuccess: () => {
       toast.success('Wallet adjusted successfully');
       queryClient.invalidateQueries({ queryKey: ['user-detail', userId] });
+      queryClient.invalidateQueries({ queryKey: ['user-transactions', userId] });
       setShowWalletModal(false);
       setWalletAmount('');
       setWalletReason('');
@@ -143,10 +137,24 @@ export default function UserDetailPage() {
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <QuickStat label="Wallet Balance" value={`₹${user.wallet.balance.toLocaleString()}`} color="text-green-600" />
-              <QuickStat label="Total Spent" value={`₹${user.wallet.totalSpent.toLocaleString()}`} color="text-purple-600" />
-              <QuickStat label="Total Sessions" value={user.stats.totalSessions} />
-              <QuickStat label="Joined" value={new Date(user.createdAt).toLocaleDateString()} />
+              <QuickStat 
+                label="Wallet Balance" 
+                value={`₹${user.wallet?.balance?.toLocaleString() ?? 0}`} 
+                color="text-green-600" 
+              />
+              <QuickStat 
+                label="Total Spent" 
+                value={`₹${user.stats?.totalSpent?.toLocaleString() ?? 0}`} 
+                color="text-purple-600" 
+              />
+              <QuickStat 
+                label="Total Orders" 
+                value={user.stats?.orderCount ?? 0} 
+              />
+              <QuickStat 
+                label="Joined" 
+                value={new Date(user.createdAt).toLocaleDateString()} 
+              />
             </div>
           </div>
         </div>
@@ -172,33 +180,26 @@ export default function UserDetailPage() {
         )}
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Stats Grid - Reduced to 2 columns since Activity is removed */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <StatsCard 
           icon={Wallet} 
-          title="Wallet" 
+          title="Wallet Details" 
           items={[
-            { label: 'Current Balance', value: `₹${user.wallet.balance}` },
-            { label: 'Total Recharged', value: `₹${user.wallet.totalRecharged}` },
-            { label: 'Total Spent', value: `₹${user.wallet.totalSpent}` },
+            { label: 'Current Balance', value: `₹${user.wallet?.balance ?? 0}` },
+            { label: 'Total Spent', value: `₹${user.stats?.totalSpent ?? 0}` },
+            // Removed Total Recharged as it's not provided by API currently
           ]}
         />
-        <StatsCard 
-          icon={Activity} 
-          title="Activity" 
-          items={[
-            { label: 'Total Sessions', value: user.stats.totalSessions },
-            { label: 'Minutes Spent', value: user.stats.totalMinutesSpent },
-            { label: 'Total Ratings', value: user.stats.totalRatings },
-          ]}
-        />
+        {/* Removed Activity StatsCard */}
         <StatsCard 
           icon={UserIcon} 
-          title="Account" 
+          title="Account Details" 
           items={[
             { label: 'Status', value: user.status, valueClass: getStatusColor(user.status) },
             { label: 'Verified', value: user.isPhoneVerified ? 'Yes' : 'No' },
-            { label: 'Method', value: user.registrationMethod },
+            { label: 'Registration', value: user.registrationMethod },
+            { label: 'Last Order', value: user.stats?.lastOrder ? new Date(user.stats.lastOrder.createdAt).toLocaleDateString() : 'Never' },
           ]}
         />
       </div>
@@ -218,11 +219,11 @@ export default function UserDetailPage() {
             {transactions.transactions.map((txn: any) => (
               <div key={txn._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
-                  <p className="font-medium text-gray-900 text-sm">{txn.type.replace('_', ' ')}</p>
+                  <p className="font-medium text-gray-900 text-sm">{txn.type?.replace('_', ' ') || 'Transaction'}</p>
                   <p className="text-xs text-gray-500">{new Date(txn.createdAt).toLocaleString()}</p>
                 </div>
-                <span className={`font-bold ${txn.type.includes('credit') || txn.type.includes('recharge') ? 'text-green-600' : 'text-red-600'}`}>
-                  {txn.type.includes('credit') || txn.type.includes('recharge') ? '+' : '-'}₹{txn.amount}
+                <span className={`font-bold ${txn.type?.includes('credit') || txn.type?.includes('recharge') ? 'text-green-600' : 'text-red-600'}`}>
+                  {txn.type?.includes('credit') || txn.type?.includes('recharge') ? '+' : '-'}₹{txn.amount}
                 </span>
               </div>
             ))}
@@ -266,36 +267,7 @@ export default function UserDetailPage() {
         )}
       </div>
 
-     {/* Favorite Astrologers */}
-{activity?.favoriteAstrologers && activity.favoriteAstrologers.length > 0 && (
-  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
-      <Star size={20} className="text-yellow-500" /> Favorite Astrologers
-    </h3>
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {activity.favoriteAstrologers.map((astro: any) => (
-        <Link
-          key={astro._id}
-          href={`/astrologers/${astro._id}`}
-          className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-indigo-50 transition-colors group"
-        >
-          <div className="w-16 h-16 rounded-full bg-purple-100 mb-2 overflow-hidden">
-            {astro.profilePicture ? (
-              <img src={astro.profilePicture} alt={astro.name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-purple-700 font-bold">
-                {astro.name.charAt(0)}
-              </div>
-            )}
-          </div>
-          <p className="font-medium text-gray-900 text-sm text-center group-hover:text-indigo-600">{astro.name}</p>
-          <p className="text-xs text-gray-500 mt-1">{astro.specializations?.[0]}</p>
-        </Link>
-      ))}
-    </div>
-  </div>
-)}
-
+      {/* Removed Favorite Astrologers section as it relied on missing activity data */}
 
       {/* Status Update Modal */}
       {showStatusModal && (
@@ -400,6 +372,7 @@ function StatusBadge({ status }: { status: string }) {
     completed: 'bg-green-100 text-green-800',
     pending: 'bg-yellow-100 text-yellow-800',
     cancelled: 'bg-red-100 text-red-800',
+    failed: 'bg-red-100 text-red-800',
   };
   return (
     <span className={`px-3 py-1 text-sm font-semibold rounded-full capitalize ${colors[status] || 'bg-gray-100 text-gray-800'}`}>
@@ -439,7 +412,10 @@ function Modal({ title, children, onClose }: any) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl p-6 max-w-md w-full">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+        </div>
         {children}
       </div>
     </div>

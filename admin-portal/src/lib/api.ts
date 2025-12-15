@@ -956,4 +956,26 @@ forceLogoutUser: async (data: {
   addInternalNote: (ticketId: string, data: { note: string }) =>
     apiClient.post(`/admin/support/tickets/${ticketId}/add-note`, data),
 
+  getAllCalls: (params: { page?: number; limit?: number; status?: string }) =>
+    apiClient.get('/admin/orders/calls', { params }),
+
+  // Chats
+  getAllChats: (params: { page?: number; limit?: number; status?: string }) =>
+    apiClient.get('/admin/orders/chats', { params }),
+
+  // Get Admin Details
+  getAdminDetails: (adminId: string) =>
+    apiClient.get(`/admin/admins/${adminId}`),
+
+  // Update Admin Profile
+  updateAdmin: (adminId: string, data: any) =>
+    apiClient.patch(`/admin/admins/${adminId}`, data),
+
+  // Update Admin Status
+  updateAdminStatus: (adminId: string, status: string, reason?: string) =>
+    apiClient.patch(`/admin/admins/${adminId}/status`, { status, reason }),
+
+  // Delete Admin
+  deleteAdmin: (adminId: string) =>
+    apiClient.delete(`/admin/admins/${adminId}`),
 };

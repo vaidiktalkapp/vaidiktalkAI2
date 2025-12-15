@@ -25,6 +25,7 @@ export default function OrderDetailPage() {
 
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+  const [zohoTicketId, setZohoTicketId] = useState('');
 
   // Fetch Order
   const { data: order, isLoading } = useQuery<Order>({
@@ -57,6 +58,7 @@ export default function OrderDetailPage() {
       adminApi.refundOrder(order?.orderId!, {
         amount: parseFloat(refundAmount),
         reason: refundReason,
+        zohoTicketId: zohoTicketId,
       }),
     onSuccess: () => {
       toast.success('Refund processed successfully');
@@ -331,6 +333,20 @@ export default function OrderDetailPage() {
               />
               <p className="text-xs text-gray-500 mt-1">Max: ₹{order.totalAmount.toLocaleString()}</p>
             </div>
+            <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Zoho Ticket Reference</label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">#</span>
+          <input
+            type="text"
+            value={zohoTicketId}
+            onChange={(e) => setZohoTicketId(e.target.value)}
+            className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            placeholder="987654321"
+          />
+        </div>
+        <p className="text-xs text-gray-500 mt-1">Link this refund to the support ticket ID</p>
+      </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Reason *</label>
               <textarea

@@ -5,13 +5,33 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
 import { 
-  ArrowLeft, Star, DollarSign, TrendingUp, Activity, 
-  MessageCircle, Phone, Video, Settings, Ban, CheckCircle 
+  ArrowLeft, Star, IndianRupee, TrendingUp, Activity, 
+  MessageCircle, Phone, Video, Settings, Ban, CheckCircle,
+  Wallet, Gift
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/use-permission';
-import type { Astrologer, AstrologerPerformance } from '@/types/astrologer';
+import type { Astrologer as BaseAstrologer, AstrologerPerformance } from '@/types/astrologer';
 import Link from 'next/link';
+
+// Extend the base interface to include the new earnings structure
+interface Astrologer extends BaseAstrologer {
+  earnings?: {
+    totalEarned: number;          // Gross (Calls + Chats + Gifts)
+    totalGiftEarnings: number;    // ✅ NEW: Specific Gift Revenue
+    platformCommission: number;   // Platform cut
+    platformCommissionRate: number;
+    netEarnings: number;          // Astrologer take home
+    totalPenalties: number;
+    withdrawableAmount: number;   // Available
+    totalWithdrawn: number;
+    pendingWithdrawal: number;
+    lastUpdated: string;
+  };
+  stats: BaseAstrologer['stats'] & {
+    totalGifts?: number;          // ✅ NEW: Count of gifts received
+  };
+}
 
 export default function AstrologerDetailPage() {
   const params = useParams();
@@ -190,8 +210,16 @@ export default function AstrologerDetailPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <QuickStat label="Experience" value={`${astrologer.experienceYears || 0} years`} />
               <QuickStat label="Total Orders" value={astrologer.stats?.totalOrders || 0} />
-              <QuickStat label="Earnings" value={`₹${(astrologer.stats?.totalEarnings || 0).toLocaleString()}`} color="text-green-600" />
-              <QuickStat label="Profile" value={`${astrologer.profileCompletion?.percentage || 0}%`} color={astrologer.profileCompletion?.isComplete ? 'text-green-600' : 'text-orange-600'} />
+              <QuickStat 
+                label="Net Earnings" 
+                value={`₹${(astrologer.earnings?.netEarnings || astrologer.stats?.totalEarnings || 0).toLocaleString()}`} 
+                color="text-green-600" 
+              />
+              <QuickStat 
+                label="Profile" 
+                value={`${astrologer.profileCompletion?.percentage || 0}%`} 
+                color={astrologer.profileCompletion?.isComplete ? 'text-green-600' : 'text-orange-600'} 
+              />
             </div>
           </div>
         </div>
@@ -210,7 +238,7 @@ export default function AstrologerDetailPage() {
               onClick={() => setShowPricingModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              <DollarSign size={18} />
+              <IndianRupee size={18} />
               Update Pricing
             </button>
             <button
@@ -232,6 +260,67 @@ export default function AstrologerDetailPage() {
         </div>
       )}
 
+      {/* 🆕 FINANCIAL OVERVIEW - Updated with Gifts */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-6 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <Wallet size={20} className="text-indigo-600" /> Financial Overview
+          </h3>
+          <span className="text-xs text-gray-500">
+            Commission Rate: {astrologer.earnings?.platformCommissionRate || 40}%
+          </span>
+        </div>
+        
+        {/* Adjusted Grid for 6 items including Gifts */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 divide-x divide-gray-100">
+          <div className="p-6 text-center">
+            <p className="text-xs font-medium text-gray-500 uppercase mb-2">Total Gross</p>
+            <p className="text-xl font-bold text-gray-900">
+              ₹{(astrologer.earnings?.totalEarned || 0).toLocaleString()}
+            </p>
+          </div>
+          
+          {/* ✅ NEW: Gift Earnings */}
+          <div className="p-6 text-center bg-pink-50">
+            <div className="flex items-center justify-center gap-1 mb-2">
+              <Gift size={14} className="text-pink-600" />
+              <p className="text-xs font-medium text-pink-700 uppercase">Gift Revenue</p>
+            </div>
+            <p className="text-xl font-bold text-pink-700">
+              ₹{(astrologer.earnings?.totalGiftEarnings || 0).toLocaleString()}
+            </p>
+          </div>
+
+          <div className="p-6 text-center">
+            <p className="text-xs font-medium text-gray-500 uppercase mb-2">Platform Comm.</p>
+            <p className="text-xl font-bold text-indigo-600">
+              ₹{(astrologer.earnings?.platformCommission || 0).toLocaleString()}
+            </p>
+          </div>
+          
+          <div className="p-6 text-center bg-green-50">
+            <p className="text-xs font-medium text-green-700 uppercase mb-2">Net Earnings</p>
+            <p className="text-xl font-bold text-green-700">
+              ₹{(astrologer.earnings?.netEarnings || 0).toLocaleString()}
+            </p>
+          </div>
+          
+          <div className="p-6 text-center">
+            <p className="text-xs font-medium text-red-500 uppercase mb-2">Penalties</p>
+            <p className="text-xl font-bold text-red-600">
+              -₹{(astrologer.earnings?.totalPenalties || 0).toLocaleString()}
+            </p>
+          </div>
+          
+          <div className="p-6 text-center bg-blue-50">
+            <p className="text-xs font-medium text-blue-700 uppercase mb-2">Withdrawable</p>
+            <p className="text-xl font-bold text-blue-700">
+              ₹{(astrologer.earnings?.withdrawableAmount || 0).toLocaleString()}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Performance Metrics */}
       {performance && (
         <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl shadow-sm border border-indigo-100 p-6">
@@ -243,7 +332,8 @@ export default function AstrologerDetailPage() {
             <MetricCard label="Completed" value={performance.performance.completedOrders} color="text-green-600" />
             <MetricCard label="Revenue" value={`₹${performance.performance.totalRevenue.toLocaleString()}`} color="text-purple-600" />
             <MetricCard label="Avg Rating" value={performance.performance.averageRating.toFixed(1)} color="text-yellow-600" />
-            <MetricCard label="Completion Rate" value={`${performance.performance.completionRate}%`} color="text-blue-600" />
+            {/* Added Gifts Count if available */}
+            <MetricCard label="Gifts Received" value={astrologer.stats?.totalGifts || 0} color="text-pink-600" />
           </div>
         </div>
       )}
