@@ -978,4 +978,10 @@ forceLogoutUser: async (data: {
   // Delete Admin
   deleteAdmin: (adminId: string) =>
     apiClient.delete(`/admin/admins/${adminId}`),
+
+  forceEndCall2: (sessionId: string) =>
+    apiClient.post(`/admin/orders/calls/${sessionId}/end`),
+
+  forceEndChat: (sessionId: string) =>
+    apiClient.post(`/admin/orders/chats/${sessionId}/end`),
 };

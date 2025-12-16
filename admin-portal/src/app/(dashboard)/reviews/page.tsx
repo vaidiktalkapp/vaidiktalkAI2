@@ -16,20 +16,21 @@ import {
   ChevronLeft, 
   ChevronRight, 
   AlertCircle,
-  MessageSquare,
-  MoreVertical
+  MessageSquare
 } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import { toast } from 'sonner';
 
+// ✅ Updated Interface to match Backend Schema
 interface Review {
   _id: string;
+  reviewId: string; // Added reviewId
   orderId: string;
   rating: number;
-  review: string;
-  reviewSubmittedAt: string;
-  reviewModerationStatus?: string; // Made optional to handle missing data
-  reviewModerationReason?: string;
+  reviewText: string; // Changed from review
+  createdAt: string; // Changed from reviewSubmittedAt
+  moderationStatus: string; // Changed from reviewModerationStatus
+  moderationReason?: string; // Changed from reviewModerationReason
   userId: {
     _id: string;
     name: string;
@@ -46,8 +47,8 @@ interface Review {
       total: number;
     };
   };
-  type: string;
-  actualDurationSeconds: number;
+  serviceType: string; // Changed from type
+  sessionDuration?: number; // Changed from actualDurationSeconds (check schema)
 }
 
 export default function ReviewModerationPage() {
@@ -60,7 +61,7 @@ export default function ReviewModerationPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Action State
-  const [selectedReview, setSelectedReview] = useState<string | null>(null);
+  const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
   const [actionType, setActionType] = useState<'reject' | 'flag' | null>(null);
   const [reason, setReason] = useState('');
 
@@ -95,6 +96,7 @@ export default function ReviewModerationPage() {
     }
   };
 
+  // ✅ Fixed: Pass reviewId instead of orderId
   const handleApprove = async (reviewId: string) => {
     try {
       await adminApi.approveReview(reviewId);
@@ -106,19 +108,19 @@ export default function ReviewModerationPage() {
   };
 
   const handleActionSubmit = async () => {
-    if (!selectedReview || !reason.trim() || !actionType) return;
+    if (!selectedReviewId || !reason.trim() || !actionType) return;
 
     try {
       if (actionType === 'reject') {
-        await adminApi.rejectReview(selectedReview, reason);
+        await adminApi.rejectReview(selectedReviewId, reason);
         toast.success('Review rejected successfully');
       } else {
-        await adminApi.flagReview(selectedReview, reason);
+        await adminApi.flagReview(selectedReviewId, reason);
         toast.success('Review flagged for manual check');
       }
       
       // Reset state
-      setSelectedReview(null);
+      setSelectedReviewId(null);
       setActionType(null);
       setReason('');
       refreshData();
@@ -132,15 +134,14 @@ export default function ReviewModerationPage() {
     fetchStats();
   };
 
-  const formatDuration = (seconds: number) => {
+  const formatDuration = (seconds?: number) => {
     if (!seconds) return '0 min';
     const mins = Math.floor(seconds / 60);
     return `${mins} min${mins !== 1 ? 's' : ''}`;
   };
 
-  // ✅ FIXED: Safety check for undefined status
   const canActOnReview = (status?: string) => {
-    if (!status) return true; // Default to allowing action if status is missing (assume pending)
+    if (!status) return true;
     const s = status.toLowerCase();
     return s === 'pending' || s === 'flagged';
   };
@@ -247,7 +248,8 @@ export default function ReviewModerationPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="font-semibold text-gray-900">{review.userId?.name || 'Unknown User'}</h4>
-                          <span className="text-xs text-gray-500">• {new Date(review.reviewSubmittedAt).toLocaleDateString()}</span>
+                          {/* ✅ Fixed: Use createdAt */}
+                          <span className="text-xs text-gray-500">• {new Date(review.createdAt).toLocaleDateString()} {new Date(review.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                         </div>
                         <div className="flex items-center gap-1 mt-1">
                           {[...Array(5)].map((_, i) => (
@@ -263,14 +265,16 @@ export default function ReviewModerationPage() {
                       </div>
                     </div>
 
-                    <Badge className={`capitalize ${getStatusColor(review.reviewModerationStatus)}`}>
-                      {review.reviewModerationStatus || 'Pending'}
+                    {/* ✅ Fixed: Use moderationStatus */}
+                    <Badge className={`capitalize ${getStatusColor(review.moderationStatus)}`}>
+                      {review.moderationStatus || 'Pending'}
                     </Badge>
                   </div>
 
+                  {/* ✅ Fixed: Use reviewText */}
                   <p className="mt-4 text-gray-700 leading-relaxed">
-                    {review.review ? (
-                      review.review
+                    {review.reviewText ? (
+                      review.reviewText
                     ) : (
                       <span className="italic text-gray-400">No written review provided.</span>
                     )}
@@ -279,17 +283,20 @@ export default function ReviewModerationPage() {
                   <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-gray-500 bg-gray-50 p-2 rounded w-fit">
                     <span>Order: <span className="font-mono font-medium">{review.orderId}</span></span>
                     <span>•</span>
-                    <span className="capitalize">{review.type || 'Service'}</span>
+                    {/* ✅ Fixed: Use serviceType */}
+                    <span className="capitalize">{review.serviceType?.replace('_', ' ') || 'Service'}</span>
                     <span>•</span>
-                    <span>{formatDuration(review.actualDurationSeconds)}</span>
+                    {/* ✅ Fixed: Use sessionDuration */}
+                    <span>{formatDuration(review.sessionDuration)}</span>
                   </div>
 
                   {/* Actions Section */}
-                  {canActOnReview(review.reviewModerationStatus) && (
+                  {canActOnReview(review.moderationStatus) && (
                     <div className="mt-6 flex flex-wrap gap-2">
                       <Button 
                         size="sm" 
-                        onClick={() => handleApprove(review.orderId || review._id)}
+                        // ✅ Fixed: Use reviewId
+                        onClick={() => handleApprove(review.reviewId)}
                         className="bg-green-600 hover:bg-green-700 text-white"
                       >
                         <CheckCircle size={16} className="mr-1.5" /> Approve
@@ -298,17 +305,19 @@ export default function ReviewModerationPage() {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => { setSelectedReview(review.orderId || review._id); setActionType('reject'); }}
+                        // ✅ Fixed: Use reviewId
+                        onClick={() => { setSelectedReviewId(review.reviewId); setActionType('reject'); }}
                         className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
                       >
                         <XCircle size={16} className="mr-1.5" /> Reject
                       </Button>
 
-                      {review.reviewModerationStatus !== 'flagged' && (
+                      {review.moderationStatus !== 'flagged' && (
                         <Button 
                           size="sm" 
                           variant="ghost"
-                          onClick={() => { setSelectedReview(review.orderId || review._id); setActionType('flag'); }}
+                          // ✅ Fixed: Use reviewId
+                          onClick={() => { setSelectedReviewId(review.reviewId); setActionType('flag'); }}
                           className="text-orange-600 hover:bg-orange-50"
                         >
                           <Flag size={16} className="mr-1.5" /> Flag
@@ -318,7 +327,7 @@ export default function ReviewModerationPage() {
                   )}
 
                   {/* Action Input Form */}
-                  {selectedReview === (review.orderId || review._id) && actionType && (
+                  {selectedReviewId === review.reviewId && actionType && (
                     <div className="mt-4 p-4 bg-gray-50 border rounded-lg animate-in fade-in slide-in-from-top-2">
                       <h5 className="text-sm font-medium text-gray-900 mb-2">
                         Reason for {actionType === 'reject' ? 'Rejection' : 'Flagging'}
@@ -336,7 +345,7 @@ export default function ReviewModerationPage() {
                         <Button 
                           size="sm" 
                           variant="ghost" 
-                          onClick={() => { setSelectedReview(null); setActionType(null); setReason(''); }}
+                          onClick={() => { setSelectedReviewId(null); setActionType(null); setReason(''); }}
                         >
                           Cancel
                         </Button>
@@ -419,7 +428,6 @@ function StatCard({ label, value, icon: Icon, active, onClick, color }: any) {
   );
 }
 
-// ✅ FIXED: Handle undefined status safely
 function getStatusColor(status?: string) {
   if (!status) return 'bg-gray-100 text-gray-700'; // Fallback
   

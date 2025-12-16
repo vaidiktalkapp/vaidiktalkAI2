@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
-import { Phone, Video, Timer, Activity } from 'lucide-react';
+import { Phone, Video, Timer, Activity, Play, Square } from 'lucide-react'; // Added Square icon for stop
 import { DataTable, Column } from '@/components/shared/DataTable';
 import { toast } from 'sonner';
 
@@ -29,8 +29,9 @@ export default function CallsPage() {
   const { data: activeCalls, isLoading: isLoadingActive } = useQuery({
     queryKey: ['active-calls'],
     queryFn: async () => {
+      // Ensure we get the 'orders' array from the response data structure
       const response = await adminApi.getAllCalls({ status: 'active', limit: 50 });
-      return response.data.data.orders; // API returns 'orders' key but contains CallSessions
+      return response.data.data.orders; 
     },
     refetchInterval: 5000, 
   });
@@ -44,13 +45,17 @@ export default function CallsPage() {
     },
   });
 
+  // ✅ Mutation using forceEndCall2
   const endCallMutation = useMutation({
-    mutationFn: (sessionId: string) => adminApi.forceEndCall(sessionId),
+    mutationFn: (sessionId: string) => adminApi.forceEndCall2(sessionId),
     onSuccess: () => {
       toast.success('Call ended successfully');
       queryClient.invalidateQueries({ queryKey: ['active-calls'] });
+      queryClient.invalidateQueries({ queryKey: ['call-history'] });
     },
-    onError: () => toast.error('Failed to end call'),
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to end call');
+    },
   });
 
   const columns: Column<CallSession>[] = [
@@ -131,7 +136,12 @@ export default function CallsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeCalls?.map((call: any) => (
-              <ActiveCallCard key={call._id} call={call} onEnd={() => endCallMutation.mutate(call.sessionId)} />
+              <ActiveCallCard 
+                key={call._id} 
+                call={call} 
+                onEnd={() => endCallMutation.mutate(call.sessionId)} 
+                isEnding={endCallMutation.isPending && endCallMutation.variables === call.sessionId}
+              />
             ))}
           </div>
         )}
@@ -157,7 +167,7 @@ export default function CallsPage() {
   );
 }
 
-function ActiveCallCard({ call, onEnd }: { call: any; onEnd: () => void }) {
+function ActiveCallCard({ call, onEnd, isEnding }: { call: any; onEnd: () => void; isEnding: boolean }) {
   const startTime = new Date(call.createdAt).getTime();
   const durationMin = Math.floor((Date.now() - startTime) / 60000);
 
@@ -168,8 +178,8 @@ function ActiveCallCard({ call, onEnd }: { call: any; onEnd: () => void }) {
       </div>
       <div className="flex items-center gap-4 mb-4">
         <div className="flex -space-x-3">
-          <img src={call.userId?.profileImage || '/placeholder.png'} className="w-10 h-10 rounded-full border-2 border-white bg-gray-200" alt="User" />
-          <img src={call.astrologerId?.profilePicture || '/placeholder.png'} className="w-10 h-10 rounded-full border-2 border-white bg-purple-200" alt="Astrologer" />
+          <img src={call.userId?.profileImage || '/placeholder.png'} className="w-10 h-10 rounded-full border-2 border-white bg-gray-200 object-cover" alt="User" />
+          <img src={call.astrologerId?.profilePicture || '/placeholder.png'} className="w-10 h-10 rounded-full border-2 border-white bg-purple-200 object-cover" alt="Astrologer" />
         </div>
         <div>
           <p className="text-sm font-bold text-gray-900">{call.astrologerId?.name}</p>
@@ -188,9 +198,11 @@ function ActiveCallCard({ call, onEnd }: { call: any; onEnd: () => void }) {
       </div>
       <button 
         onClick={onEnd}
-        className="w-full py-2 bg-red-50 text-red-700 text-sm font-medium rounded-lg hover:bg-red-100 transition flex items-center justify-center gap-1"
+        disabled={isEnding}
+        className="w-full py-2 bg-red-50 text-red-700 text-sm font-medium rounded-lg hover:bg-red-100 transition flex items-center justify-center gap-2 disabled:opacity-50"
       >
-        Force End
+        <Square size={14} fill="currentColor" />
+        {isEnding ? 'Ending...' : 'Force End Call'}
       </button>
     </div>
   );
