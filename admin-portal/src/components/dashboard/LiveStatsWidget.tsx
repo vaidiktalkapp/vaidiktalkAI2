@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
-import { TrendingUp, Users, Video, DollarSign, Loader2 } from 'lucide-react';
+import { TrendingUp, Users, Video, IndianRupee, Loader2 } from 'lucide-react';
 
 export default function LiveStatsWidget() {
   // Polling every 10 seconds for "near-real-time" feel without complex socket setup for simple stats
@@ -47,7 +47,7 @@ export default function LiveStatsWidget() {
     {
       label: 'Revenue Today',
       value: `₹${(data?.revenue?.today || 0).toLocaleString()}`,
-      icon: DollarSign,
+      icon: IndianRupee,
       color: 'text-purple-600',
       bg: 'bg-purple-50',
       trend: 'Verified'

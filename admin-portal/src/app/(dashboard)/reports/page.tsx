@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import { usePermission } from '@/hooks/use-permission';
 import { 
-  TrendingUp, Users, DollarSign, ShoppingCart, 
+  TrendingUp, Users, IndianRupee, ShoppingCart, 
   Download, Calendar, BarChart3 
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -135,7 +135,7 @@ export default function ReportsPage() {
           {/* Revenue Summary */}
           <ReportSection
             title="Revenue Overview"
-            icon={DollarSign}
+            icon={IndianRupee}
             color="green"
             exportAction={() => handleExport('revenue')}
           >

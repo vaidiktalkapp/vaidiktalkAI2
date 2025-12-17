@@ -26,7 +26,7 @@ import {
   LucideIcon,
   RefreshCw,
   Gift,
-  DollarSign,
+  IndianRupee,
   TrendingUp,
   RotateCcw
 } from 'lucide-react';
@@ -130,7 +130,7 @@ export default function Sidebar() {
       category: 'Finance',
       items: [
         {
-          icon: DollarSign,
+          icon: IndianRupee,
           label: 'Transactions',
           href: '/payments/transactions',
           requiredPermission: 'view_transactions',

@@ -6,7 +6,7 @@ import { adminApi } from '@/lib/api';
 import { DataTable, Column } from '@/components/shared/DataTable';
 import { FilterBar } from '@/components/shared/FilterBar';
 import { usePermission } from '@/hooks/use-permission';
-import { DollarSign, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
+import { IndianRupee, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
 
 interface Transaction {
   _id: string;
@@ -140,7 +140,7 @@ export default function TransactionsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard label="Total Recharged" value={`₹${(stats?.totalRecharge || 0).toLocaleString()}`} icon={TrendingUp} color="text-green-600" />
         <StatCard label="Total Spent" value={`₹${(stats?.totalSpent || 0).toLocaleString()}`} icon={TrendingDown} color="text-red-600" />
-        <StatCard label="Bonuses Credited" value={`₹${(stats?.totalBonusCredited || 0).toLocaleString()}`} icon={DollarSign} color="text-purple-600" />
+        <StatCard label="Bonuses Credited" value={`₹${(stats?.totalBonusCredited || 0).toLocaleString()}`} icon={IndianRupee} color="text-purple-600" />
         <StatCard label="Refunds Processed" value={`₹${(stats?.totalOrderRefunds || 0).toLocaleString()}`} icon={RefreshCw} color="text-blue-600" />
       </div>
 

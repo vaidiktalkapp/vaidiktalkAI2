@@ -8,7 +8,7 @@ import {
   ArrowLeft,
   Users,
   Clock,
-  DollarSign,
+  IndianRupee,
   Heart,
   MessageCircle,
   Gift,
@@ -18,7 +18,9 @@ import {
   Ban,
   Eye,
   TrendingUp,
-  PhoneOff
+  PhoneOff,
+  Download,
+  PlayCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -40,16 +42,6 @@ export default function StreamDetailPage() {
       return response.data.data;
     },
     refetchInterval: autoRefresh ? 3000 : false, // Refresh every 3 seconds
-  });
-
-  // Fetch stream analytics
-  const { data: analytics } = useQuery({
-    queryKey: ['stream-analytics', streamId],
-    queryFn: async () => {
-      const response = await adminApi.getStreamAnalytics(streamId);
-      return response.data.data;
-    },
-    enabled: streamData?.stream?.status === 'ended',
   });
 
   // Force end stream mutation
@@ -251,6 +243,50 @@ export default function StreamDetailPage() {
         </div>
       </div>
 
+      {/* ✅ NEW: Stream Recordings Section */}
+      {stream?.recordingFiles && stream.recordingFiles.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Video size={20} className="text-red-500" />
+            Stream Recordings
+          </h3>
+          <div className="grid gap-4">
+            {stream.recordingFiles.map((url: string, index: number) => (
+              <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600">
+                    <PlayCircle size={24} />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Recording Part {index + 1}</p>
+                    <p className="text-xs text-gray-500 truncate max-w-md">{url}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <a 
+                    href={url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center px-3 py-1.5 bg-white text-gray-700 border border-gray-300 rounded hover:bg-gray-50 text-sm font-medium"
+                  >
+                    <PlayCircle size={16} className="mr-1.5" />
+                    Play
+                  </a>
+                  <a 
+                    href={url} 
+                    download
+                    className="flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded hover:bg-indigo-100 text-sm font-medium"
+                  >
+                    <Download size={16} className="mr-1.5" />
+                    Download
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg shadow p-4">
@@ -286,7 +322,7 @@ export default function StreamDetailPage() {
               <p className="text-sm text-gray-600">Revenue</p>
               <p className="text-2xl font-bold text-purple-600">₹{stream?.totalRevenue || 0}</p>
             </div>
-            <DollarSign className="text-purple-600" size={32} />
+            <IndianRupee className="text-purple-600" size={32} />
           </div>
         </div>
       </div>
@@ -322,13 +358,11 @@ export default function StreamDetailPage() {
         </div>
       </div>
 
-      {/* ✅ UPDATED: Current Call Info with Action Button */}
+      {/* Current Call Info with Action Button */}
       {stream?.currentCall?.isOnCall && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
           <div className="flex justify-between items-start mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Current Call</h3>
-            
-            {/* End Call Button */}
             <button
               onClick={handleEndCall}
               disabled={forceEndCallMutation.isPending}
@@ -370,7 +404,6 @@ export default function StreamDetailPage() {
             <div>
               <p className="text-sm text-gray-600">Duration</p>
               <span className="font-semibold text-gray-900 font-mono">
-                {/* Calculate duration simply based on start time */}
                 {stream.currentCall.startedAt ? getLiveDuration(stream.currentCall.startedAt) : '0:00'}
               </span>
             </div>
@@ -417,26 +450,26 @@ export default function StreamDetailPage() {
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {viewers
-  .filter((viewer: any) => viewer.isActive)
-  .slice(0, 20)
-  .map((viewer: any) => (
-    <div key={viewer.id} className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
-      <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center overflow-hidden">
-        {viewer.userId?.profileImage ? (
-          <img src={viewer.userId.profileImage} alt={viewer.userId.name} className="w-full h-full object-cover" />
-        ) : (
-          <span className="text-purple-600 text-xs font-semibold">
-            {viewer.userId?.name?.charAt(0)}
-          </span>
-        )}
-      </div>
-      <span className="text-sm text-gray-900 truncate">{viewer.userId?.name}</span>
-    </div>
-  ))}
+            .filter((viewer: any) => viewer.isActive)
+            .slice(0, 20)
+            .map((viewer: any) => (
+              <div key={viewer.id} className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
+                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center overflow-hidden">
+                  {viewer.userId?.profileImage ? (
+                    <img src={viewer.userId.profileImage} alt={viewer.userId.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-purple-600 text-xs font-semibold">
+                      {viewer.userId?.name?.charAt(0)}
+                    </span>
+                  )}
+                </div>
+                <span className="text-sm text-gray-900 truncate">{viewer.userId?.name}</span>
+              </div>
+            ))}
         </div>
       </div>
 
-      {/* Call History */}
+      {/* Call History (With Recording Column) */}
       {calls.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Call History ({calls.length})</h3>
@@ -450,23 +483,38 @@ export default function StreamDetailPage() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Charge</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recording</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {calls.map((call: any) => (
-  <tr key={call.id}>
-    <td className="px-4 py-3 text-sm text-gray-900">{call.userId?.name}</td>
-    <td className="px-4 py-3 text-sm text-gray-600 capitalize">{call.callType}</td>
-    <td className="px-4 py-3 text-sm text-gray-600 capitalize">{call.callMode}</td>
-    <td className="px-4 py-3 text-sm text-gray-900">{formatDuration(call.duration || 0)}</td>
-    <td className="px-4 py-3 text-sm text-gray-900">₹{call.totalCharge || 0}</td>
-    <td className="px-4 py-3">
-      <span className={`px-2 py-1 text-xs font-semibold rounded ${call.status === 'completed' ? 'bg-green-100 text-green-800' : call.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
-        {call.status}
-      </span>
-    </td>
-  </tr>
-))}
+                  <tr key={call.id}>
+                    <td className="px-4 py-3 text-sm text-gray-900">{call.userId?.name}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 capitalize">{call.callType}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 capitalize">{call.callMode}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{formatDuration(call.duration || 0)}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">₹{call.totalCharge || 0}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 text-xs font-semibold rounded ${call.status === 'completed' ? 'bg-green-100 text-green-800' : call.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
+                        {call.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {stream?.recordingFiles?.length > 0 ? (
+                        <a 
+                          href={stream.recordingFiles[0]} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="text-indigo-600 hover:text-indigo-800 flex items-center"
+                        >
+                          <PlayCircle size={14} className="mr-1" /> View Stream
+                        </a>
+                      ) : (
+                        <span className="text-gray-400 text-xs">Not available</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

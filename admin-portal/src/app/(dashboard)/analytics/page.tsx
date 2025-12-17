@@ -7,7 +7,7 @@ import {
   LineChart, Line, BarChart, Bar, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ComposedChart 
 } from 'recharts';
-import { Calendar, Loader2, AlertCircle, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { Calendar, Loader2, AlertCircle, TrendingUp, TrendingDown, IndianRupee } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function AnalyticsPage() {
@@ -68,7 +68,7 @@ export default function AnalyticsPage() {
           value={periodStats.gross} 
           subtext="Total platform share (40%)"
           color="text-indigo-600"
-          icon={DollarSign}
+          icon={IndianRupee}
         />
         <SummaryCard 
           label="Bonus Deductions" 

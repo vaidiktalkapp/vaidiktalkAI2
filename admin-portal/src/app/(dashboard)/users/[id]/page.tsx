@@ -6,11 +6,10 @@ import { adminApi } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
 import { 
   ArrowLeft, User as UserIcon, Wallet, Activity, ShoppingCart, 
-  DollarSign, Star 
+  IndianRupee, Wifi, WifiOff 
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/use-permission';
-import type { User } from '@/types/user'; // Removed UserActivity import
 import Link from 'next/link';
 
 export default function UserDetailPage() {
@@ -29,15 +28,18 @@ export default function UserDetailPage() {
   const [walletReason, setWalletReason] = useState('');
 
   // Fetch User Details
-  const { data: user, isLoading } = useQuery<any>({ // using any to accommodate the stats structure
+  const { data: user, isLoading } = useQuery<any>({
     queryKey: ['user-detail', userId],
     queryFn: async () => {
       const response = await adminApi.getUserDetails(userId);
+      // 🔍 DEBUG LOG: Check exactly what the API returns
+      console.log('🔍 [API DEBUG] Raw Response:', response.data); 
+      console.log('🔍 [API DEBUG] User Data:', response.data.data);
+      console.log('🔍 [API DEBUG] isOnline Flag:', response.data.data?.isOnline);
       return response.data.data;
     },
+    refetchInterval: 5000, 
   });
-
-  // Removed "Fetch User Activity" query as requested
 
   // Fetch Transactions
   const { data: transactions } = useQuery({
@@ -99,6 +101,9 @@ export default function UserDetailPage() {
     return <div className="p-12 text-center text-gray-500">User not found</div>;
   }
 
+  // 🔍 RENDER DEBUG: Check what React is actually seeing
+  console.log('👤 [RENDER DEBUG] User Object:', user);
+
   return (
     <div className="space-y-6 pb-12">
       {/* Header */}
@@ -115,20 +120,40 @@ export default function UserDetailPage() {
       {/* User Profile Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-start gap-6">
-          {/* Profile Image */}
-          <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-3xl font-bold flex-shrink-0 overflow-hidden">
-            {user.profileImage ? (
-              <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
-            ) : (
-              user.name?.charAt(0).toUpperCase()
-            )}
+          {/* Profile Image with Online Indicator */}
+          <div className="relative">
+            <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-3xl font-bold flex-shrink-0 overflow-hidden">
+              {user.profileImage ? (
+                <img src={user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                user.name?.charAt(0).toUpperCase()
+              )}
+            </div>
+            {/* ✅ Online Status Dot */}
+            <div 
+              className={`absolute bottom-1 right-1 w-6 h-6 rounded-full border-4 border-white flex items-center justify-center ${
+                user.isOnline ? 'bg-green-500' : 'bg-gray-300'
+              }`} 
+              title={user.isOnline ? 'Online' : 'Offline'}
+            />
           </div>
 
           {/* User Info */}
           <div className="flex-1">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
+                  {/* ✅ Online Status Badge */}
+                  <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                    user.isOnline 
+                      ? 'bg-green-50 text-green-700 border-green-200' 
+                      : 'bg-gray-50 text-gray-600 border-gray-200'
+                  }`}>
+                    {user.isOnline ? <Wifi size={12} /> : <WifiOff size={12} />}
+                    {user.isOnline ? 'Online' : 'Offline'}
+                  </div>
+                </div>
                 <p className="text-gray-600 mt-1">{user.phoneNumber}</p>
                 {user.email && <p className="text-gray-500 text-sm">{user.email}</p>}
               </div>
@@ -180,7 +205,7 @@ export default function UserDetailPage() {
         )}
       </div>
 
-      {/* Stats Grid - Reduced to 2 columns since Activity is removed */}
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <StatsCard 
           icon={Wallet} 
@@ -188,14 +213,18 @@ export default function UserDetailPage() {
           items={[
             { label: 'Current Balance', value: `₹${user.wallet?.balance ?? 0}` },
             { label: 'Total Spent', value: `₹${user.stats?.totalSpent ?? 0}` },
-            // Removed Total Recharged as it's not provided by API currently
           ]}
         />
-        {/* Removed Activity StatsCard */}
         <StatsCard 
           icon={UserIcon} 
           title="Account Details" 
           items={[
+            // ✅ Connection Status Line
+            { 
+              label: 'Connection Status', 
+              value: user.isOnline ? 'Online Now' : 'Offline', 
+              valueClass: user.isOnline ? 'text-green-600 font-bold' : 'text-gray-500' 
+            },
             { label: 'Status', value: user.status, valueClass: getStatusColor(user.status) },
             { label: 'Verified', value: user.isPhoneVerified ? 'Yes' : 'No' },
             { label: 'Registration', value: user.registrationMethod },
@@ -208,7 +237,7 @@ export default function UserDetailPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <DollarSign size={20} /> Recent Transactions
+            <IndianRupee size={20} /> Recent Transactions
           </h3>
           <Link href={`/users/${userId}/transactions`} className="text-indigo-600 hover:underline text-sm">
             View All
@@ -266,8 +295,6 @@ export default function UserDetailPage() {
           <p className="text-gray-500 text-sm">No orders yet</p>
         )}
       </div>
-
-      {/* Removed Favorite Astrologers section as it relied on missing activity data */}
 
       {/* Status Update Modal */}
       {showStatusModal && (

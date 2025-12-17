@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
-import { TrendingUp, Users, DollarSign, Video, Award } from 'lucide-react';
+import { TrendingUp, Users, IndianRupee, Video, Award } from 'lucide-react';
 
 export default function StreamAnalyticsPage() {
   // Fetch top streams
@@ -66,7 +66,7 @@ export default function StreamAnalyticsPage() {
               <p className="text-sm text-gray-600">Total Revenue</p>
               <p className="text-2xl font-bold text-green-600">₹{(stats?.totalRevenue || 0).toLocaleString()}</p>
             </div>
-            <DollarSign className="text-green-600" size={32} />
+            <IndianRupee className="text-green-600" size={32} />
           </div>
         </div>
         <div className="bg-white rounded-lg shadow p-4">
@@ -126,7 +126,7 @@ export default function StreamAnalyticsPage() {
       {/* Top Earning Astrologers */}
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <DollarSign className="mr-2 text-green-600" size={24} />
+          <IndianRupee className="mr-2 text-green-600" size={24} />
           Top Earning Astrologers (Livestreams)
         </h3>
         <div className="overflow-x-auto">

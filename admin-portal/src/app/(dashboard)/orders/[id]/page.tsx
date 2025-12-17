@@ -5,8 +5,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
 import { 
-  ArrowLeft, User, Star, Clock, DollarSign, RefreshCw, XCircle, 
-  Video, MessageCircle, Phone, FileText, CheckCircle, AlertCircle 
+  ArrowLeft, User, Star, Clock, IndianRupee, RefreshCw, XCircle, 
+  Video, MessageCircle, Phone, FileText, CheckCircle, AlertCircle, PlayCircle 
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/use-permission';
@@ -168,7 +168,7 @@ export default function OrderDetailPage() {
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard label="Total Amount" value={`₹${order.totalAmount.toLocaleString()}`} icon={DollarSign} color="text-green-600" />
+          <StatCard label="Total Amount" value={`₹${order.totalAmount.toLocaleString()}`} icon={IndianRupee} color="text-green-600" />
           <StatCard label="Rate/Min" value={`₹${order.ratePerMinute}`} icon={Clock} />
           <StatCard label="Duration" value={formatDuration(order.actualDurationSeconds)} icon={Clock} />
           <StatCard label="Payment" value={order.payment.status} icon={CheckCircle} color={getPaymentStatusColor(order.payment.status)} />
@@ -178,7 +178,7 @@ export default function OrderDetailPage() {
       {/* Payment Breakdown */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <DollarSign size={20} /> Payment Breakdown
+          <IndianRupee size={20} /> Payment Breakdown
         </h3>
         <div className="grid md:grid-cols-3 gap-6">
           <PaymentDetail label="Held Amount" value={`₹${order.payment.heldAmount}`} timestamp={order.payment.heldAt} />
@@ -192,7 +192,7 @@ export default function OrderDetailPage() {
         )}
       </div>
 
-      {/* Session History */}
+      {/* Session History (With Enhanced Recording Link) */}
       {order.sessionHistory && order.sessionHistory.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Session History ({order.sessionHistory.length})</h3>
@@ -222,10 +222,18 @@ export default function OrderDetailPage() {
                     <td className="px-4 py-3">₹{session.chargedAmount}</td>
                     <td className="px-4 py-3">
                       {session.recordingUrl ? (
-                        <a href={session.recordingUrl} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">
+                        <a 
+                          href={session.recordingUrl} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium"
+                        >
+                          <PlayCircle size={16} />
                           View
                         </a>
-                      ) : '—'}
+                      ) : (
+                        <span className="text-gray-400 text-xs italic">No Recording</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -264,13 +272,13 @@ export default function OrderDetailPage() {
             <AlertCircle size={20} /> Refund Request
           </h3>
           <div className="grid md:grid-cols-2 gap-4 text-sm">
-            <div><span className="font-medium">Status:</span> <span className="capitalize">{order.refundRequest.status}</span></div>
-            <div><span className="font-medium">Requested:</span> {new Date(order.refundRequest.requestedAt).toLocaleString()}</div>
-            <div><span className="font-medium">Reason:</span> {order.refundRequest.reason}</div>
-            {order.refundRequest.refundAmount && <div><span className="font-medium">Amount:</span> ₹{order.refundRequest.refundAmount}</div>}
-            {order.refundRequest.adminNotes && <div className="col-span-2"><span className="font-medium">Admin Notes:</span> {order.refundRequest.adminNotes}</div>}
-            {order.refundRequest.rejectionReason && <div className="col-span-2 text-red-700"><span className="font-medium">Rejection:</span> {order.refundRequest.rejectionReason}</div>}
-          </div>
+              <div><span className="font-medium">Status:</span> <span className="capitalize">{order.refundRequest.status}</span></div>
+              <div><span className="font-medium">Requested:</span> {new Date(order.refundRequest.requestedAt).toLocaleString()}</div>
+              <div><span className="font-medium">Reason:</span> {order.refundRequest.reason}</div>
+              {order.refundRequest.refundAmount && <div><span className="font-medium">Amount:</span> ₹{order.refundRequest.refundAmount}</div>}
+              {order.refundRequest.adminNotes && <div className="col-span-2"><span className="font-medium">Admin Notes:</span> {order.refundRequest.adminNotes}</div>}
+              {order.refundRequest.rejectionReason && <div className="col-span-2 text-red-700"><span className="font-medium">Rejection:</span> {order.refundRequest.rejectionReason}</div>}
+            </div>
         </div>
       )}
 

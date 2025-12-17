@@ -11,18 +11,6 @@ export default function NotificationManagePage() {
   const [alertLoading, setAlertLoading] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
 
-  const handleTestNotification = async () => {
-    setTestLoading(true);
-    try {
-      await adminApi.testNotification();
-      toast.success('✅ Test notification sent to all connected admins!');
-    } catch (error: any) {
-      toast.error('❌ Failed to send test notification');
-      console.error(error.response?.data || error.message);
-    } finally {
-      setTestLoading(false);
-    }
-  };
 
   const handleSystemAlert = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,20 +81,6 @@ export default function NotificationManagePage() {
             </div>
           </div>
 
-          {/* Test Notification */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Test Notification</h2>
-            <p className="text-sm text-gray-600 mb-4">
-              Send a test notification to all connected admin devices
-            </p>
-            <button
-              onClick={handleTestNotification}
-              disabled={testLoading}
-              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-            >
-              {testLoading ? 'Sending...' : 'Send Test Notification'}
-            </button>
-          </div>
         </div>
 
         {/* System Alert */}
@@ -141,33 +115,6 @@ export default function NotificationManagePage() {
             </form>
           </div>
 
-          {/* Notification Templates */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Common Templates</h2>
-            
-            <div className="space-y-2">
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm font-medium text-gray-900">Maintenance Notice</p>
-                <p className="text-xs text-gray-600 mt-1">
-                  "System maintenance scheduled for [time]. Services may be temporarily unavailable."
-                </p>
-              </div>
-
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm font-medium text-gray-900">New Feature Launch</p>
-                <p className="text-xs text-gray-600 mt-1">
-                  "🎉 New feature available! Check out [feature name] in your dashboard."
-                </p>
-              </div>
-
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm font-medium text-gray-900">Promotion Announcement</p>
-                <p className="text-xs text-gray-600 mt-1">
-                  "Special offer! Get [discount]% off on all services. Limited time only!"
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

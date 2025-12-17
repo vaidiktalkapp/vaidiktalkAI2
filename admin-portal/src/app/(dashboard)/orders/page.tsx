@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import Link from 'next/link';
-import { Eye, DollarSign, Phone, MessageCircle, Video, Clock } from 'lucide-react';
+import { Eye, IndianRupee, Phone, MessageCircle, Video, Clock } from 'lucide-react';
 import { DataTable, Column } from '@/components/shared/DataTable';
 import { FilterBar } from '@/components/shared/FilterBar';
 import { usePermission } from '@/hooks/use-permission';
@@ -121,7 +121,7 @@ export default function OrdersPage() {
       header: 'Amount',
       cell: (order) => (
         <span className="font-medium text-green-700 flex items-center text-sm">
-          <DollarSign size={12} /> {order.totalAmount}
+          <IndianRupee size={12} /> {order.totalAmount}
         </span>
       )
     },

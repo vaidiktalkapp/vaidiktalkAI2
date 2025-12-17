@@ -3,7 +3,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
-import { TrendingUp, Users, Video, DollarSign } from 'lucide-react';
+import { TrendingUp, Users, Video, IndianRupee } from 'lucide-react';
 
 export default function LiveStatsWidget() {
   const { data: liveStats } = useQuery({
@@ -77,7 +77,7 @@ export default function LiveStatsWidget() {
               {liveStats?.ordersToday || 0} orders
             </p>
           </div>
-          <DollarSign className="text-purple-500" size={40} />
+          <IndianRupee className="text-purple-500" size={40} />
         </div>
       </div>
     </div>

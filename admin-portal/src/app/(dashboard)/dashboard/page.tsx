@@ -6,7 +6,7 @@ import { adminApi } from '@/lib/api';
 import { usePermission } from '@/hooks/use-permission';
 import ActivityFeed from '@/components/dashboard/ActivityFeed';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Loader2, Users, DollarSign, Activity, ShoppingCart } from 'lucide-react';
+import { Loader2, Users, IndianRupee, Activity, ShoppingCart } from 'lucide-react';
 
 export default function DashboardPage() {
   const { user } = usePermission();
@@ -60,7 +60,7 @@ export default function DashboardPage() {
           label="Net Revenue"
           value={`₹${analytics?.financials?.netRevenue?.toLocaleString() || 0}`}
           subtext="Real earnings (Commission + Penalties - Bonus)"
-          icon={DollarSign}
+          icon={IndianRupee}
           color="text-green-600"
           bg="bg-green-50"
           loading={isLoadingStats}
