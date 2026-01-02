@@ -199,6 +199,9 @@ export const adminApi = {
   
   refundOrder: (orderId: string, data: any) =>
     apiClient.post(`/admin/orders/${orderId}/refund`, data),
+
+  refundOrderDirect: (orderId: string, data: { amount: number; reason: string }) =>
+    apiClient.post(`/admin/orders/${orderId}/refund/direct`, data),
   
   cancelOrder: (orderId: string, reason: string) =>
     apiClient.patch(`/admin/orders/${orderId}/cancel`, { reason }),
@@ -984,4 +987,27 @@ forceLogoutUser: async (data: {
 
   forceEndChat: (sessionId: string) =>
     apiClient.post(`/admin/orders/chats/${sessionId}/end`),
+
+  // ==================== NEW PAYMENT FEATURES ====================
+
+  /**
+   * Refund a Razorpay transaction directly (Reverses wallet & Removes bonus)
+   */
+  refundRazorpayTransaction: (transactionId: string, reason: string) =>
+    apiClient.post(`/admin/payments/transactions/${transactionId}/refund-razorpay`, { reason }),
+
+  /**
+   * Manually Manage User Bonus (Add/Deduct)
+   */
+  manageUserBonus: (data: { userId: string; amount: number; action: 'add' | 'deduct'; reason: string }) =>
+    apiClient.post('/admin/payments/bonus/manage', data),
+
+  getAllRechargePacks: () => 
+    apiClient.get('/admin/payments/recharge-packs'),
+  
+  saveRechargePack: (data: any) => 
+    apiClient.post('/admin/payments/recharge-packs', data),
+  
+  deleteRechargePack: (amount: number) => 
+    apiClient.delete(`/admin/payments/recharge-packs/${amount}`),
 };

@@ -32,7 +32,7 @@ export default function DirectOrderRefundPage() {
   };
 
   const refundMutation = useMutation({
-    mutationFn: () => adminApi.refundOrder(order._id, { 
+    mutationFn: () => adminApi.refundOrderDirect(order.orderId, { 
       amount: parseFloat(amount), 
       reason 
     }),

@@ -94,30 +94,6 @@ export default function OrdersPage() {
       cell: (order) => <p className="text-sm text-gray-700">{order.astrologerId?.name || 'N/A'}</p>
     },
     {
-      header: 'Type',
-      cell: (order) => {
-        const icons: any = { 
-          chat: <MessageCircle size={14} className="text-blue-500" />, 
-          call: <Phone size={14} className="text-green-500" />, 
-          video_call: <Video size={14} className="text-purple-500" /> 
-        };
-        return (
-          <span className="capitalize flex items-center gap-2 text-sm">
-            {icons[order.type]} {order.type.replace('_', ' ')}
-          </span>
-        );
-      }
-    },
-    {
-      header: 'Duration',
-      cell: (order) => (
-        <div className="flex items-center gap-1 text-xs text-gray-600">
-          <Clock size={12} />
-          {formatDuration(order.duration)}
-        </div>
-      )
-    },
-    {
       header: 'Amount',
       cell: (order) => (
         <span className="font-medium text-green-700 flex items-center text-sm">

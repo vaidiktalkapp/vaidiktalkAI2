@@ -92,7 +92,7 @@ export default function Sidebar() {
       ],
     },
     {
-      category: 'Orders & Support',
+      category: 'Orders',
       items: [
         { 
           icon: ShoppingCart, 
@@ -112,18 +112,6 @@ export default function Sidebar() {
           href: '/orders/chats', 
           requiredPermission: 'view_orders' 
         },
-        {
-          icon: ShoppingBag,
-          label: 'Shopify Orders',
-          href: '/shopify-orders',
-          requiredPermission: 'view_shopify',
-        },
-        {
-          icon: Sparkles,
-          label: 'Remedies',
-          href: '/remedies',
-          requiredPermission: 'view_remedies',
-        },
       ],
     },
     {
@@ -131,7 +119,7 @@ export default function Sidebar() {
       items: [
         {
           icon: IndianRupee,
-          label: 'Transactions',
+          label: 'Transactions & Refunds',
           href: '/payments/transactions',
           requiredPermission: 'view_transactions',
         },
@@ -140,12 +128,6 @@ export default function Sidebar() {
           label: 'Payouts',
           href: '/payments/payouts',
           requiredPermission: 'manage_payouts', // changed from view_payouts to match typical admin needs
-        },
-        {
-          icon: RefreshCw,
-          label: 'Wallet Refunds',
-          href: '/payments/wallet-refunds',
-          requiredPermission: 'manage_refunds',
         },
         {
           icon: RotateCcw,
@@ -163,7 +145,7 @@ export default function Sidebar() {
           icon: Wallet,
           label: 'Recharge Packs',
           href: '/offers/recharge-packs',
-          requiredPermission: 'manage_payments',
+          requiredPermission: 'view_transactions',
         },
       ],
     },
@@ -210,12 +192,6 @@ export default function Sidebar() {
           label: 'Activity Logs', 
           href: '/activity-logs', 
           requiredPermission: 'view_logs' 
-        },
-        {
-          icon: Server,
-          label: 'System Health',
-          href: '/system-health',
-          requiredPermission: 'view_system_health',
         },
       ],
     },
