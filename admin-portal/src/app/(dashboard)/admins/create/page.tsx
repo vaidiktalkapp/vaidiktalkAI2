@@ -130,6 +130,7 @@ export default function CreateAdminPage() {
                 name="phoneNumber"
                 value={formData.phoneNumber}
                 onChange={handleChange}
+                maxLength={14} // Added limit here
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="+91 9876543210"
               />
