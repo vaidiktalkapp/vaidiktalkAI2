@@ -1010,4 +1010,44 @@ forceLogoutUser: async (data: {
   
   deleteRechargePack: (amount: number) => 
     apiClient.delete(`/admin/payments/recharge-packs/${amount}`),
+
+// --- MODERATION: REPORTS ---
+  
+  /** * Get all safety reports. 
+   * Filter by 'reporterRole' to see who is complaining (user vs astrologer).
+   */
+  getModerationReports: (params: { 
+    page?: number; 
+    limit?: number; 
+    status?: 'pending' | 'resolved' | 'dismissed';
+    reporterRole?: 'user' | 'astrologer'; // NEW: Filter by who sent the report
+  }) =>
+    apiClient.get('/admin/moderation/reports', { params }),
+
+  updateReportStatus: (reportId: string, status: 'resolved' | 'dismissed') =>
+    apiClient.patch(`/admin/moderation/reports/${reportId}/status`, { status }),
+
+  // --- MODERATION: BLOCKING ---
+
+  /** * Get Blocked Users 
+   * Returns: { users: User[], total: number } 
+   */
+  getBlockedUsers: (params: { page?: number; limit?: number; search?: string }) =>
+    apiClient.get('/admin/users', { params: { ...params, status: 'blocked' } }),
+
+  /** * Get Blocked Astrologers 
+   * Returns: { astrologers: Astrologer[], total: number } 
+   */
+  getBlockedAstrologers: (params: { page?: number; limit?: number; search?: string }) =>
+    apiClient.get('/admin/astrologers', { params: { ...params, status: 'blocked' } }),
+
+  // --- ACTIONS ---
+
+  // // Block/Unblock User
+  // updateUserStatus: (userId: string, status: 'active' | 'blocked', reason?: string) =>
+  //   apiClient.patch(`/admin/users/${userId}/status`, { status, reason }),
+
+  // // Block/Unblock Astrologer
+  // updateAstrologerStatus: (astrologerId: string, status: 'active' | 'blocked', reason?: string) =>
+  //   apiClient.patch(`/admin/astrologers/${astrologerId}/status`, { status, reason }),
 };

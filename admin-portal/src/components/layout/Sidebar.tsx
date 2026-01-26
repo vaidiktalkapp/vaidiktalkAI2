@@ -18,17 +18,15 @@ import {
   ClipboardList,
   LogOut,
   Bell,
-  ShoppingBag,
-  Sparkles,
-  Server,
   Phone,
   MessageCircle,
   LucideIcon,
-  RefreshCw,
   Gift,
   IndianRupee,
   TrendingUp,
-  RotateCcw
+  RotateCcw,
+  Flag,      // For Reports
+  Ban,       // For Blocked Users
 } from 'lucide-react';
 
 // Define interface for menu items
@@ -164,6 +162,28 @@ export default function Sidebar() {
           href: '/livestreams', 
           requiredPermission: 'manage_livestreams' 
         },
+      ],
+    },
+    {
+      category: 'Trust & Safety', // <--- NEW PROFESSIONAL SECTION
+      items: [
+        { 
+          icon: Flag, 
+          label: 'User Reports', 
+          href: '/moderation/reports', 
+          requiredPermission: 'view_user_reports' 
+        },
+        { 
+          icon: Ban, 
+          label: 'Block List', 
+          href: '/moderation/blocked', 
+          requiredPermission: 'view_blocked_users' 
+        },
+      ],
+    },
+    {
+      category: 'Communication', // Split Notifications here if you like, or keep in Moderation
+      items: [
         { 
           icon: Bell, 
           label: 'Notifications', 
