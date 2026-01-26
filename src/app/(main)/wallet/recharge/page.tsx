@@ -3,40 +3,108 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { RECHARGE_AMOUNTS, calculateBonus } from '../../../../lib/walletService';
 import walletService from '../../../../lib/walletService';
+
+// Interfaces
+interface RechargePack {
+  _id: string;
+  amount: number;
+  bonusPercentage: number;
+  isPopular: boolean;
+  isActive: boolean;
+}
+
+interface CachedData {
+  timestamp: number;
+  userId: string;
+  packs: RechargePack[];
+  claimedHistory: number[]; // Store as array in JSON, convert to Set in state
+}
+
+const CACHE_KEY = 'wallet_recharge_cache';
+const CACHE_DURATION = 60 * 60 * 1000; // 1 Hour in milliseconds
 
 export default function RechargePage() {
   const { user } = useAuth();
   const router = useRouter();
+  
+  // State
   const [amount, setAmount] = useState('');
+  const [rechargePacks, setRechargePacks] = useState<RechargePack[]>([]);
   const [claimedAmounts, setClaimedAmounts] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadClaimedHistory();
-  }, []);
+    if (user) {
+      loadData();
+    }
+  }, [user]);
 
-  const loadClaimedHistory = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const logsResponse = await walletService.getPaymentLogs({
-        page: 1,
-        limit: 100,
-        status: 'completed',
-      });
 
+      // 1. Check Local Storage Cache
+      const cachedRaw = localStorage.getItem(CACHE_KEY);
+      
+      if (cachedRaw) {
+        const cached: CachedData = JSON.parse(cachedRaw);
+        const now = Date.now();
+        const isExpired = now - cached.timestamp > CACHE_DURATION;
+        const isSameUser = cached.userId === user?._id; // Ensure cache belongs to current user
+
+        if (!isExpired && isSameUser) {
+          console.log('Using cached wallet data (valid for 1 hour)');
+          setRechargePacks(cached.packs);
+          setClaimedAmounts(new Set(cached.claimedHistory)); // Convert Array back to Set
+          setLoading(false);
+          return; // STOP HERE - Do not fetch from server
+        }
+      }
+
+      // 2. Fetch from Server (if cache is missing, expired, or wrong user)
+      console.log('Cache expired or missing. Fetching from server...');
+      
+      const [logsResponse, packsResponse] = await Promise.all([
+        walletService.getPaymentLogs({
+          page: 1,
+          limit: 100,
+          status: 'completed',
+        }),
+        walletService.getRechargePacks(),
+      ]);
+
+      let newClaimedHistory = new Set<number>();
+      let newPacks: RechargePack[] = [];
+
+      // Process Logs
       if (logsResponse.success && logsResponse.data?.logs) {
-        const history = new Set<number>();
         logsResponse.data.logs.forEach((log: any) => {
           if (log.status === 'completed') {
-            history.add(log.amount);
+            newClaimedHistory.add(log.amount);
           }
         });
-        setClaimedAmounts(history);
+        setClaimedAmounts(newClaimedHistory);
       }
+
+      // Process Packs
+      if (packsResponse.success && Array.isArray(packsResponse.data)) {
+        newPacks = packsResponse.data;
+        setRechargePacks(newPacks);
+      }
+
+      // 3. Save to Local Storage
+      const cacheData: CachedData = {
+        timestamp: Date.now(),
+        userId: user?._id || '',
+        packs: newPacks,
+        claimedHistory: Array.from(newClaimedHistory), // Convert Set to Array for JSON
+      };
+      
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+
     } catch (error) {
-      console.error('Load claimed history error:', error);
+      console.error('Error loading wallet data:', error);
     } finally {
       setLoading(false);
     }
@@ -59,6 +127,10 @@ export default function RechargePage() {
 
   const navigateToPayment = (value: number) => {
     const isBonusAvailable = !claimedAmounts.has(value);
+    
+    // Optional: Clear cache on navigation so next visit fetches fresh data
+    // localStorage.removeItem(CACHE_KEY); 
+    
     router.push(`/wallet/payment?amount=${value}&bonus=${isBonusAvailable}`);
   };
 
@@ -97,7 +169,7 @@ export default function RechargePage() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="Enter amount (e.g. 500)"
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
             />
             <button
               onClick={handleProceed}
@@ -108,7 +180,7 @@ export default function RechargePage() {
           </div>
         </div>
 
-        {/* Predefined Amounts */}
+        {/* Dynamic Predefined Amounts */}
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Recharge</h2>
         
         {loading ? (
@@ -117,33 +189,37 @@ export default function RechargePage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {RECHARGE_AMOUNTS.map((item) => {
-              const hasBonus = !claimedAmounts.has(item.value);
+            {rechargePacks.map((pack) => {
+              const isBonusAvailable = !claimedAmounts.has(pack.amount);
               
               return (
                 <button
-                  key={item.id}
-                  onClick={() => navigateToPayment(item.value)}
+                  key={pack._id}
+                  onClick={() => navigateToPayment(pack.amount)}
                   className={`relative bg-white rounded-xl border-2 p-6 text-center transition-all hover:shadow-lg ${
-                    hasBonus
+                    isBonusAvailable && pack.bonusPercentage > 0
                       ? 'border-yellow-400 shadow-yellow-100'
                       : 'border-gray-300 bg-gray-50'
                   }`}
                 >
-                  {item.popular && (
+                  {pack.isPopular && (
                     <span className="absolute -top-2 -left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-tl-lg rounded-br-lg">
                       ★ POPULAR
                     </span>
                   )}
                   
                   <p className="text-2xl font-bold text-gray-900 mb-2">
-                    ₹{item.value.toLocaleString()}
+                    ₹{pack.amount.toLocaleString()}
                   </p>
                   
-                  {hasBonus ? (
-                    <p className="text-sm font-semibold text-green-600">{item.bonus}</p>
+                  {isBonusAvailable && pack.bonusPercentage > 0 ? (
+                    <p className="text-sm font-semibold text-green-600">
+                      {pack.bonusPercentage}% Extra
+                    </p>
                   ) : (
-                    <p className="text-xs text-gray-500">Bonus Claimed</p>
+                    <p className="text-xs text-gray-500">
+                      {pack.bonusPercentage > 0 ? 'Bonus Claimed' : 'Standard Pack'}
+                    </p>
                   )}
                 </button>
               );

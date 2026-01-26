@@ -1,5 +1,10 @@
 // ✅ This is what we need in vaidik-website/lib/types.ts
 export interface User {
+  pincode: string;
+  country: string;
+  state: string;
+  city: string;
+  currentAddress: string;
   id: string;
   _id: string;
   name: string;
@@ -8,49 +13,57 @@ export interface User {
   profileImage?: string;
   wallet: { balance: number; currency: string;};
   role: 'user' | 'astrologer';
+  gender?: string;
+  dateOfBirth?: string;
+  timeOfBirth?: string;
+  placeOfBirth?: string;
 }
 
 export interface Astrologer {
   _id: string;
   name: string;
-  bio: string;
+  bio?: string;
   profilePicture?: string;
-  specializations: string[];
-  languages: string[];
-  experienceYears: number;
+  specializations?: string[];
+  languages?: string[];
+  experienceYears?: number;
   pricing: {
     chat: number;
     call: number;
-    videoCall: number;
+    videoCall?: number;
   };
-  country: string;
+  country?: string;
   ratings: {
     average: number;
     total: number;
-    breakdown: {
+    // Optional breakdown if not always present
+    breakdown?: {
       5: number;
       4: number;
       3: number;
       2: number;
       1: number;
     };
-    approvedReviews: number;
+    approvedReviews?: number;
   };
   stats: {
-    totalEarnings: number;
-    totalMinutes: number;
+    totalEarnings?: number;
+    totalMinutes?: number;
     totalOrders: number;
-    callOrders: number;
-    chatOrders: number;
+    callOrders?: number;
+    chatOrders?: number;
   };
-  isChatEnabled: boolean;
-  isCallEnabled: boolean;
+  isChatEnabled?: boolean;
+  isCallEnabled?: boolean;
   availability: {
     isOnline: boolean;
     isAvailable: boolean;
     busyUntil?: string;
     isLive?: boolean;
+    chatStatus?: string;
+    callStatus?: string;
   };
+  realStatus?: string; // Added to match Home.js logic
   tier?: string;
 }
 

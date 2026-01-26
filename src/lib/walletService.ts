@@ -139,6 +139,12 @@ export const walletService = {
       throw error;
     }
   },
+
+  // Add this to your walletService object
+getRechargePacks: async () => {
+  const response = await apiClient.get('/wallet/recharge-packs'); // Adjust 'api.get' to your actual axios/fetch instance
+  return response.data;
+}
 };
 
 export default walletService;

@@ -2,6 +2,7 @@
 import { apiClient } from './api';
 import { getWebDeviceInfo } from './deviceInfo';
 import { getFCMToken } from './firebase';
+import { User } from './types';
 
 export class AuthService {
   static async sendOtp(phoneNumber: string, countryCode: string) {
@@ -214,6 +215,22 @@ export class AuthService {
     } catch (error) {
       console.error('❌ Failed to refresh user profile:', error);
       return null;
+    }
+  }
+
+  // 👇 FIXED: Changed from .put to .patch
+  static async updateProfile(data: Partial<User>) {
+    try {
+      const response = await apiClient.patch('/users/profile', data);
+      
+      if (response.data.success) {
+        // Update local storage with new data
+        await this.refreshUserProfile(); 
+      }
+      return response.data;
+    } catch (error: any) {
+        console.error('Update profile error', error);
+        throw error.response?.data || error;
     }
   }
 }

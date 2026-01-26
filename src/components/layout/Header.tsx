@@ -150,6 +150,7 @@ export default function Header() {
                   <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                     {/* ... Profile Header and Menu Items (Same as before) ... */}
                      <div className="from-yellow-50 via-orange-50 to-yellow-100 px-6 py-6 border-b border-gray-200">
+                      <Link href="/profile">
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-16 rounded-full border-3 border-black shadow-lg overflow-hidden ring-4 ring-yellow-200">
                           <img 
@@ -158,6 +159,7 @@ export default function Header() {
                             className="w-full h-full object-cover"
                           />
                         </div>
+                        
                         <div className="flex-1 min-w-0">
                           <h3 className="text-xl font-bold text-gray-900 truncate">
                             {user?.name || 'User'}
@@ -167,6 +169,7 @@ export default function Header() {
                           </p>
                         </div>
                       </div>
+                      </Link>
                     </div>
 
                     <div className="py-2">

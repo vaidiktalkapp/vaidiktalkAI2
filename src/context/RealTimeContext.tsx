@@ -8,6 +8,8 @@ import callService from '../lib/callService';
 import orderService from '../lib/orderService';
 import notificationService from '../lib/notificationService';
 import { onForegroundMessage } from '../lib/firebase';
+import toast from 'react-hot-toast'; // ✅ Added for Popup
+import { isProfileComplete } from '../utils/profileValidation'; // ✅ Added Profile Check Helper
 
 // ... [Interfaces remain the same] ...
 interface Astrologer {
@@ -303,6 +305,38 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const initiateChat = useCallback(async (astrologer: Astrologer) => {
     if (isChatProcessing) return { success: false, message: 'Already processing' };
 
+    // 🛑 1. Profile Completion Check
+    if (!isProfileComplete(user)) {
+      toast((t) => (
+        <div className="flex flex-col gap-2">
+          <span className="font-semibold text-gray-800">
+            ⚠️ Profile Incomplete
+          </span>
+          <span className="text-sm text-gray-600">
+            Please complete your personal information before connecting with an astrologer.
+          </span>
+          <button 
+            onClick={() => {
+              toast.dismiss(t.id);
+              router.push('/profile');
+            }}
+            className="mt-2 bg-yellow-400 text-black px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-yellow-500 transition-colors"
+          >
+            Go to Profile Page
+          </button>
+        </div>
+      ), {
+        duration: 5000,
+        position: 'top-center',
+        style: {
+          background: '#fff',
+          border: '1px solid #e5e7eb',
+          padding: '16px',
+        },
+      });
+      return { success: false, message: 'Profile incomplete' };
+    }
+
     try {
       setIsChatProcessing(true);
       const chatRate = astrologer.pricing?.chat ?? astrologer.chatRate ?? astrologer.currentRate ?? 10;
@@ -368,6 +402,37 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // ✅ Initiate Call (Fixed Balance + Socket)
   const initiateCall = useCallback(async (astrologer: Astrologer, callType: 'audio' | 'video' = 'audio') => {
+    // 🛑 1. Profile Completion Check
+    if (!isProfileComplete(user)) {
+      toast((t) => (
+        <div className="flex flex-col gap-2">
+          <span className="font-semibold text-gray-800">
+            ⚠️ Profile Incomplete
+          </span>
+          <span className="text-sm text-gray-600">
+            Please complete your personal information before connecting with an astrologer.
+          </span>
+          <button 
+            onClick={() => {
+              toast.dismiss(t.id);
+              router.push('/profile');
+            }}
+            className="mt-2 bg-yellow-400 text-black px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-yellow-500 transition-colors"
+          >
+            Go to Profile Page
+          </button>
+        </div>
+      ), {
+        duration: 5000,
+        position: 'top-center',
+        style: {
+          background: '#fff',
+          border: '1px solid #e5e7eb',
+          padding: '16px',
+        },
+      });
+      return { success: false, message: 'Profile incomplete' };
+    }
     if (isCallProcessing) return { success: false, message: 'Already processing' };
 
     try {
