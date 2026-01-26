@@ -132,7 +132,7 @@ export default function AstrologerProfilePage() {
 
     const shareData = {
       title: `${astrologer.name} - Astrologer Profile`,
-      text: `Consult with ${astrologer.name} (${astrologer.specializations.join(', ')}) on our platform!`,
+      text: `Consult with ${astrologer.name} (${astrologer.specializations?.join(', ') || 'Expert Astrologer'}) on our platform!`,
       url: window.location.href,
     };
 
@@ -293,7 +293,7 @@ export default function AstrologerProfilePage() {
                           <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 fill-blue-50 shrink-0" />
                         </div>
                         <p className="text-sm sm:text-base text-gray-700 font-medium mb-2 truncate">
-                          {astrologer.specializations.join(', ')}
+                          {astrologer.specializations?.join(', ') || 'Expert Astrologer'}
                         </p>
                       </div>
                       
@@ -332,7 +332,7 @@ export default function AstrologerProfilePage() {
                       </div>
                       <div className="flex items-center text-gray-600 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-100">
                         <Languages className="w-3.5 h-3.5 mr-1" />
-                        {astrologer.languages.join(', ')}
+                        {astrologer.languages?.join(', ') || 'N/A'}
                       </div>
                       <div className="flex items-center text-gray-600 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-100">
                         <ShieldCheck className="w-3.5 h-3.5 mr-1" />
