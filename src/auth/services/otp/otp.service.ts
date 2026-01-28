@@ -23,6 +23,10 @@ export class OtpService {
   private readonly logger = new Logger(OtpService.name);
   private readonly VEPAAR_API_URL = 'https://api.vepaar.com/api/v1/send-otp';
 
+  // 🧪 Test ACCOUNT CREDENTIALS
+  private readonly DEMO_PHONE = '9988776655';
+  private readonly DEMO_OTP = '987654';
+
   constructor(
     private configService: ConfigService,
     private otpStorage: OtpStorageService,
@@ -62,6 +66,17 @@ export class OtpService {
     countryCode: string
   ): Promise<{ success: boolean; message: string; otp?: string }> {
     try {
+      // 🧪 1. CHECK FOR DEMO ACCOUNT BYPASS
+      if (phoneNumber === this.DEMO_PHONE) {
+        this.logger.log(`🧪 Demo Account Login Attempt: +${countryCode}${phoneNumber}`);
+        return {
+          success: true,
+          message: 'OTP sent successfully (Demo Account)',
+          // In dev mode, we can return it, but the fixed OTP is always 123456
+          ...(this.configService.get('NODE_ENV') === 'development' && { otp: this.DEMO_OTP })
+        };
+      }
+
       // Validate phone number
       if (!this.validatePhoneNumber(phoneNumber, countryCode)) {
         throw new BadRequestException(
@@ -110,7 +125,7 @@ export class OtpService {
   }
 
   // FIXED: Exact Vepaar API implementation as per documentation
-  private async sendVepaarOTP(
+ private async sendVepaarOTP(
     phoneNumber: string, 
     countryCode: string, 
     otp: string
@@ -181,6 +196,17 @@ export class OtpService {
   ): Promise<boolean> {
     try {
       this.logger.log(`🔍 Verifying OTP for +${countryCode}${phoneNumber}: ${enteredOTP}`);
+
+      // 🧪 2. CHECK FOR DEMO ACCOUNT BYPASS
+      if (phoneNumber === this.DEMO_PHONE) {
+        if (enteredOTP === this.DEMO_OTP) {
+          this.logger.log(`✅ Demo OTP verified successfully for +${countryCode}${phoneNumber}`);
+          return true;
+        } else {
+          this.logger.warn(`❌ Invalid Demo OTP attempt for +${countryCode}${phoneNumber}`);
+          throw new BadRequestException('Invalid Demo OTP. Please use 123456.');
+        }
+      }
 
       const result = this.otpStorage.validateOTP(phoneNumber, countryCode, enteredOTP);
       
