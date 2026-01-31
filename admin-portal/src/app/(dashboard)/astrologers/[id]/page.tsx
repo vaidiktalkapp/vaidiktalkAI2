@@ -7,7 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { 
   ArrowLeft, Star, IndianRupee, TrendingUp, Activity, 
   MessageCircle, Phone, Video, Settings, Ban, CheckCircle,
-  Wallet, Gift
+  Wallet, Gift, Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/use-permission';
@@ -53,6 +53,8 @@ export default function AstrologerDetailPage() {
   const [chatEnabled, setChatEnabled] = useState(false);
   const [callEnabled, setCallEnabled] = useState(false);
   const [liveEnabled, setLiveEnabled] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
 
   // Fetch Astrologer Details
   const { data: astrologer, isLoading } = useQuery<Astrologer>({
@@ -81,6 +83,17 @@ export default function AstrologerDetailPage() {
     queryFn: async () => {
       const response = await adminApi.getAstrologerPerformance(astrologerId);
       return response.data.data;
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => adminApi.deleteAstrologer(astrologerId, deleteReason),
+    onSuccess: () => {
+      toast.success('Astrologer account deleted successfully');
+      router.push('/astrologers'); // Redirect to list
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to delete astrologer');
     },
   });
 
@@ -247,6 +260,13 @@ export default function AstrologerDetailPage() {
             >
               <Settings size={18} />
               Manage Features
+            </button>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors ml-auto"
+            >
+              <Trash2 size={18} />
+              Delete Account
             </button>
           </div>
         )}
@@ -542,6 +562,42 @@ export default function AstrologerDetailPage() {
               </button>
               <button
                 onClick={() => setShowFeaturesModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+      {/* ✅ NEW: Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <Modal title="Delete Astrologer Account" onClose={() => setShowDeleteModal(false)}>
+          <div className="space-y-4">
+            <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+              <strong>Critical Action:</strong> This will immediately hide the astrologer from search results.
+              They will not be able to log in. Data is retained for 7 days for payout reconciliation.
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Reason for Deletion *</label>
+              <textarea
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="Example: Requested via email, Violation of terms, etc."
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => deleteMutation.mutate()}
+                disabled={!deleteReason || deleteMutation.isPending}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Confirm Delete'}
+              </button>
+              <button
+                onClick={() => setShowDeleteModal(false)}
                 className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
               >
                 Cancel

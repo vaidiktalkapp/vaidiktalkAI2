@@ -6,7 +6,7 @@ import { adminApi } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
 import { 
   ArrowLeft, User as UserIcon, Wallet, Activity, ShoppingCart, 
-  IndianRupee, Wifi, WifiOff 
+  IndianRupee, Wifi, WifiOff, Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/use-permission';
@@ -26,6 +26,8 @@ export default function UserDetailPage() {
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [walletAmount, setWalletAmount] = useState('');
   const [walletReason, setWalletReason] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
 
   // Fetch User Details
   const { data: user, isLoading } = useQuery<any>({
@@ -86,6 +88,18 @@ export default function UserDetailPage() {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to adjust wallet');
+    },
+  });
+
+  // Add Delete Mutation
+  const deleteMutation = useMutation({
+    mutationFn: () => adminApi.deleteUser(userId, deleteReason),
+    onSuccess: () => {
+      toast.success('User account deleted successfully');
+      router.push('/users'); // Redirect to list
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to delete user');
     },
   });
 
@@ -200,6 +214,13 @@ export default function UserDetailPage() {
             >
               <Wallet size={18} />
               Adjust Wallet
+            </button>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors ml-auto"
+            >
+              <Trash2 size={18} />
+              Delete Account
             </button>
           </div>
         )}
@@ -333,6 +354,42 @@ export default function UserDetailPage() {
               </button>
               <button
                 onClick={() => setShowStatusModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* ✅ NEW: Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <Modal title="Delete User Account" onClose={() => setShowDeleteModal(false)}>
+          <div className="space-y-4">
+            <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+              Warning: This action will soft-delete the user immediately. Permanent deletion occurs after 7 days.
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Reason for Deletion *</label>
+              <textarea
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="Why is this account being deleted?"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => deleteMutation.mutate()}
+                disabled={!deleteReason || deleteMutation.isPending}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Confirm Delete'}
+              </button>
+              <button
+                onClick={() => setShowDeleteModal(false)}
                 className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
               >
                 Cancel
