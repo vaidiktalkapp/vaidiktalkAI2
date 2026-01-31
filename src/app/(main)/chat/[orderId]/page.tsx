@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import chatService from '@/lib/chatService';
+import { useAuth } from '../../../../context/AuthContext';
+import chatService from '../../../../lib/chatService';
 import { Play, Pause, Download } from 'lucide-react';
 
 // --- Interfaces ---

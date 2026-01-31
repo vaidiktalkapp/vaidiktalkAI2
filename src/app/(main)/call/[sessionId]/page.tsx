@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import callService from '@/lib/callService';
+import { useAuth } from '../../../../context/AuthContext';
+import callService from '../../../../lib/callService';
 import { Mic, MicOff, Video, VideoOff, PhoneOff } from 'lucide-react';
 
 export default function CallScreen() {

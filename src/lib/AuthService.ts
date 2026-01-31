@@ -233,4 +233,23 @@ export class AuthService {
         throw error.response?.data || error;
     }
   }
+
+  static async deleteAccount(reason?: string) {
+    try {
+      console.log('⚠️ [AuthService] Requesting account deletion...');
+      const response = await apiClient.delete('/users/account', {
+        data: { reason } // Axios sends body in 'data' for DELETE requests
+      });
+      
+      if (response.data.success) {
+        // Clear local session immediately upon success
+        await this.logout();
+        return response.data;
+      }
+      throw new Error(response.data.message);
+    } catch (error: any) {
+      console.error('❌ Delete account error:', error);
+      throw error.response?.data || error;
+    }
+  }
 }

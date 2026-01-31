@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '../../../context/AuthContext';
 import { AuthService } from '../../../lib/AuthService';
 import { uploadService } from '../../../lib/upload.web';
@@ -364,6 +365,24 @@ export default function ProfilePage() {
                <p className="text-xs text-gray-400">Ensure all details are correct before saving.</p>
             </div>
         )}
+
+        {/* --- DANGER ZONE --- */}
+<div className="mt-8 pt-8 border-t border-gray-200">
+  <h3 className="text-lg font-bold text-gray-800 mb-4">Account Settings</h3>
+  
+  <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+    <div>
+      <h4 className="font-semibold text-gray-900">Delete Account</h4>
+      <p className="text-sm text-gray-500">Permanently remove your account and data.</p>
+    </div>
+    <Link 
+      href="/delete-account" 
+      className="px-4 py-2 bg-red-50 text-red-600 font-medium rounded-lg hover:bg-red-100 transition-colors"
+    >
+      Delete
+    </Link>
+  </div>
+</div>
       </div>
     </div>
   );

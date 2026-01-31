@@ -1,5 +1,6 @@
 // lib/astrologerService.ts
 import apiClient from './api';
+import { getWebDeviceInfo } from './deviceInfo';
 
 export interface SearchParams {
   page?: number;
@@ -131,6 +132,53 @@ export const astrologerService = {
     } catch (error) {
       console.error('❌ Get astrologer details error:', error);
       throw error;
+    }
+  },
+ // ✅ NEW: Check if phone exists (Prevents "no response" issue)
+  checkPhone: async (phoneNumber: string, countryCode: string) => {
+    try {
+      // Calls the backend check-phone endpoint
+      return await apiClient.post('/auth/astrologer/check-phone', { phoneNumber, countryCode });
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // ✅ NEW: Send OTP
+  sendLoginOtp: async (phoneNumber: string, countryCode: string) => {
+    try {
+      return await apiClient.post('/auth/astrologer/send-otp', { phoneNumber, countryCode });
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // ✅ NEW: Verify OTP
+verifyLoginOtp: async (phoneNumber: string, countryCode: string, otp: string) => {
+    try {
+      // Generate device info on the client side
+      const deviceInfo = getWebDeviceInfo();
+      
+      return await apiClient.post('/auth/astrologer/verify-otp', { 
+        phoneNumber, 
+        countryCode, 
+        otp,
+        // Spread device info fields (deviceId, deviceType, deviceName)
+        ...deviceInfo,
+        // Provide a default for fcmToken if strictly required as string, or rely on backend IsOptional
+        fcmToken: 'web-no-token' 
+      });
+    } catch (error: any) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // ✅ NEW: Delete Account (Requires Auth Token)
+  deleteAccount: async (reason?: string) => {
+    try {
+      return await apiClient.delete('/astrologer/account', { data: { reason } });
+    } catch (error: any) {
+      throw error.response?.data || error;
     }
   },
 };

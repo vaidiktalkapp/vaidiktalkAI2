@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import chatService from '@/lib/chatService'; 
-import { useRealTime } from '@/context/RealTimeContext';
+import { useAuth } from '../../../../context/AuthContext';
+import chatService from '../../../../lib/chatService'; 
+import { useRealTime } from '../../../../context/RealTimeContext';
 
 // Icons
 import { 
