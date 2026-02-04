@@ -103,6 +103,19 @@ export class NotificationController {
     };
   }
 
+    /**
+   * Clear all notifications
+   * DELETE /notifications/clear-all
+   */
+  @Delete('clear-all')
+  async clearAll(@Req() req: AuthenticatedRequest) {
+    await this.notificationService.clearAllNotifications(req.user._id);
+    return {
+      success: true,
+      message: 'All notifications cleared',
+    };
+  }
+
   /**
    * Delete specific notification
    * DELETE /notifications/:notificationId
@@ -116,19 +129,6 @@ export class NotificationController {
     return {
       success: true,
       message: 'Notification deleted',
-    };
-  }
-
-  /**
-   * Clear all notifications
-   * DELETE /notifications/clear-all
-   */
-  @Delete('clear-all')
-  async clearAll(@Req() req: AuthenticatedRequest) {
-    await this.notificationService.clearAllNotifications(req.user._id);
-    return {
-      success: true,
-      message: 'All notifications cleared',
     };
   }
 }
