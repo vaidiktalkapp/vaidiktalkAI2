@@ -309,68 +309,69 @@ export class NotificationService {
     }
   }
 
-async getUserNotifications(
-  userId: string,
-  page: number = 1,
-  limit: number = 20,
-  unreadOnly: boolean = false
-): Promise<any> {
-  const skip = (page - 1) * limit;
-  
-  // ✅ Query both string AND ObjectId formats
-  const query: any = {
-    $or: [
-      { recipientId: userId },  // String format
-      { recipientId: new Types.ObjectId(userId) }  // ObjectId format
-    ]
-  };
-
-  if (unreadOnly) {
-    query.isRead = false;
-  }
-
-  this.logger.log(`📊 Query with $or: userId=${userId}, page=${page}, limit=${limit}`);
-
-  try {
-    const [notifications, total, unreadCount] = await Promise.all([
-      this.notificationModel
-        .find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean()
-        .exec(),
-      this.notificationModel.countDocuments(query),
-      this.notificationModel.countDocuments({ 
-        $or: [
-          { recipientId: userId, isRead: false },
-          { recipientId: new Types.ObjectId(userId), isRead: false }
-        ]
-      }),
-    ]);
-
-    this.logger.log(`✅ Found ${notifications.length} notifications (Total: ${total}, Unread: ${unreadCount})`);
-
-    return {
-      success: true,
-      data: {
-        notifications,
-        unreadCount,
-        pagination: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit),
-        },
-      },
+/**
+   * ✅ GET NOTIFICATIONS (Fixed Query Logic)
+   */
+  async getUserNotifications(
+    userId: string,
+    page: number = 1,
+    limit: number = 20,
+    unreadOnly: boolean = false
+  ): Promise<any> {
+    const skip = (page - 1) * limit;
+    
+    // ✅ Robust Query: Matches either String OR ObjectId
+    const query: any = {
+      $or: [
+        { recipientId: userId },
+        { recipientId: new Types.ObjectId(userId) }
+      ]
     };
-  } catch (error) {
-    this.logger.error(`❌ Error fetching notifications: ${error.message}`);
-    throw error;
+
+    if (unreadOnly) {
+      query.isRead = false;
+    }
+
+    try {
+      const [notifications, total, unreadCount] = await Promise.all([
+        this.notificationModel
+          .find(query)
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean()
+          .exec(),
+        this.notificationModel.countDocuments(query),
+        this.notificationModel.countDocuments({ 
+          $or: [
+            { recipientId: userId, isRead: false },
+            { recipientId: new Types.ObjectId(userId), isRead: false }
+          ]
+        }),
+      ]);
+
+      return {
+        success: true,
+        data: {
+          notifications,
+          unreadCount,
+          pagination: {
+            page,
+            limit,
+            total,
+            pages: Math.ceil(total / limit),
+          },
+        },
+      };
+    } catch (error) {
+      this.logger.error(`❌ Error fetching notifications: ${(error as any).message}`);
+      throw error;
+    }
   }
-}
 
-
+  /**
+   * ✅ MARK AS READ (Fixed Query Logic)
+   */
   async markAsRead(notificationIds: string[]): Promise<void> {
     await this.notificationModel.updateMany(
       { notificationId: { $in: notificationIds }, isRead: false },
@@ -383,58 +384,73 @@ async getUserNotifications(
     );
   }
 
- async markAllAsRead(userId: string): Promise<void> {
-    let recipientId: any = userId;
-    
-    if (Types.ObjectId.isValid(userId)) {
-      recipientId = new Types.ObjectId(userId);
-    }
+  /**
+   * ✅ MARK ALL AS READ (Fixed Query Logic)
+   */
+  async markAllAsRead(userId: string): Promise<void> {
+    // ✅ Matches both types to ensure everything is marked
+    const query = {
+      $or: [
+        { recipientId: userId },
+        { recipientId: new Types.ObjectId(userId) }
+      ],
+      isRead: false
+    };
 
-    await this.notificationModel.updateMany(
-      { recipientId, isRead: false },
-      {
+    await this.notificationModel.updateMany(query, {
         $set: {
           isRead: true,
           readAt: new Date(),
         },
-      }
-    );
+    });
   }
 
+  /**
+   * ✅ DELETE NOTIFICATION (Fixed Query Logic)
+   */
   async deleteNotification(notificationId: string, userId: string): Promise<void> {
-    let recipientId: any = userId;
-    
-    if (Types.ObjectId.isValid(userId)) {
-      recipientId = new Types.ObjectId(userId);
-    }
+    // ✅ Matches both types to ensure deletion works
+    const query = {
+      notificationId,
+      $or: [
+        { recipientId: userId },
+        { recipientId: new Types.ObjectId(userId) }
+      ]
+    };
 
-    await this.notificationModel.deleteOne({ 
-      notificationId, 
-      recipientId 
-    });
+    const result = await this.notificationModel.deleteOne(query);
+    this.logger.log(`Deleted notification ${notificationId}: ${result.deletedCount} documents removed`);
   }
 
- async clearAllNotifications(userId: string): Promise<void> {
-    let recipientId: any = userId;
-    
-    if (Types.ObjectId.isValid(userId)) {
-      recipientId = new Types.ObjectId(userId);
-    }
+  /**
+   * ✅ CLEAR ALL (Fixed Query Logic)
+   */
+  async clearAllNotifications(userId: string): Promise<void> {
+    // ✅ Matches both types to ensure clearing works
+    const query = {
+      $or: [
+        { recipientId: userId },
+        { recipientId: new Types.ObjectId(userId) }
+      ]
+    };
 
-    await this.notificationModel.deleteMany({ recipientId });
+    const result = await this.notificationModel.deleteMany(query);
+    this.logger.log(`Cleared all notifications for ${userId}: ${result.deletedCount} documents removed`);
   }
 
+  /**
+   * ✅ GET UNREAD COUNT (Fixed Query Logic)
+   */
   async getUnreadCount(userId: string): Promise<number> {
-    let recipientId: any = userId;
-    
-    if (Types.ObjectId.isValid(userId)) {
-      recipientId = new Types.ObjectId(userId);
-    }
+    const query = {
+      $or: [
+        { recipientId: userId },
+        { recipientId: new Types.ObjectId(userId) }
+      ],
+      isRead: false
+    };
 
-    return this.notificationModel.countDocuments({ 
-      recipientId, 
-      isRead: false 
-    });
+    return this.notificationModel.countDocuments(query);
   }
 
   async getNotificationStats(): Promise<any> {
