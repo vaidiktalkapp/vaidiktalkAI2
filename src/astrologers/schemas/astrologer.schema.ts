@@ -39,7 +39,7 @@ export class Astrologer {
       steps: {
         basicInfo: { type: Boolean, default: true }, // Already filled from registration
         expertise: { type: Boolean, default: true }, // Already filled from registration
-        pricing: { type: Boolean, default: false },
+        pricing: { type: Boolean, default: true },
         availability: { type: Boolean, default: false }
       }
     },
