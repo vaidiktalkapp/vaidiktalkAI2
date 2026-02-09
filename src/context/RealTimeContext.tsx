@@ -444,6 +444,7 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (chatResponse.success && chatResponse.data?.sessionId) {
         const data = chatResponse.data;
+        console.log('📞 [Chat] Initiated:', astrologer);
         const newChatSession: ChatSession = {
           sessionId: data.sessionId,
           orderId: data.orderId,
@@ -455,7 +456,7 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             id: astrologer.id || astrologer._id,
             _id: astrologer._id || astrologer.id!,
             name: astrologer.name,
-            image: astrologer.image || astrologer.profileImage,
+            image: astrologer.image || astrologer.profileImage || astrologer.profilePicture,
             price: chatRate,
           },
         };
@@ -527,7 +528,7 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             id: astrologer.id || astrologer._id,
             _id: astrologer._id || astrologer.id!,
             name: astrologer.name,
-            image: astrologer.image || astrologer.profileImage,
+            image: astrologer.image || astrologer.profileImage || astrologer.profilePicture,
             callPrice: callRate,
           },
         };
