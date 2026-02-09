@@ -1,5 +1,5 @@
 // src/auth/dto/verify-otp.dto.ts (Enhanced validation)
-import { IsNotEmpty, IsString, Matches, Length } from 'class-validator';
+import { IsNotEmpty, IsString, Matches, Length, IsOptional } from 'class-validator';
 
 export class VerifyOtpDto {
   @IsNotEmpty({ message: 'Phone number is required' })
@@ -25,6 +25,7 @@ export class VerifyOtpDto {
   otp: string;
 
   // ✅ ADD THESE FOR DEVICE STORAGE
+  @IsOptional()
   @IsString()
   fcmToken?: string;
 
