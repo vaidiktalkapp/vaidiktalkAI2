@@ -564,7 +564,7 @@ export default function ChatScreen() {
   }
 
   return (
-    <div className="flex justify-center min-h-screen bg-gray-100 pt-16">
+    <div className="flex justify-center bg-gray-100">
       <div className="flex flex-col w-full max-w-lg h-[calc(100vh-64px)] bg-[#EFE7DE] shadow-xl relative">
         
         {/* Header */}

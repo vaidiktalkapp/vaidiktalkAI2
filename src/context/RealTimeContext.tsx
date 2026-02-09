@@ -8,10 +8,10 @@ import callService from '../lib/callService';
 import orderService from '../lib/orderService';
 import notificationService from '../lib/notificationService';
 import { onForegroundMessage } from '../lib/firebase';
-import toast from 'react-hot-toast'; // ✅ Added for Popup
-import { isProfileComplete } from '../utils/profileValidation'; // ✅ Added Profile Check Helper
+import toast from 'react-hot-toast';
+import { isProfileComplete } from '../utils/profileValidation';
 
-// ... [Interfaces remain the same] ...
+// ========== INTERFACES ==========
 interface Astrologer {
   _id: string;
   id?: string;
@@ -77,119 +77,259 @@ interface IncomingCall {
 
 interface RealTimeContextType {
   ready: boolean;
-  // Chat
   pendingChatSession: ChatSession | null;
   chatWaitingVisible: boolean;
   isChatProcessing: boolean;
   initiateChat: (astrologer: Astrologer) => Promise<{ success: boolean; message?: string; data?: any }>;
   cancelChat: () => void;
-  // Call
   pendingCallSession: CallSession | null;
   callWaitingVisible: boolean;
   isCallProcessing: boolean;
   initiateCall: (astrologer: Astrologer, callType?: 'audio' | 'video') => Promise<{ success: boolean; message?: string; data?: any }>;
   cancelCall: () => void;
-  // Incoming call
   incomingCall: IncomingCall | null;
   incomingCallVisible: boolean;
   acceptIncomingCall: () => void;
   rejectIncomingCall: () => void;
+  addNotificationListener: (callback: (payload: any) => void) => () => void;
 }
 
 const RealTimeContext = createContext<RealTimeContextType | null>(null);
 
+// ========== PROVIDER ==========
 export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
-  
+
   const [socketInitialized, setSocketInitialized] = useState(false);
-  
+
   // Chat State
   const [pendingChatSession, setPendingChatSession] = useState<ChatSession | null>(null);
   const [chatWaitingVisible, setChatWaitingVisible] = useState(false);
   const [isChatProcessing, setIsChatProcessing] = useState(false);
-  
+
   // Call State
   const [pendingCallSession, setPendingCallSession] = useState<CallSession | null>(null);
   const [callWaitingVisible, setCallWaitingVisible] = useState(false);
   const [isCallProcessing, setIsCallProcessing] = useState(false);
-  
+
   // Incoming Call State
   const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
   const [incomingCallVisible, setIncomingCallVisible] = useState(false);
 
-  // Use refs to access latest state in event handlers
+  // Refs for access in event handlers
   const pendingChatRef = useRef<ChatSession | null>(null);
   const pendingCallRef = useRef<CallSession | null>(null);
+  const processedSessionIds = useRef<Set<string>>(new Set());
+  
+  const notificationListeners = useRef<Set<(payload: any) => void>>(new Set());
 
   useEffect(() => { pendingChatRef.current = pendingChatSession; }, [pendingChatSession]);
   useEffect(() => { pendingCallRef.current = pendingCallSession; }, [pendingCallSession]);
 
-  // Register Firebase service worker
+  // ========== DEBUG LOGGER ==========
+  const debugLog = useCallback((source: string, message: string, data?: any) => {
+    const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+    // console.log(`[${timestamp}] 🔍 [${source}] ${message}`, data || '');
+  }, []);
+
+  // ========== 0. NOTIFICATION LISTENER SYSTEM ==========
+  
+  // Internal helper to broadcast to all subscribers
+  const broadcastNotification = useCallback((payload: any) => {
+    // 1. Explicit Log for Debugging
+    console.log("🔥 [FCM-BROADCAST] Notification Payload:", JSON.stringify(payload, null, 2));
+    
+    notificationListeners.current.forEach(listener => {
+      try {
+        listener(payload);
+      } catch (error) {
+        console.error("Error in notification listener:", error);
+      }
+    });
+  }, []);
+
+  const addNotificationListener = useCallback((callback: (payload: any) => void) => {
+    notificationListeners.current.add(callback);
+    return () => {
+      notificationListeners.current.delete(callback);
+    };
+  }, []);
+
+  // ========== 1. STATE PERSISTENCE ==========
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/firebase-messaging-sw.js')
-        .then((registration) => console.log('✅ SW registered:', registration.scope))
-        .catch((err) => console.error('❌ SW failed:', err));
+    if (typeof window !== 'undefined') {
+      const savedChat = sessionStorage.getItem('pendingChatSession');
+      const savedCall = sessionStorage.getItem('pendingCallSession');
+
+      if (savedChat) {
+        try {
+          setPendingChatSession(JSON.parse(savedChat));
+          setChatWaitingVisible(true);
+        } catch (e) {}
+      }
+
+      if (savedCall) {
+        try {
+          setPendingCallSession(JSON.parse(savedCall));
+          setCallWaitingVisible(true);
+        } catch (e) {}
+      }
     }
   }, []);
 
-  // Handle foreground FCM messages
+  useEffect(() => {
+    if (pendingChatSession) {
+      sessionStorage.setItem('pendingChatSession', JSON.stringify(pendingChatSession));
+    } else {
+      sessionStorage.removeItem('pendingChatSession');
+    }
+  }, [pendingChatSession]);
+
+  useEffect(() => {
+    if (pendingCallSession) {
+      sessionStorage.setItem('pendingCallSession', JSON.stringify(pendingCallSession));
+    } else {
+      sessionStorage.removeItem('pendingCallSession');
+    }
+  }, [pendingCallSession]);
+
+  // ========== 2. CENTRALIZED ACCEPTANCE HANDLER ==========
+  const processAcceptance = useCallback((payload: any, eventName?: string, source?: string) => {
+    console.log(`📥 [${source}] Processing Acceptance:`, payload);
+
+    // Normalize Data (Handle both { data: {...} } and direct {...})
+    const data = payload.data || payload; 
+    
+    const type = data.type || payload.type || '';
+    const step = data.step || '';
+    const mode = data.mode || (type.includes('chat') ? 'chat' : type.includes('call') ? 'call' : '');
+    
+    // Attempt to find ANY valid ID
+    const incomingId = data.sessionId || data.id || data._id || data.orderId;
+
+    if (!incomingId) {
+      console.warn(`⚠️ [${source}] No Session ID or Order ID found in payload`, data);
+      return;
+    }
+
+    if (processedSessionIds.current.has(incomingId)) {
+      console.log(`🔄 [${source}] Already processed ID: ${incomingId}`);
+      return;
+    }
+
+    console.log(`🔎 [${source}] Checking Match | ID: ${incomingId} | Mode: ${mode} | Type: ${type}`);
+
+    // --- CHAT HANDLING ---
+    const isChatEvent = mode === 'chat' || type.includes('chat') || eventName === 'chat_accepted';
+    
+    if (isChatEvent) {
+      const currentPending = pendingChatRef.current;
+      if (currentPending) {
+        // Match against EITHER sessionId OR orderId
+        const isMatch = incomingId === currentPending.sessionId || incomingId === currentPending.orderId;
+        
+        if (isMatch) {
+          console.log('✅ [Chat] Match Found! Redirecting...');
+          processedSessionIds.current.add(incomingId);
+          setChatWaitingVisible(false);
+          setPendingChatSession(null);
+
+          if (user?._id) {
+             chatService.joinSession(currentPending.sessionId, user._id);
+          }
+          router.push(`/chat/${currentPending.orderId}`);
+          return;
+        } else {
+           console.log(`❌ [Chat] ID Mismatch. Pending: ${currentPending.sessionId} / ${currentPending.orderId}`);
+        }
+      }
+    }
+
+    // --- CALL HANDLING ---
+    const isCallEvent = mode === 'call' || type.includes('call') || eventName === 'call_accepted';
+
+    if (isCallEvent) {
+      const currentPending = pendingCallRef.current;
+      if (currentPending) {
+        const isMatch = incomingId === currentPending.sessionId || incomingId === currentPending.orderId;
+
+        if (isMatch) {
+          console.log('✅ [Call] Match Found! Redirecting...');
+          processedSessionIds.current.add(incomingId);
+          setCallWaitingVisible(false);
+          setPendingCallSession(null);
+
+          if (user?._id) {
+             callService.joinSession(currentPending.sessionId, user._id, 'user');
+          }
+
+          // Build Query
+          const queryParams: Record<string, string> = {
+            type: data.callType || currentPending.callType || 'audio',
+            name: encodeURIComponent(data.astrologerName || currentPending.astrologer.name || 'Astrologer'),
+            rate: (data.ratePerMinute || currentPending.ratePerMinute || 0).toString(),
+          };
+          if (data.agoraToken) queryParams.token = data.agoraToken;
+          if (data.agoraChannelName) queryParams.channel = data.agoraChannelName;
+          if (data.agoraUid) queryParams.uid = data.agoraUid.toString();
+
+          const query = new URLSearchParams(queryParams).toString();
+          router.push(`/call/${currentPending.sessionId}?${query}`);
+          return;
+        } else {
+           console.log(`❌ [Call] ID Mismatch. Pending: ${currentPending.sessionId}`);
+        }
+      }
+    }
+  }, [router, user]);
+
+
+  // ========== 3. REGISTER FIREBASE SERVICE WORKER ==========
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        .then((reg) => console.log('✅ [SW] Service Worker Registered'))
+        .catch((err) => console.error('❌ [SW] Registration Failed', err));
+    }
+  }, []);
+
+  // ========== 4. FCM FOREGROUND LISTENER ==========
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    onForegroundMessage((payload) => {
-      console.log('📨 [FCM Foreground] Message received:', payload);
-      const data = payload.data || {};
-      const notification = payload.notification || {};
-
-      // Handle request_accepted for chat
-      if ((data.type === 'request_accepted' && data.mode === 'chat') || data.step === 'astrologer_accepted_chat') {
-        const currentPending = pendingChatRef.current;
-        if (currentPending && (data.sessionId === currentPending.sessionId || data.orderId === currentPending.orderId)) {
-          console.log('🎉 [FCM] Chat accepted! Navigating...');
-          setChatWaitingVisible(false);
-          setPendingChatSession(null);
-          router.push(`/chat/${currentPending.orderId}`);
-          return;
-        }
-      }
-
-      // Handle request_accepted for call
-      if ((data.type === 'request_accepted' && data.mode === 'call') || data.type === 'call_accepted' || data.step === 'astrologer_accepted') {
-        const currentPending = pendingCallRef.current;
-        if (currentPending) {
-          console.log('🎉 [FCM] Call accepted! Navigating...');
-          setCallWaitingVisible(false);
-          setPendingCallSession(null);
-          router.push(`/call/${currentPending.sessionId}?type=${currentPending.callType}&name=${currentPending.astrologer.name}&rate=${currentPending.ratePerMinute}`);
-          return;
-        }
-      }
-
-      // Handle call ended
-      if (data.type === 'call_ended' && data.mode === 'call') {
-        const currentPending = pendingCallRef.current;
-        if (currentPending && data.sessionId === currentPending.sessionId) {
-          setCallWaitingVisible(false);
-          setPendingCallSession(null);
-          if (typeof window !== 'undefined' && window.location.pathname.startsWith('/call/')) {
-            window.location.href = '/orders';
+    console.log('📡 [FCM] Initializing Foreground Listener...');
+    
+    // Wrap in try-catch to prevent crashes if firebase isn't configured
+    try {
+        const unsubscribe = onForegroundMessage((payload) => {
+          console.log('📨 [FCM] Message Received:', payload);
+          broadcastNotification(payload);
+          processAcceptance(payload, undefined, 'FCM-Foreground');
+          
+          // Handle Call Ended
+          const data = payload.data || {};
+          if (data.type === 'call_ended' && data.mode === 'call') {
+             const currentPending = pendingCallRef.current;
+             if (currentPending && data.sessionId === currentPending.sessionId) {
+                setCallWaitingVisible(false);
+                setPendingCallSession(null);
+                if (window.location.pathname.startsWith('/call/')) {
+                    router.push('/orders');
+                }
+             }
           }
-          return;
-        }
-      }
+        });
+        
+        return () => {
+          console.log('🧹 [FCM] Cleaning up Foreground Listener');
+        };
+    } catch (error) {
+        console.error("❌ [FCM] Failed to init foreground listener:", error);
+    }
+  }, [isAuthenticated, processAcceptance, router, broadcastNotification]);
 
-      // Dispatch event for other components
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('notification-received', {
-            detail: { type: data.type || data.step, title: notification.title, message: notification.body, data }
-        }));
-      }
-    });
-  }, [isAuthenticated, router]);
-
-  // ✅ Setup Sockets (Chat, Call, Notifications)
+  // ========== 5. SETUP SOCKETS ==========
   useEffect(() => {
     let setupAttempted = false;
 
@@ -197,83 +337,61 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (setupAttempted) return;
       setupAttempted = true;
 
-      const userId = user?._id; 
+      const userId = user?._id;
       if (!isAuthenticated || !userId) return;
 
       try {
         const token = localStorage.getItem('accessToken');
         if (!token) return;
 
-        // 1. Notification Socket
+        // --- A. Notification Socket ---
         await notificationService.connect(token);
+        
         notificationService.on('notification', (notification: any) => {
-            // ... (keep existing notification logic)
-            if (notification.type === 'request_accepted' && notification.data?.mode === 'chat') {
-                const currentPending = pendingChatRef.current;
-                if (currentPending && notification.data.sessionId === currentPending.sessionId) {
-                  setChatWaitingVisible(false);
-                  setPendingChatSession(null);
-                  router.push(`/chat/${currentPending.orderId}`);
-                }
-            }
-            if (notification.type === 'request_accepted' && notification.data?.mode === 'call') {
-                const currentPending = pendingCallRef.current;
-                if (currentPending && notification.data.sessionId === currentPending.sessionId) {
-                  setCallWaitingVisible(false);
-                  setPendingCallSession(null);
-                  router.push(`/call/${currentPending.sessionId}?type=${currentPending.callType}&name=${currentPending.astrologer.name}&rate=${currentPending.ratePerMinute}`);
-                }
-            }
+          console.log('🔔 [Socket-Notif] Event Received:', notification);
+          broadcastNotification(notification);
+          processAcceptance(notification, undefined, 'NotificationSocket');
         });
 
-        // 2. Chat Socket
+        // --- B. Chat Socket ---
         await chatService.connect(token);
         chatService.on('chat_accepted', (payload: any) => {
-          const currentPending = pendingChatRef.current;
-          if (!currentPending) return;
-          const incomingId = payload.sessionId || payload.data?.sessionId;
-          if (incomingId && incomingId !== currentPending.sessionId) return;
-          setChatWaitingVisible(false);
-          setPendingChatSession(null);
-          router.push(`/chat/${currentPending.orderId}`);
+          console.log('💬 [Socket-Chat] Chat Accepted:', payload);
+          processAcceptance(payload, 'chat_accepted', 'ChatSocket');
         });
+
         chatService.on('chat_rejected', (payload: any) => {
           setChatWaitingVisible(false);
           setPendingChatSession(null);
-          alert(payload.message || 'Astrologer rejected your chat request.');
+          toast.error(payload.message || 'Astrologer rejected your chat request.');
         });
 
-        // 3. Call Socket
+        // --- C. Call Socket ---
         await callService.connectSocket(token);
-        
         callService.on('call_accepted', (payload: any) => {
-          const currentPending = pendingCallRef.current;
-          if (!currentPending) return;
-          const incomingId = payload.sessionId || payload.data?.sessionId || payload.id;
-          // Soft check on ID to allow navigation
-          setCallWaitingVisible(false);
-          setPendingCallSession(null);
-          router.push(`/call/${currentPending.sessionId}?type=${currentPending.callType}&name=${currentPending.astrologer.name}&rate=${currentPending.ratePerMinute}`);
+          console.log('📞 [Socket-Call] Call Accepted:', payload);
+          processAcceptance(payload, 'call_accepted', 'CallSocket');
         });
 
         callService.on('call_rejected', (payload: any) => {
           setCallWaitingVisible(false);
           setPendingCallSession(null);
-          alert(payload.message || 'Astrologer rejected your call request.');
+          toast.error(payload.message || 'Astrologer rejected your call request.');
         });
 
         callService.on('call_cancelled', () => {
-           setCallWaitingVisible(false);
-           setPendingCallSession(null);
+          setCallWaitingVisible(false);
+          setPendingCallSession(null);
         });
 
         callService.on('call_timeout', () => {
           setCallWaitingVisible(false);
           setPendingCallSession(null);
-          alert('Astrologer did not respond. No amount has been charged to your wallet.');
+          toast.error('Astrologer did not respond.');
         });
 
         callService.on('incoming_call', (payload: any) => {
+          console.log('📲 [Socket] Incoming Call:', payload);
           setIncomingCall({
             sessionId: payload.sessionId,
             orderId: payload.orderId,
@@ -285,8 +403,8 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         });
 
         setSocketInitialized(true);
-      } catch (error) {
-        console.error('❌ [RealTime] Socket setup failed:', error);
+      } catch (error: any) {
+        console.error('❌ [Socket] Setup Failed:', error);
         setSocketInitialized(false);
       }
     };
@@ -294,55 +412,25 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setupSockets();
 
     return () => {
-      notificationService.disconnect();
-      chatService.disconnect();
-      callService.destroy(); 
+      // Cleanup logic if needed
     };
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user, processAcceptance, broadcastNotification]);
 
-
-  // ✅ Initiate Chat (Fixed Balance + Socket)
+  // ========== 6. INITIATE CHAT ==========
   const initiateChat = useCallback(async (astrologer: Astrologer) => {
     if (isChatProcessing) return { success: false, message: 'Already processing' };
 
-    // 🛑 1. Profile Completion Check
     if (!isProfileComplete(user)) {
-      toast((t) => (
-        <div className="flex flex-col gap-2">
-          <span className="font-semibold text-gray-800">
-            ⚠️ Profile Incomplete
-          </span>
-          <span className="text-sm text-gray-600">
-            Please complete your personal information before connecting with an astrologer.
-          </span>
-          <button 
-            onClick={() => {
-              toast.dismiss(t.id);
-              router.push('/profile');
-            }}
-            className="mt-2 bg-yellow-400 text-black px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-yellow-500 transition-colors"
-          >
-            Go to Profile Page
-          </button>
-        </div>
-      ), {
-        duration: 5000,
-        position: 'top-center',
-        style: {
-          background: '#fff',
-          border: '1px solid #e5e7eb',
-          padding: '16px',
-        },
-      });
+      toast.error("Please complete your profile first");
+      router.push('/profile');
       return { success: false, message: 'Profile incomplete' };
     }
 
     try {
       setIsChatProcessing(true);
-      const chatRate = astrologer.pricing?.chat ?? astrologer.chatRate ?? astrologer.currentRate ?? 10;
-      const balanceCheck = await orderService.checkBalance(chatRate, 5);
+      const chatRate = astrologer.pricing?.chat ?? astrologer.chatRate ?? 10;
 
-      // FIX 1: Redirect on Low Balance
+      const balanceCheck = await orderService.checkBalance(chatRate, 5);
       if (!balanceCheck.success) {
         router.push('/wallet/recharge');
         return { success: false, message: 'Insufficient balance' };
@@ -361,89 +449,60 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           orderId: data.orderId,
           status: data.status,
           ratePerMinute: chatRate,
-          expectedWaitTime: data.expectedWaitTime || null,
-          queuePosition: data.queuePosition || null,
+          expectedWaitTime: data.expectedWaitTime,
+          queuePosition: data.queuePosition,
           astrologer: {
             id: astrologer.id || astrologer._id,
             _id: astrologer._id || astrologer.id!,
             name: astrologer.name,
-            image: astrologer.image || astrologer.profileImage || astrologer.profilePicture,
+            image: astrologer.image || astrologer.profileImage,
             price: chatRate,
           },
         };
 
         setPendingChatSession(newChatSession);
         setChatWaitingVisible(true);
-        
-        // FIX 2: Ensure Socket is Connected before Joining
+
         if (user?._id) {
-            const token = localStorage.getItem('accessToken');
-            if (token) {
-                // Force check connection to avoid "Socket not connected" error
-                await chatService.connect(token);
-                chatService.joinSession(data.sessionId, user._id);
-            }
+          const token = localStorage.getItem('accessToken');
+          if (token) {
+            await chatService.connect(token);
+            chatService.joinSession(data.sessionId, user._id);
+          }
         }
 
         return { success: true, data };
       } else {
         const errorMsg = chatResponse.message || 'Unable to start chat session';
-        alert(errorMsg);
+        toast.error(errorMsg);
         return { success: false, message: errorMsg };
       }
     } catch (error: any) {
-      console.error('❌ Chat initiate error:', error);
+      toast.error(error.message || 'Failed to initiate chat');
       return { success: false, message: error.message };
     } finally {
       setIsChatProcessing(false);
     }
   }, [isChatProcessing, router, user]);
 
-
-  // ✅ Initiate Call (Fixed Balance + Socket)
+  // ========== 7. INITIATE CALL ==========
   const initiateCall = useCallback(async (astrologer: Astrologer, callType: 'audio' | 'video' = 'audio') => {
-    // 🛑 1. Profile Completion Check
+    if (isCallProcessing) return { success: false, message: 'Already processing' };
+
     if (!isProfileComplete(user)) {
-      toast((t) => (
-        <div className="flex flex-col gap-2">
-          <span className="font-semibold text-gray-800">
-            ⚠️ Profile Incomplete
-          </span>
-          <span className="text-sm text-gray-600">
-            Please complete your personal information before connecting with an astrologer.
-          </span>
-          <button 
-            onClick={() => {
-              toast.dismiss(t.id);
-              router.push('/profile');
-            }}
-            className="mt-2 bg-yellow-400 text-black px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-yellow-500 transition-colors"
-          >
-            Go to Profile Page
-          </button>
-        </div>
-      ), {
-        duration: 5000,
-        position: 'top-center',
-        style: {
-          background: '#fff',
-          border: '1px solid #e5e7eb',
-          padding: '16px',
-        },
-      });
+      toast.error("Please complete your profile first");
+      router.push('/profile');
       return { success: false, message: 'Profile incomplete' };
     }
-    if (isCallProcessing) return { success: false, message: 'Already processing' };
 
     try {
       setIsCallProcessing(true);
-      const callRate = astrologer.pricing?.call ?? astrologer.callRate ?? astrologer.callPrice ?? 15;
-      const balanceCheck = await orderService.checkBalance(callRate, 5);
+      const callRate = astrologer.pricing?.call ?? astrologer.callRate ?? 15;
 
-      // FIX 1: Redirect on Low Balance
+      const balanceCheck = await orderService.checkBalance(callRate, 5);
       if (!balanceCheck.success) {
-         router.push('/wallet/recharge');
-         return { success: false, message: 'Insufficient balance' };
+        router.push('/wallet/recharge');
+        return { success: false, message: 'Insufficient balance' };
       }
 
       const callResponse = await callService.initiateCall({
@@ -462,13 +521,13 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           status: data.status,
           callType,
           ratePerMinute: callRate,
-          expectedWaitTime: data.expectedWaitTime || null,
-          queuePosition: data.queuePosition || null,
+          expectedWaitTime: data.expectedWaitTime,
+          queuePosition: data.queuePosition,
           astrologer: {
             id: astrologer.id || astrologer._id,
             _id: astrologer._id || astrologer.id!,
             name: astrologer.name,
-            image: astrologer.image || astrologer.profileImage || astrologer.profilePicture,
+            image: astrologer.image || astrologer.profileImage,
             callPrice: callRate,
           },
         };
@@ -476,58 +535,49 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setPendingCallSession(newCallSession);
         setCallWaitingVisible(true);
 
-        // FIX 2: FORCE SOCKET CONNECTION & RETRY LOGIC
         if (user?._id) {
-            console.log(`🔌 [RealTime] Attempting to join session: ${data.sessionId}`);
-            try {
-                const token = localStorage.getItem('accessToken');
-                if (token) {
-                    // Critical: Await the connection to ensure it's ready before emitting
-                    await callService.connectSocket(token);
-                    
-                    // Small delay to ensure socket state is propagated if necessary
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    
-                    callService.joinSession(data.sessionId, user._id, 'user');
-                    console.log('✅ [RealTime] Successfully joined session room');
-                }
-            } catch (socketErr) {
-                console.error("❌ [RealTime] Critical Socket Error - Could not join session room:", socketErr);
-                // Even if this fails, we don't return false, because FCM might still save us.
-            }
+          const token = localStorage.getItem('accessToken');
+          if (token) {
+            await callService.connectSocket(token);
+            callService.joinSession(data.sessionId, user._id, 'user');
+          }
         }
 
         return { success: true, data };
       } else {
         const errorMsg = callResponse.message || 'Unable to start call session';
-        alert(errorMsg);
+        toast.error(errorMsg);
         return { success: false, message: errorMsg };
       }
     } catch (error: any) {
-      console.error('❌ Call initiate error:', error);
+      toast.error(error.message || 'Failed to initiate call');
       return { success: false, message: error.message };
     } finally {
       setIsCallProcessing(false);
     }
   }, [isCallProcessing, router, user]);
 
+  // ========== 8. CANCEL ACTIONS ==========
   const cancelChat = useCallback(() => {
     setChatWaitingVisible(false);
     setPendingChatSession(null);
+    processedSessionIds.current.clear();
   }, []);
 
   const cancelCall = useCallback(async () => {
     if (pendingCallRef.current) {
-        try {
-            await callService.cancelCall(pendingCallRef.current.sessionId, 'user_cancelled');
-        } catch (e) {
-            console.error('Failed to send cancel to backend', e);
-        }
+      try {
+        await callService.cancelCall(pendingCallRef.current.sessionId, 'user_cancelled');
+      } catch (e) {
+        console.error('Failed to send cancel to backend', e);
+      }
     }
     setCallWaitingVisible(false);
     setPendingCallSession(null);
+    processedSessionIds.current.clear();
   }, []);
 
+  // ========== 9. INCOMING CALL ACTIONS ==========
   const acceptIncomingCall = useCallback(() => {
     if (!incomingCall) return;
     setIncomingCallVisible(false);
@@ -543,11 +593,24 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIncomingCall(null);
   }, [incomingCall, user]);
 
+  // ========== CONTEXT VALUE ==========
   const value: RealTimeContextType = {
-    ready: true,
-    pendingChatSession, chatWaitingVisible, isChatProcessing, initiateChat, cancelChat,
-    pendingCallSession, callWaitingVisible, isCallProcessing, initiateCall, cancelCall,
-    incomingCall, incomingCallVisible, acceptIncomingCall, rejectIncomingCall,
+    ready: socketInitialized,
+    pendingChatSession,
+    chatWaitingVisible,
+    isChatProcessing,
+    initiateChat,
+    cancelChat,
+    pendingCallSession,
+    callWaitingVisible,
+    isCallProcessing,
+    initiateCall,
+    cancelCall,
+    incomingCall,
+    incomingCallVisible,
+    acceptIncomingCall,
+    rejectIncomingCall,
+    addNotificationListener,
   };
 
   return (
