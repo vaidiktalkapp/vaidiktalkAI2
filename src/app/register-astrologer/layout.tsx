@@ -1,6 +1,7 @@
 import React from 'react';
 import { Toaster } from 'react-hot-toast'; // Recommended for alerts
 import Image from 'next/image';
+import Link from 'next/link';
 
 export const metadata = {
   title: 'VaidikTalk - Astrologer Registration',
@@ -18,8 +19,10 @@ export default function AstrologerLayout({
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
+            <Link href="https://vaidiktalk.com">
             {/* Replace with your Logo */}
             <Image src="/Vaidik-talk1.png" alt="VaidikTalk Logo" width={200} height={200} />
+            </Link>
           </div>
         </div>
       </header>
