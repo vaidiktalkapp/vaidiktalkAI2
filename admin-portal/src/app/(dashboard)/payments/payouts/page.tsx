@@ -76,6 +76,7 @@ export default function PayoutsPage() {
   const [selectedPayout, setSelectedPayout] = useState<Payout | null>(null);
   
   // Form states
+  const [approveRef, setApproveRef] = useState('');
   const [approveNotes, setApproveNotes] = useState('');
   const [processRef, setProcessRef] = useState('');
   const [processNotes, setProcessNotes] = useState('');
@@ -110,7 +111,7 @@ export default function PayoutsPage() {
   // Approve mutation
   const approveMutation = useMutation({
     mutationFn: () => adminApi.approvePayout(selectedPayout!.payoutId, {
-      transactionReference: '',
+      transactionReference: approveRef,
       adminNotes: approveNotes,
     }),
     onSuccess: () => {
@@ -184,6 +185,7 @@ export default function PayoutsPage() {
     setCompleteRef('');
     setCompleteNotes('');
     setRejectReason('');
+    setApproveRef('');
   };
 
   const openDetailsModal = (payout: Payout) => {
@@ -447,6 +449,20 @@ export default function PayoutsPage() {
                 This will mark the payout as <strong>approved</strong>. You can then process the bank transfer.
               </p>
             </div>
+            <div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Transaction Reference
+  </label>
+  <input
+    type="text"
+    value={approveRef}
+    onChange={(e) => setApproveRef(e.target.value)}
+    className="w-full px-3 py-2 border border-gray-300 rounded-lg
+               focus:ring-2 focus:ring-green-500"
+    placeholder="UTR / Transaction ID"
+  />
+</div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Admin Notes (Optional)
