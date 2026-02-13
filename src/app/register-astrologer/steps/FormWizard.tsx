@@ -27,8 +27,7 @@ const SKILLS = [
   'Tarot', 
   'Vastu', 
   'Healing', 
-  'Numerology', 
-  'Kundli'
+  'Numerology'
 ];
 
 const LANGUAGES_LIST = [
