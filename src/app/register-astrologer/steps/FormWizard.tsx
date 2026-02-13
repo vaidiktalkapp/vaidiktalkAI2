@@ -19,8 +19,35 @@ import {
 } from 'lucide-react';
 
 // --- CONSTANTS ---
-const SKILLS = ['Vedic', 'Numerology', 'Tarot', 'Palmistry', 'Vastu', 'Kundli'];
-const LANGUAGES_LIST = ['English', 'Hindi', 'Marathi', 'Gujarati', 'Tamil', 'Telugu', 'Kannada'];
+const SKILLS = [
+  'Vedic', 
+  'KP', 
+  'Palmistry', 
+  'Face Reading', 
+  'Tarot', 
+  'Vastu', 
+  'Healing', 
+  'Numerology', 
+  'Kundli'
+];
+
+const LANGUAGES_LIST = [
+  'English', 
+  'Hindi', 
+  'Marathi', 
+  'Gujarati', 
+  'Punjabi', 
+  'Haryanvi', 
+  'Bengali', 
+  'Tamil', 
+  'Telugu', 
+  'Kannada', 
+  'Bhojpuri', 
+  'Sindhi', 
+  'Odia', 
+  'Dogri', 
+  'Kashmiri'
+];
 
 // Updated Steps to include Experience/Bio
 const STEPS = [
