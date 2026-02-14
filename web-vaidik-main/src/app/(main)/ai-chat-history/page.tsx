@@ -173,18 +173,8 @@ const AiChatHistoryPage = () => {
     };
 
     const handleConsultAgain = (session: AiChatOrder) => {
-        // More resilient ID extraction
-        const astrologerId = session.aiAstrologerId ||
-            (session.astrologer && (session.astrologer as any)._id) ||
-            (session.astrologer && (session.astrologer as any).id);
-
-        if (!astrologerId) {
-            toast.error('Astrologer information not available');
-            console.error('[HISTORY] Missing astrologer ID in session:', session);
-            return;
-        }
-
-        router.push(`/ai-astrologer/${astrologerId}`);
+        // Redirect to the general AI astrologers listing page as requested
+        router.push(`/ai-astrologer-chat`);
     };
 
     const handleExportSession = (session: AiChatOrder) => {
