@@ -461,9 +461,13 @@ Always say:
 
             const content = completion.choices[0].message.content;
 
-            // ✅ Return RAW content with METRICS block intact
-            // The gateway will extract metrics BEFORE cleaning for display
-            return content || 'I apologize, but the celestial connection was interrupted.';
+            if (!content) {
+                if (expertise === 'Tarot') return 'I apologize, but the cards are unclear right now. Please try again.';
+                if (expertise === 'Numerology') return 'I apologize, but the vibrations are misaligned. Please try again.';
+                return 'I apologize, but the celestial connection was interrupted. Please try again.';
+            }
+
+            return content;
 
         } catch (error: any) {
             const errorMessage = error?.message || 'Unknown error';
@@ -476,6 +480,12 @@ Always say:
                 this.logger.error('🔑 [AI Engine] Invalid OpenAI API Key. Please check your .env file.');
             } else if (errorStatus === 429) {
                 this.logger.error('💳 [AI Engine] OpenAI Quota Exceeded or Rate Limited. Please check your billing/usage.');
+            }
+
+            if (expertise === 'Tarot') {
+                return "I apologize, but I'm having trouble reading the cards right now. Please try again in a moment.";
+            } else if (expertise === 'Numerology') {
+                return "I apologize, but I'm having trouble aligning the vibrations right now. Please try again in a moment.";
             }
 
             return "I apologize, but I'm having trouble connecting to the stars right now. Please try again in a moment.";
@@ -561,11 +571,7 @@ Always say:
             return JSON.parse(cleanedText);
         } catch (error) {
             this.logger.error('Follow-up suggestions error:', error);
-            return [
-                'What remedies can improve my situation?',
-                'How are current cosmic energies affecting me?',
-                'What should I focus on in the coming months?'
-            ];
+            return [];
         }
     }
 

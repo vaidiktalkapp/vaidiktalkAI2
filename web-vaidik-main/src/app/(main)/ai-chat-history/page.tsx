@@ -173,34 +173,63 @@ const AiChatHistoryPage = () => {
     };
 
     const handleConsultAgain = (session: AiChatOrder) => {
-        if (!session?.aiAstrologerId) {
+        // More resilient ID extraction
+        const astrologerId = session.aiAstrologerId ||
+            (session.astrologer && (session.astrologer as any)._id) ||
+            (session.astrologer && (session.astrologer as any).id);
+
+        if (!astrologerId) {
             toast.error('Astrologer information not available');
+            console.error('[HISTORY] Missing astrologer ID in session:', session);
             return;
         }
 
-        router.push(`/ai-astrologer/${session.aiAstrologerId}`);
+        router.push(`/ai-astrologer/${astrologerId}`);
     };
 
     const handleExportSession = (session: AiChatOrder) => {
-        // Export session as JSON
-        const sessionData = {
-            astrologer: session.astrologer?.name,
-            date: session.startedAt ? new Date(session.startedAt).toLocaleString() : 'N/A',
-            duration: session.duration ? `${Math.floor(session.duration / 60)}m ${session.duration % 60}s` : '0m 0s',
-            messages: sessionMessages
-        };
+        // Create formatted text content instead of JSON
+        const astrologerName = session.astrologer?.name || 'AI Astrologer';
+        const dateStr = session.startedAt ? new Date(session.startedAt).toLocaleString('en-IN') : 'N/A';
+        const durationStr = session.duration ? `${Math.floor(session.duration / 60)}m ${session.duration % 60}s` : '0m 0s';
+        const costStr = `₹${Number(session.totalCost || 0).toFixed(2)}`;
 
-        const blob = new Blob([JSON.stringify(sessionData, null, 2)], {
-            type: 'application/json'
+        let content = `VAIDIK TALK - AI ASTROLOGY CONSULTATION\n`;
+        content += `==========================================\n\n`;
+        content += `Astrologer: ${astrologerName}\n`;
+        content += `Date: ${dateStr}\n`;
+        content += `Duration: ${durationStr}\n`;
+        content += `Total Cost: ${costStr}\n`;
+        content += `Session ID: ${session._id}\n\n`;
+        content += `------------------------------------------\n`;
+        content += `CONVERSATION LOG\n`;
+        content += `------------------------------------------\n\n`;
+
+        if (sessionMessages && sessionMessages.length > 0) {
+            sessionMessages.forEach(msg => {
+                const sender = msg.senderModel === 'User' ? (user?.name || 'You') : astrologerName;
+                const time = new Date(msg.sentAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                content += `[${time}] ${sender}:\n${msg.content}\n\n`;
+            });
+        } else {
+            content += `(No message transcripts available for this session export)\n`;
+        }
+
+        content += `==========================================\n`;
+        content += `Generated on ${new Date().toLocaleString()}\n`;
+
+        const blob = new Blob([content], {
+            type: 'text/plain;charset=utf-8'
         });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `astrology-session-${session._id}.json`;
+        const safeName = astrologerName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        a.download = `astrology_${safeName}_${session._id.substring(0, 8)}.txt`;
         a.click();
         URL.revokeObjectURL(url);
 
-        toast.success('Session exported successfully');
+        toast.success('Session exported as TXT');
     };
 
     // Filter and search logic
