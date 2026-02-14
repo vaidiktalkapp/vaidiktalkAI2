@@ -370,17 +370,17 @@ Always say:
         conversationHistory: any[] = [],
         language: string = 'English'
     ): Promise<string> {
+        let rawExpertise = astrologerProfile.expertise || 'Vedic';
+        let expertise = rawExpertise.charAt(0).toUpperCase() + rawExpertise.slice(1).toLowerCase();
+
+        if (!['Vedic', 'Tarot', 'Numerology'].includes(expertise)) {
+            expertise = 'Vedic';
+        }
+
         try {
             this.logger.log('🤖 [AI Engine] Generating response...');
 
             const intent = this.detectAstrologyIntent(userMessage);
-
-            let rawExpertise = astrologerProfile.expertise || 'Vedic';
-            let expertise = rawExpertise.charAt(0).toUpperCase() + rawExpertise.slice(1).toLowerCase();
-
-            if (!['Vedic', 'Tarot', 'Numerology'].includes(expertise)) {
-                expertise = 'Vedic';
-            }
 
             const personaPrompt = this.buildPersonaPrompt({ ...astrologerProfile, expertise }, language);
             const specializationPrompt = (this.SPECIALIZATION_PROMPTS[expertise as keyof typeof this.SPECIALIZATION_PROMPTS] || this.SPECIALIZATION_PROMPTS.Vedic)[intent as keyof (typeof this.SPECIALIZATION_PROMPTS)['Vedic']] || (this.SPECIALIZATION_PROMPTS[expertise as keyof typeof this.SPECIALIZATION_PROMPTS] || this.SPECIALIZATION_PROMPTS.Vedic).general;
