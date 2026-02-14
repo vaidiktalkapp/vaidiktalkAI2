@@ -1,0 +1,31 @@
+import { IsNotEmpty, IsString, IsMongoId, IsOptional } from 'class-validator';
+
+export class StartAiChatDto {
+    @IsNotEmpty()
+    @IsMongoId()
+    astrologerId: string;
+
+    @IsOptional()
+    @IsString()
+    message: string;
+
+    @IsNotEmpty()
+    @IsString()
+    userName: string;
+
+    @IsNotEmpty()
+    @IsString()
+    dateOfBirth: string; // YYYY-MM-DD
+
+    @IsNotEmpty()
+    @IsString()
+    timeOfBirth: string; // HH:MM
+
+    @IsNotEmpty()
+    @IsString()
+    placeOfBirth: string;
+
+    @IsOptional()
+    @IsString()
+    language?: string;
+}
