@@ -466,7 +466,18 @@ Always say:
             return content || 'I apologize, but the celestial connection was interrupted.';
 
         } catch (error: any) {
-            this.logger.error('❌ [AI Engine] Error generating AI response:', error);
+            const errorMessage = error?.message || 'Unknown error';
+            const errorStatus = error?.status || error?.response?.status || 'No status';
+            const errorType = error?.type || error?.code || 'No type';
+
+            this.logger.error(`❌ [AI Engine] Error generating AI response: ${errorMessage} (Status: ${errorStatus}, Type: ${errorType})`);
+
+            if (errorStatus === 401) {
+                this.logger.error('🔑 [AI Engine] Invalid OpenAI API Key. Please check your .env file.');
+            } else if (errorStatus === 429) {
+                this.logger.error('💳 [AI Engine] OpenAI Quota Exceeded or Rate Limited. Please check your billing/usage.');
+            }
+
             return "I apologize, but I'm having trouble connecting to the stars right now. Please try again in a moment.";
         }
     }

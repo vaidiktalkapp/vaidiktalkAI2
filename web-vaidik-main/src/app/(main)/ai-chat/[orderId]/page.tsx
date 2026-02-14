@@ -789,7 +789,7 @@ Occupation: ${intakeData.occupation || 'Unknown'}`;
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   disabled={loading || isTyping}
-                  className="flex-1 px-5 py-3 md:py-4 bg-white border-2 border-orange-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500 transition-all text-sm md:text-base font-bold shadow-lg placeholder-gray-400 disabled:bg-gray-50 disabled:cursor-not-allowed resize-none overflow-hidden min-h-[56px] max-h-48"
+                  className="flex-1 px-5 py-3 md:py-4 bg-white border-2 border-orange-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500 transition-all text-sm md:text-base font-bold text-gray-900 shadow-lg placeholder-gray-400 disabled:bg-gray-50 disabled:cursor-not-allowed resize-none overflow-hidden min-h-[56px] max-h-48"
                   onInput={(e) => {
                     const target = e.currentTarget as HTMLTextAreaElement;
                     target.style.height = 'auto';

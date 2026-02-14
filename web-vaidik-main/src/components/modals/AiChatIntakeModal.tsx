@@ -225,7 +225,7 @@ const AiChatIntakeModal = ({ isOpen, onClose, astrologer }: AiChatIntakeModalPro
                                                 type="text" required disabled={loading}
                                                 value={intakeData.name}
                                                 onChange={e => setIntakeData({ ...intakeData, name: e.target.value })}
-                                                className="w-full px-3 py-2 bg-white border-2 border-orange-200 rounded-xl text-sm font-black focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none shadow-sm placeholder-gray-400"
+                                                className="w-full px-3 py-2 bg-white border-2 border-orange-200 rounded-xl text-sm font-black text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none shadow-sm placeholder-gray-400"
                                                 placeholder="Your name"
                                             />
                                             <Sparkles className="absolute right-3 top-9 w-3.5 h-3.5 text-orange-500" />
@@ -239,7 +239,7 @@ const AiChatIntakeModal = ({ isOpen, onClose, astrologer }: AiChatIntakeModalPro
                                                     disabled={loading}
                                                     value={intakeData.gender}
                                                     onChange={e => setIntakeData({ ...intakeData, gender: e.target.value })}
-                                                    className="w-full px-4 pr-10 py-2.5 bg-white border-2 border-orange-200 rounded-xl text-sm font-black focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none shadow-sm"
+                                                    className="w-full px-4 pr-10 py-2.5 bg-white border-2 border-orange-200 rounded-xl text-sm font-black text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none shadow-sm"
                                                 >
                                                     <option>Male</option>
                                                     <option>Female</option>
@@ -258,7 +258,7 @@ const AiChatIntakeModal = ({ isOpen, onClose, astrologer }: AiChatIntakeModalPro
                                                 type="text" required disabled={loading}
                                                 value={intakeData.place}
                                                 onChange={e => setIntakeData({ ...intakeData, place: e.target.value })}
-                                                className="w-full px-4 pr-10 py-2.5 bg-white border-2 border-orange-200 rounded-xl text-sm font-black focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none shadow-sm placeholder-gray-400"
+                                                className="w-full px-4 pr-10 py-2.5 bg-white border-2 border-orange-200 rounded-xl text-sm font-black text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none shadow-sm placeholder-gray-400"
                                                 placeholder="Enter city"
                                             />
                                             <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-500" />
@@ -274,7 +274,7 @@ const AiChatIntakeModal = ({ isOpen, onClose, astrologer }: AiChatIntakeModalPro
                                                     type="date" required disabled={loading}
                                                     value={intakeData.date}
                                                     onChange={e => setIntakeData({ ...intakeData, date: e.target.value })}
-                                                    className="w-full px-4 pr-10 py-2.5 bg-white border-2 border-orange-200 rounded-xl text-sm font-black focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none shadow-sm [color-scheme:light]"
+                                                    className="w-full px-4 pr-10 py-2.5 bg-white border-2 border-orange-200 rounded-xl text-sm font-black text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none shadow-sm [color-scheme:light]"
                                                 />
                                                 <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-500 pointer-events-none" />
                                             </div>
@@ -286,7 +286,7 @@ const AiChatIntakeModal = ({ isOpen, onClose, astrologer }: AiChatIntakeModalPro
                                                     type="time" required disabled={loading}
                                                     value={intakeData.time}
                                                     onChange={e => setIntakeData({ ...intakeData, time: e.target.value })}
-                                                    className="w-full px-4 pr-10 py-2.5 bg-white border-2 border-orange-200 rounded-xl text-sm font-black focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none shadow-sm [color-scheme:light]"
+                                                    className="w-full px-4 pr-10 py-2.5 bg-white border-2 border-orange-200 rounded-xl text-sm font-black text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none shadow-sm [color-scheme:light]"
                                                 />
                                                 <Clock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-500 pointer-events-none" />
                                             </div>
@@ -302,7 +302,7 @@ const AiChatIntakeModal = ({ isOpen, onClose, astrologer }: AiChatIntakeModalPro
                                                     disabled={loading}
                                                     value={intakeData.maritalStatus}
                                                     onChange={e => setIntakeData({ ...intakeData, maritalStatus: e.target.value })}
-                                                    className="w-full px-3 pr-10 py-2 bg-white border-2 border-orange-200 rounded-xl text-sm font-black focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none shadow-sm"
+                                                    className="w-full px-3 pr-10 py-2 bg-white border-2 border-orange-200 rounded-xl text-sm font-black text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none shadow-sm"
                                                 >
                                                     <option>Single</option>
                                                     <option>Married</option>
@@ -319,7 +319,7 @@ const AiChatIntakeModal = ({ isOpen, onClose, astrologer }: AiChatIntakeModalPro
                                                     disabled={loading}
                                                     value={intakeData.occupation}
                                                     onChange={e => setIntakeData({ ...intakeData, occupation: e.target.value })}
-                                                    className="w-full px-3 pr-10 py-2 bg-white border-2 border-orange-200 rounded-xl text-sm font-black focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none shadow-sm"
+                                                    className="w-full px-3 pr-10 py-2 bg-white border-2 border-orange-200 rounded-xl text-sm font-black text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none shadow-sm"
                                                 >
                                                     <option>Employee</option>
                                                     <option>Business</option>
@@ -341,7 +341,7 @@ const AiChatIntakeModal = ({ isOpen, onClose, astrologer }: AiChatIntakeModalPro
                                                 disabled={loading}
                                                 value={intakeData.language}
                                                 onChange={e => setIntakeData({ ...intakeData, language: e.target.value })}
-                                                className="w-full px-4 pr-10 py-2.5 bg-white border-2 border-orange-200 rounded-xl text-sm font-black focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none shadow-sm"
+                                                className="w-full px-4 pr-10 py-2.5 bg-white border-2 border-orange-200 rounded-xl text-sm font-black text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none appearance-none shadow-sm"
                                             >
                                                 {astrologer.languages && astrologer.languages.length > 0 ? (
                                                     astrologer.languages.map(lang => (
