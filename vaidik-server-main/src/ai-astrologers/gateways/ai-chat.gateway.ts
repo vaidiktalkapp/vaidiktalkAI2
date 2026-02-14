@@ -28,7 +28,7 @@ interface AuthSocket extends Socket {
 
 @WebSocketGateway({
     cors: {
-        origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:3001', 'http://localhost:3005', 'http://localhost:5173', 'https://vaidik-web.netlify.app', 'https://vaidik-admin.netlify.app', 'https://vaidiktalk-ai.vercel.app', 'https://vaidiktalkweb.vercel.app', 'https://vaidiktalk-ai-2.vercel.app', 'https://vaidiktalkaiadmin.vercel.app'],
+        origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:3001', 'http://localhost:3005', 'http://localhost:5173', 'https://vaidik-web.netlify.app', 'https://vaidiktalk-ai-2-1a2t.vercel.app', 'https://vaidik-admin.netlify.app', 'https://vaidiktalk-ai.vercel.app', 'https://vaidiktalkweb.vercel.app', 'https://vaidiktalk-ai-2.vercel.app', 'https://vaidiktalkaiadmin.vercel.app'],
         credentials: true,
         methods: ['GET', 'POST'],
     },
