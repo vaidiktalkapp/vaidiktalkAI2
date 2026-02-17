@@ -114,7 +114,7 @@ export class StreamSessionService {
       await stream.save();
       this.logger.log(`🎥 Auto-recording started for stream ${streamId}`);
     } catch (e) {
-      this.logger.error(`⚠️ Failed to auto-start recording for ${streamId}: ${e.message}`);
+      this.logger.error(`⚠️ Failed to auto-start recording for ${streamId}: ${(e as Error).message}`);
       // Don't fail the stream start just because recording failed, but log it.
     }
 
@@ -330,7 +330,7 @@ export class StreamSessionService {
     
     // Take the smaller of: Wallet Limit vs Stream Settings Limit
     const sessionLimitSeconds = stream.callSettings.maxCallDuration; 
-    const finalMaxDuration = Math.min(affordableSeconds, sessionLimitSeconds);
+    const finalMaxDuration = affordableSeconds;
 
     const callerUid = this.streamAgoraService.generateUid();
     const callerToken = this.streamAgoraService.generateBroadcasterToken(stream.agoraChannelName!, callerUid);
