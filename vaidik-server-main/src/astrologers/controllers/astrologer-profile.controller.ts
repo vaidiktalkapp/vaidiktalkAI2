@@ -30,7 +30,7 @@ import { UpdateAstrologerProfileDto } from '../dto/update-astrologer-profile.dto
 import { UpdateWorkingHoursDto } from '../dto/update-working-hours.dto';
 import { UpdateAvailabilityDto } from '../dto/update-availability.dto';
 import { RequestProfileChangeDto } from '../dto/request-profile-change.dto';
-import { GiftService } from '../../payments/services/gift.service'; 
+import { GiftService } from '../../payments/services/gift.service';
 
 interface AuthenticatedRequest extends Request {
   user: { _id: string; astrologerId?: string };
@@ -48,7 +48,7 @@ export class AstrologerProfileController {
     private penaltyService: PenaltyService,
     private walletService: WalletService,
     private giftService: GiftService,
-  ) {}
+  ) { }
 
   // ===== PROFILE MANAGEMENT =====
 
@@ -232,7 +232,7 @@ export class AstrologerProfileController {
         summary: {
           totalEarned: astrologer.earnings.totalEarned || 0,
           platformCommission: astrologer.earnings.platformCommission || 0,
-          platformCommissionRate: 40,
+          platformCommissionRate: astrologer.earnings?.platformCommissionRate ?? 50,
           netEarnings: astrologer.earnings.netEarnings || 0,
           totalPenalties: astrologer.earnings.totalPenalties || 0,
           withdrawableAmount: astrologer.earnings.withdrawableAmount || 0,
@@ -330,7 +330,7 @@ export class AstrologerProfileController {
         withdrawableAmount: netEarnings,
         totalPenalties: totalPenalties, // ✅ Now calculated correctly
         platformCommissionRate: 40,
-        pendingWithdrawal: 0, 
+        pendingWithdrawal: 0,
         totalWithdrawn: 0,
       },
     };
@@ -420,7 +420,7 @@ export class AstrologerProfileController {
         streamOrders, // ✅ Returned to frontend
         totalMinutes: Math.round(totalMinutes / 60),
         repeatCustomers: repeatCustomers,
-        totalEarnings: 0, 
+        totalEarnings: 0,
       },
     };
   }
@@ -584,8 +584,8 @@ export class AstrologerProfileController {
       userModel: 'Astrologer',
       status: 'completed',
       $or: [
-          { type: 'gift' }, 
-          { 'metadata.context': 'gift' } 
+        { type: 'gift' },
+        { 'metadata.context': 'gift' }
       ]
     };
 
@@ -600,7 +600,7 @@ export class AstrologerProfileController {
       { $match: matchQuery },
       {
         $group: {
-          _id: '$metadata.context', 
+          _id: '$metadata.context',
           count: { $sum: 1 },
           totalAmount: { $sum: '$amount' },
         }
@@ -613,14 +613,14 @@ export class AstrologerProfileController {
     let streamGifts = { count: 0, amount: 0 };
 
     giftStats.forEach(stat => {
-        totalGifts += stat.count;
-        totalEarned += stat.totalAmount;
-        
-        if (stat._id === 'direct') {
-            directGifts = { count: stat.count, amount: stat.totalAmount };
-        } else if (stat._id === 'stream') {
-            streamGifts = { count: stat.count, amount: stat.totalAmount };
-        }
+      totalGifts += stat.count;
+      totalEarned += stat.totalAmount;
+
+      if (stat._id === 'direct') {
+        directGifts = { count: stat.count, amount: stat.totalAmount };
+      } else if (stat._id === 'stream') {
+        streamGifts = { count: stat.count, amount: stat.totalAmount };
+      }
     });
 
     return {

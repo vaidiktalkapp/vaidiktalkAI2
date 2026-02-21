@@ -15,7 +15,7 @@ export class CallBillingService {
     @InjectModel(CallSession.name) private sessionModel: Model<CallSessionDocument>,
     private walletService: WalletService,
     private orderPaymentService: OrderPaymentService
-  ) {}
+  ) { }
 
   /**
    * ✅ Calculate billing for a call
@@ -24,17 +24,17 @@ export class CallBillingService {
   calculateBilling(
     durationSeconds: number,
     ratePerMinute: number,
-    commissionRate: number = 20
+    commissionRate: number = 50
   ): any {
     // ✅ Logic: 
     // 0-60s -> 1 min
     // 61-120s -> 2 mins
     // If duration is 0 but call started, usually we typically charge 1 min if connected
-    
+
     let billedMinutes = Math.ceil(durationSeconds / 60);
     if (billedMinutes < 1) billedMinutes = 1; // Enforce minimum 1 min
 
-    const billedDuration = billedMinutes * 60; 
+    const billedDuration = billedMinutes * 60;
     const totalAmount = billedMinutes * ratePerMinute;
     const platformCommission = (totalAmount * commissionRate) / 100;
     const astrologerEarning = totalAmount - platformCommission;
