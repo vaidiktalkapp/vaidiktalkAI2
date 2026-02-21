@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
 import { 
-  ArrowLeft, User, Star, Clock, IndianRupee, RefreshCw, XCircle, 
+  ArrowLeft, User, Star, Clock, IndianRupee, RefreshCw, XCircle, X,
   Video, MessageCircle, Phone, FileText, CheckCircle, AlertCircle, PlayCircle 
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -26,6 +26,8 @@ export default function OrderDetailPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [zohoTicketId, setZohoTicketId] = useState('');
+
+  const [viewingChatSessionId, setViewingChatSessionId] = useState<string | null>(null);
 
   // Fetch Order
   const { data: order, isLoading } = useQuery<Order>({
@@ -221,7 +223,15 @@ export default function OrderDetailPage() {
                     <td className="px-4 py-3">{session.billedMinutes} min</td>
                     <td className="px-4 py-3">₹{session.chargedAmount}</td>
                     <td className="px-4 py-3">
-                      {session.recordingUrl ? (
+                      {session.sessionType === 'chat' ? (
+                        <button 
+                          onClick={() => setViewingChatSessionId(session.sessionId)}
+                          className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          <MessageCircle size={16} />
+                          View Chat
+                        </button>
+                      ) : session.recordingUrl ? (
                         <a 
                           href={session.recordingUrl} 
                           target="_blank" 
@@ -416,6 +426,79 @@ export default function OrderDetailPage() {
           </div>
         </Modal>
       )}
+
+      {viewingChatSessionId && (
+        <ChatViewerModal 
+          sessionId={viewingChatSessionId} 
+          onClose={() => setViewingChatSessionId(null)} 
+        />
+      )}
+    </div>
+  );
+}
+
+export function ChatViewerModal({ sessionId, onClose }: { sessionId: string; onClose: () => void }) {
+  const { data: messages, isLoading } = useQuery({
+    queryKey: ['admin-chat-messages', sessionId],
+    queryFn: async () => {
+      const response = await adminApi.getChatMessages(sessionId);
+      // Adjust path based on your API response structure
+      return response.data?.data?.messages || response.data?.data || [];
+    },
+    refetchInterval: 5000 // Automatically fetch new messages every 5s for live monitoring
+  });
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-slate-50 rounded-2xl w-full max-w-2xl h-[80vh] flex flex-col shadow-2xl overflow-hidden">
+        {/* Modal Header */}
+        <div className="p-4 bg-white border-b flex justify-between items-center z-10">
+          <div>
+            <h3 className="font-bold text-gray-900 flex items-center gap-2">
+              <MessageCircle className="text-blue-600" size={20} />
+              Security & Fraud Monitoring
+            </h3>
+            <p className="text-xs text-gray-500 font-mono mt-1">Session ID: {sessionId}</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition">
+            <X size={20} className="text-gray-500" />
+          </button>
+        </div>
+        
+        {/* Chat Canvas */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-full">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : messages?.length > 0 ? (
+            messages.map((msg: any) => {
+              // Automatically detects sender regardless of schema variations
+              const isUser = msg.senderType === 'User' || msg.senderModel === 'User' || msg.sender === 'user';
+              
+              return (
+                <div key={msg._id || msg.id} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+                  <div className={`p-3 rounded-2xl max-w-[80%] ${
+                    isUser 
+                      ? 'bg-blue-600 text-white rounded-tr-sm shadow-sm' 
+                      : 'bg-white border shadow-sm rounded-tl-sm text-gray-800'
+                  }`}>
+                    <p className="text-sm whitespace-pre-wrap">{msg.content || msg.message}</p>
+                    <span className={`text-[10px] mt-1 block font-medium ${isUser ? 'text-blue-200' : 'text-gray-400'}`}>
+                      {isUser ? 'User' : 'Astrologer'} • {new Date(msg.createdAt || msg.timestamp).toLocaleTimeString()}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="h-full flex items-center justify-center flex-col text-gray-400 gap-2">
+              <MessageCircle size={40} className="opacity-20" />
+              <p>No messages recorded yet.</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

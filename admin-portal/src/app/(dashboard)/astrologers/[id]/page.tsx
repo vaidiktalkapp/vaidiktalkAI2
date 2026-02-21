@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
-import { 
-  ArrowLeft, Star, IndianRupee, TrendingUp, Activity, 
+import {
+  ArrowLeft, Star, IndianRupee, TrendingUp, Activity,
   MessageCircle, Phone, Video, Settings, Ban, CheckCircle,
   Wallet, Gift, Trash2
 } from 'lucide-react';
@@ -62,17 +62,17 @@ export default function AstrologerDetailPage() {
     queryFn: async () => {
       const response = await adminApi.getAstrologerDetails(astrologerId);
       const data = response.data.data;
-      
+
       // Initialize pricing modal values
       setChatRate(data.pricing?.chat?.toString() || '0');
       setCallRate(data.pricing?.call?.toString() || '0');
       setVideoRate(data.pricing?.videoCall?.toString() || '0');
-      
+
       // Initialize features
       setChatEnabled(data.isChatEnabled || false);
       setCallEnabled(data.isCallEnabled || false);
       setLiveEnabled(data.isLiveStreamEnabled || false);
-      
+
       return data;
     },
   });
@@ -189,16 +189,16 @@ export default function AstrologerDetailPage() {
                 <h2 className="text-2xl font-bold text-gray-900">{astrologer.name}</h2>
                 <p className="text-gray-600 mt-1">{astrologer.phoneNumber}</p>
                 {astrologer.email && <p className="text-gray-500 text-sm">{astrologer.email}</p>}
-                
+
                 {/* Rating */}
                 <div className="flex items-center gap-2 mt-2">
                   <div className="flex items-center gap-1">
                     {[...Array(5)].map((_, i) => (
-                      <Star 
-                        key={i} 
-                        size={16} 
-                        fill={i < Math.round(astrologer.ratings?.average || 0) ? 'gold' : 'none'} 
-                        className="text-yellow-500" 
+                      <Star
+                        key={i}
+                        size={16}
+                        fill={i < Math.round(astrologer.ratings?.average || 0) ? 'gold' : 'none'}
+                        className="text-yellow-500"
                       />
                     ))}
                   </div>
@@ -223,15 +223,15 @@ export default function AstrologerDetailPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <QuickStat label="Experience" value={`${astrologer.experienceYears || 0} years`} />
               <QuickStat label="Total Orders" value={astrologer.stats?.totalOrders || 0} />
-              <QuickStat 
-                label="Net Earnings" 
-                value={`₹${(astrologer.earnings?.netEarnings || astrologer.stats?.totalEarnings || 0).toLocaleString()}`} 
-                color="text-green-600" 
+              <QuickStat
+                label="Net Earnings"
+                value={`₹${(astrologer.earnings?.netEarnings || astrologer.stats?.totalEarnings || 0).toLocaleString()}`}
+                color="text-green-600"
               />
-              <QuickStat 
-                label="Profile" 
-                value={`${astrologer.profileCompletion?.percentage || 0}%`} 
-                color={astrologer.profileCompletion?.isComplete ? 'text-green-600' : 'text-orange-600'} 
+              <QuickStat
+                label="Profile"
+                value={`${astrologer.profileCompletion?.percentage || 0}%`}
+                color={astrologer.profileCompletion?.isComplete ? 'text-green-600' : 'text-orange-600'}
               />
             </div>
           </div>
@@ -287,10 +287,10 @@ export default function AstrologerDetailPage() {
             <Wallet size={20} className="text-indigo-600" /> Financial Overview
           </h3>
           <span className="text-xs text-gray-500">
-            Commission Rate: {astrologer.earnings?.platformCommissionRate || 40}%
+            Commission Rate: {astrologer.earnings?.platformCommissionRate ?? '—'}%
           </span>
         </div>
-        
+
         {/* Adjusted Grid for 6 items including Gifts */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 divide-x divide-gray-100">
           <div className="p-6 text-center">
@@ -299,7 +299,7 @@ export default function AstrologerDetailPage() {
               ₹{(astrologer.earnings?.totalEarned || 0).toLocaleString()}
             </p>
           </div>
-          
+
           {/* ✅ NEW: Gift Earnings */}
           <div className="p-6 text-center bg-pink-50">
             <div className="flex items-center justify-center gap-1 mb-2">
@@ -317,21 +317,21 @@ export default function AstrologerDetailPage() {
               ₹{(astrologer.earnings?.platformCommission || 0).toLocaleString()}
             </p>
           </div>
-          
+
           <div className="p-6 text-center bg-green-50">
             <p className="text-xs font-medium text-green-700 uppercase mb-2">Net Earnings</p>
             <p className="text-xl font-bold text-green-700">
               ₹{(astrologer.earnings?.netEarnings || 0).toLocaleString()}
             </p>
           </div>
-          
+
           <div className="p-6 text-center">
             <p className="text-xs font-medium text-red-500 uppercase mb-2">Penalties</p>
             <p className="text-xl font-bold text-red-600">
               -₹{(astrologer.earnings?.totalPenalties || 0).toLocaleString()}
             </p>
           </div>
-          
+
           <div className="p-6 text-center bg-blue-50">
             <p className="text-xs font-medium text-blue-700 uppercase mb-2">Withdrawable</p>
             <p className="text-xl font-bold text-blue-700">
@@ -360,22 +360,22 @@ export default function AstrologerDetailPage() {
 
       {/* Services & Pricing */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <ServiceCard 
-          icon={MessageCircle} 
-          title="Chat" 
-          rate={astrologer.pricing?.chat} 
+        <ServiceCard
+          icon={MessageCircle}
+          title="Chat"
+          rate={astrologer.pricing?.chat}
           enabled={astrologer.isChatEnabled}
         />
-        <ServiceCard 
-          icon={Phone} 
-          title="Call" 
-          rate={astrologer.pricing?.call} 
+        <ServiceCard
+          icon={Phone}
+          title="Call"
+          rate={astrologer.pricing?.call}
           enabled={astrologer.isCallEnabled}
         />
-        <ServiceCard 
-          icon={Video} 
-          title="Livestream" 
-          rate={astrologer.pricing?.videoCall} 
+        <ServiceCard
+          icon={Video}
+          title="Livestream"
+          rate={astrologer.pricing?.videoCall}
           enabled={astrologer.isLiveStreamEnabled}
         />
       </div>
@@ -386,8 +386,8 @@ export default function AstrologerDetailPage() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Orders</h3>
           <div className="space-y-2">
             {performance.recentOrders.map((order: any) => (
-              <Link 
-                key={order._id} 
+              <Link
+                key={order._id}
                 href={`/orders/${order.orderId}`}
                 className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition-colors group"
               >
