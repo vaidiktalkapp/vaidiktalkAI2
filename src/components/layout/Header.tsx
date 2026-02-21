@@ -49,13 +49,13 @@ const PhoneIcon = () => (
 );
 
 export default function Header() {
- const { 
-    user, 
-    isAuthenticated, 
-    logout, 
-    isLoginModalOpen, 
-    openLoginModal, 
-    closeLoginModal 
+  const {
+    user,
+    isAuthenticated,
+    logout,
+    isLoginModalOpen,
+    openLoginModal,
+    closeLoginModal
   } = useAuth();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -92,19 +92,19 @@ export default function Header() {
     <>
       <header className="bg-white shadow-sm sticky top-0 z-40 border-b border-gray-100">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between">
-          
+
           {/* Left: Logo */}
-          <Link href="/" className="flex items-center transition-opacity hover:opacity-80">
-            <img 
-              src="/Vaidik-talk1.png" 
-              alt="Vaidik Talk Logo" 
-              className="h-12 w-auto object-contain" 
+          <Link href="https://vaidiktalk.com" className="flex items-center transition-opacity hover:opacity-80">
+            <img
+              src="/Vaidik-talk1.png"
+              alt="Vaidik Talk Logo"
+              className="h-12 w-auto object-contain"
             />
           </Link>
 
           {/* Center: Navigation Links */}
           <nav className="hidden md:flex items-center gap-2 absolute left-1/2 -translate-x-1/2">
-             <Link href="/astrologers-chat" className="flex items-center gap-2 px-5 py-2.5 text-[15px] font-semibold text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 rounded-xl transition-all whitespace-nowrap border border-transparent hover:border-yellow-200">
+            <Link href="/astrologers-chat" className="flex items-center gap-2 px-5 py-2.5 text-[15px] font-semibold text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 rounded-xl transition-all whitespace-nowrap border border-transparent hover:border-yellow-200">
               Chat with Astrologer
             </Link>
             <Link href="/astrologers-call" className="flex items-center gap-2 px-5 py-2.5 text-[15px] font-semibold text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 rounded-xl transition-all whitespace-nowrap border border-transparent hover:border-yellow-200">
@@ -115,7 +115,7 @@ export default function Header() {
           {/* Right: Auth Button / Profile */}
           <div className="flex items-center gap-3">
             {!isAuthenticated ? (
-              <button 
+              <button
                 onClick={openLoginModal}
                 className="bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600 text-black font-bold px-6 py-2.5 rounded-full transition-all flex items-center gap-2 shadow-sm hover:shadow-md"
               >
@@ -123,8 +123,8 @@ export default function Header() {
                 <span className="hidden sm:inline">Login</span>
               </button>
             ) : (
-              <div 
-                className="relative" 
+              <div
+                className="relative"
                 ref={dropdownRef}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
@@ -133,15 +133,15 @@ export default function Header() {
                   <span className="hidden sm:block text-sm font-semibold text-gray-800">
                     {user?.name || 'User'}
                   </span>
-                  
+
                   <div className="w-9 h-9 rounded-full border-2 border-black shadow-sm overflow-hidden">
-                    <img 
-                      src={user?.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'user'}`} 
-                      alt={user?.name || 'User'} 
+                    <img
+                      src={user?.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'user'}`}
+                      alt={user?.name || 'User'}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  
+
                   <ChevronDownIcon />
                 </div>
 
@@ -149,43 +149,43 @@ export default function Header() {
                 {isProfileOpen && (
                   <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                     {/* ... Profile Header and Menu Items (Same as before) ... */}
-                     <div className="from-yellow-50 via-orange-50 to-yellow-100 px-6 py-6 border-b border-gray-200">
+                    <div className="from-yellow-50 via-orange-50 to-yellow-100 px-6 py-6 border-b border-gray-200">
                       <Link href="/profile">
-                      <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-full border-3 border-black shadow-lg overflow-hidden ring-4 ring-yellow-200">
-                          <img 
-                            src={user?.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'user'}`} 
-                            alt={user?.name || 'User'} 
-                            className="w-full h-full object-cover"
-                          />
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 rounded-full border-3 border-black shadow-lg overflow-hidden ring-4 ring-yellow-200">
+                            <img
+                              src={user?.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'user'}`}
+                              alt={user?.name || 'User'}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-xl font-bold text-gray-900 truncate">
+                              {user?.name || 'User'}
+                            </h3>
+                            <p className="text-sm text-gray-600 truncate mt-0.5">
+                              {user?.phoneNumber || 'Phone not available'}
+                            </p>
+                          </div>
                         </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-xl font-bold text-gray-900 truncate">
-                            {user?.name || 'User'}
-                          </h3>
-                          <p className="text-sm text-gray-600 truncate mt-0.5">
-                            {user?.phoneNumber || 'Phone not available'}
-                          </p>
-                        </div>
-                      </div>
                       </Link>
                     </div>
 
                     <div className="py-2">
-                       <Link href="/wallet" className="w-full px-6 py-3.5 hover:from-green-50 hover:to-emerald-50 text-gray-700 font-medium transition-all flex items-center justify-between group" onClick={() => setIsProfileOpen(false)}>
-                          <span className="flex items-center gap-3">
-                             <span className="font-semibold">Wallet</span>
-                          </span>
-                          <span className="font-bold text-green-600 text-lg">₹{user?.wallet?.balance || 0}</span>
-                       </Link>
-                       <Link href="/orders" className="w-full px-6 py-3.5 hover:from-blue-50 hover:to-indigo-50 text-gray-700 font-medium transition-all flex items-center gap-3 group" onClick={() => setIsProfileOpen(false)}>
-                          <span className="font-semibold">Order History</span>
-                       </Link>
-                       <div className="border-t border-gray-200 my-2 mx-4"></div>
-                       <button onClick={handleLogout} className="w-full px-6 py-3.5 hover:from-red-50 hover:to-pink-50 text-gray-700 hover:text-red-600 font-medium transition-all flex items-center gap-3 group">
-                          <span className="font-semibold">Logout</span>
-                       </button>
+                      <Link href="/wallet" className="w-full px-6 py-3.5 hover:from-green-50 hover:to-emerald-50 text-gray-700 font-medium transition-all flex items-center justify-between group" onClick={() => setIsProfileOpen(false)}>
+                        <span className="flex items-center gap-3">
+                          <span className="font-semibold">Wallet</span>
+                        </span>
+                        <span className="font-bold text-green-600 text-lg">₹{user?.wallet?.balance || 0}</span>
+                      </Link>
+                      <Link href="/orders" className="w-full px-6 py-3.5 hover:from-blue-50 hover:to-indigo-50 text-gray-700 font-medium transition-all flex items-center gap-3 group" onClick={() => setIsProfileOpen(false)}>
+                        <span className="font-semibold">Order History</span>
+                      </Link>
+                      <div className="border-t border-gray-200 my-2 mx-4"></div>
+                      <button onClick={handleLogout} className="w-full px-6 py-3.5 hover:from-red-50 hover:to-pink-50 text-gray-700 hover:text-red-600 font-medium transition-all flex items-center gap-3 group">
+                        <span className="font-semibold">Logout</span>
+                      </button>
                     </div>
                   </div>
                 )}
@@ -195,9 +195,9 @@ export default function Header() {
         </div>
       </header>
 
-      <LoginModal 
-        isOpen={isLoginModalOpen} 
-        onClose={closeLoginModal} 
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={closeLoginModal}
       />
     </>
   );
