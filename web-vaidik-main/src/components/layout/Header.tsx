@@ -113,7 +113,7 @@ export default function Header() {
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between">
 
           {/* Left: Logo */}
-          <Link href="/" className="flex items-center transition-opacity hover:opacity-80">
+          <Link href="https://vaidiktalk.com" className="flex items-center transition-opacity hover:opacity-80">
             <img
               src="/Vaidik-talk1.png"
               alt="Vaidik Talk Logo"

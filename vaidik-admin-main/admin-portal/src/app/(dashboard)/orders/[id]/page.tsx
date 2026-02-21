@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
-import { 
-  ArrowLeft, User, Star, Clock, IndianRupee, RefreshCw, XCircle, 
-  Video, MessageCircle, Phone, FileText, CheckCircle, AlertCircle, PlayCircle 
+import {
+  ArrowLeft, User, Star, Clock, IndianRupee, RefreshCw, XCircle, X,
+  Video, MessageCircle, Phone, FileText, CheckCircle, AlertCircle, PlayCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/use-permission';
@@ -26,6 +26,8 @@ export default function OrderDetailPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [zohoTicketId, setZohoTicketId] = useState('');
+
+  const [viewingChatSessionId, setViewingChatSessionId] = useState<string | null>(null);
 
   // Fetch Order
   const { data: order, isLoading } = useQuery<Order>({
@@ -149,11 +151,10 @@ export default function OrderDetailPage() {
             <div className="flex items-center gap-2">
               <StatusBadge status={order.status} />
               {order.refundRequest && (
-                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  order.refundRequest.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                <span className={`px-2 py-1 rounded text-xs font-medium ${order.refundRequest.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                   order.refundRequest.status === 'approved' ? 'bg-green-100 text-green-800' :
-                  'bg-red-100 text-red-800'
-                }`}>
+                    'bg-red-100 text-red-800'
+                  }`}>
                   Refund {order.refundRequest.status}
                 </span>
               )}
@@ -221,11 +222,19 @@ export default function OrderDetailPage() {
                     <td className="px-4 py-3">{session.billedMinutes} min</td>
                     <td className="px-4 py-3">₹{session.chargedAmount}</td>
                     <td className="px-4 py-3">
-                      {session.recordingUrl ? (
-                        <a 
-                          href={session.recordingUrl} 
-                          target="_blank" 
-                          rel="noreferrer" 
+                      {session.sessionType === 'chat' ? (
+                        <button
+                          onClick={() => setViewingChatSessionId(session.sessionId)}
+                          className="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          <MessageCircle size={16} />
+                          View Chat
+                        </button>
+                      ) : session.recordingUrl ? (
+                        <a
+                          href={session.recordingUrl}
+                          target="_blank"
+                          rel="noreferrer"
                           className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium"
                         >
                           <PlayCircle size={16} />
@@ -245,18 +254,18 @@ export default function OrderDetailPage() {
 
       {/* Participants Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ParticipantCard 
-          title="User" 
-          icon={User} 
+        <ParticipantCard
+          title="User"
+          icon={User}
           data={[
             { label: 'Name', value: order.userId?.name || 'N/A' },
             { label: 'Phone', value: order.userId?.phoneNumber || 'N/A' },
             { label: 'Email', value: order.userId?.email || 'Not provided' },
           ]}
         />
-        <ParticipantCard 
-          title="Astrologer" 
-          icon={Star} 
+        <ParticipantCard
+          title="Astrologer"
+          icon={Star}
           data={[
             { label: 'Name', value: order.astrologerId?.name || 'N/A' },
             { label: 'Phone', value: order.astrologerId?.phoneNumber || 'N/A' },
@@ -272,13 +281,13 @@ export default function OrderDetailPage() {
             <AlertCircle size={20} /> Refund Request
           </h3>
           <div className="grid md:grid-cols-2 gap-4 text-sm">
-              <div><span className="font-medium">Status:</span> <span className="capitalize">{order.refundRequest.status}</span></div>
-              <div><span className="font-medium">Requested:</span> {new Date(order.refundRequest.requestedAt).toLocaleString()}</div>
-              <div><span className="font-medium">Reason:</span> {order.refundRequest.reason}</div>
-              {order.refundRequest.refundAmount && <div><span className="font-medium">Amount:</span> ₹{order.refundRequest.refundAmount}</div>}
-              {order.refundRequest.adminNotes && <div className="col-span-2"><span className="font-medium">Admin Notes:</span> {order.refundRequest.adminNotes}</div>}
-              {order.refundRequest.rejectionReason && <div className="col-span-2 text-red-700"><span className="font-medium">Rejection:</span> {order.refundRequest.rejectionReason}</div>}
-            </div>
+            <div><span className="font-medium">Status:</span> <span className="capitalize">{order.refundRequest.status}</span></div>
+            <div><span className="font-medium">Requested:</span> {new Date(order.refundRequest.requestedAt).toLocaleString()}</div>
+            <div><span className="font-medium">Reason:</span> {order.refundRequest.reason}</div>
+            {order.refundRequest.refundAmount && <div><span className="font-medium">Amount:</span> ₹{order.refundRequest.refundAmount}</div>}
+            {order.refundRequest.adminNotes && <div className="col-span-2"><span className="font-medium">Admin Notes:</span> {order.refundRequest.adminNotes}</div>}
+            {order.refundRequest.rejectionReason && <div className="col-span-2 text-red-700"><span className="font-medium">Rejection:</span> {order.refundRequest.rejectionReason}</div>}
+          </div>
         </div>
       )}
 
@@ -342,19 +351,19 @@ export default function OrderDetailPage() {
               <p className="text-xs text-gray-500 mt-1">Max: ₹{order.totalAmount.toLocaleString()}</p>
             </div>
             <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Zoho Ticket Reference</label>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">#</span>
-          <input
-            type="text"
-            value={zohoTicketId}
-            onChange={(e) => setZohoTicketId(e.target.value)}
-            className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-            placeholder="987654321"
-          />
-        </div>
-        <p className="text-xs text-gray-500 mt-1">Link this refund to the support ticket ID</p>
-      </div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Zoho Ticket Reference</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">#</span>
+                <input
+                  type="text"
+                  value={zohoTicketId}
+                  onChange={(e) => setZohoTicketId(e.target.value)}
+                  className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  placeholder="987654321"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Link this refund to the support ticket ID</p>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Reason *</label>
               <textarea
@@ -416,6 +425,78 @@ export default function OrderDetailPage() {
           </div>
         </Modal>
       )}
+
+      {viewingChatSessionId && (
+        <ChatViewerModal
+          sessionId={viewingChatSessionId}
+          onClose={() => setViewingChatSessionId(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function ChatViewerModal({ sessionId, onClose }: { sessionId: string; onClose: () => void }) {
+  const { data: messages, isLoading } = useQuery({
+    queryKey: ['admin-chat-messages', sessionId],
+    queryFn: async () => {
+      const response = await adminApi.getChatMessages(sessionId);
+      // Adjust path based on your API response structure
+      return response.data?.data?.messages || response.data?.data || [];
+    },
+    refetchInterval: 5000 // Automatically fetch new messages every 5s for live monitoring
+  });
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-slate-50 rounded-2xl w-full max-w-2xl h-[80vh] flex flex-col shadow-2xl overflow-hidden">
+        {/* Modal Header */}
+        <div className="p-4 bg-white border-b flex justify-between items-center z-10">
+          <div>
+            <h3 className="font-bold text-gray-900 flex items-center gap-2">
+              <MessageCircle className="text-blue-600" size={20} />
+              Security & Fraud Monitoring
+            </h3>
+            <p className="text-xs text-gray-500 font-mono mt-1">Session ID: {sessionId}</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition">
+            <X size={20} className="text-gray-500" />
+          </button>
+        </div>
+
+        {/* Chat Canvas */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-full">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : messages?.length > 0 ? (
+            messages.map((msg: any) => {
+              // Automatically detects sender regardless of schema variations
+              const isUser = msg.senderType === 'User' || msg.senderModel === 'User' || msg.sender === 'user';
+
+              return (
+                <div key={msg._id || msg.id} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+                  <div className={`p-3 rounded-2xl max-w-[80%] ${isUser
+                    ? 'bg-blue-600 text-white rounded-tr-sm shadow-sm'
+                    : 'bg-white border shadow-sm rounded-tl-sm text-gray-800'
+                    }`}>
+                    <p className="text-sm whitespace-pre-wrap">{msg.content || msg.message}</p>
+                    <span className={`text-[10px] mt-1 block font-medium ${isUser ? 'text-blue-200' : 'text-gray-400'}`}>
+                      {isUser ? 'User' : 'Astrologer'} • {new Date(msg.createdAt || msg.timestamp).toLocaleTimeString()}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="h-full flex items-center justify-center flex-col text-gray-400 gap-2">
+              <MessageCircle size={40} className="opacity-20" />
+              <p>No messages recorded yet.</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
