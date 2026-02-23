@@ -1092,6 +1092,9 @@ Send full-screen notification to a single User or Astrologer
   getAIAstrologerChatLogDetails: (chatLogId: string) =>
     apiClient.get(`/admin/ai-astrologers/chat-logs/${chatLogId}`),
 
+  getChatMessages: (sessionId: string) =>
+    apiClient.get(`/admin/ai-astrologers/chat-logs/${sessionId}/messages`),
+
   getAIAstrologerChatStats: () =>
     apiClient.get('/admin/ai-astrologers/chat-stats'),
 
