@@ -196,7 +196,7 @@ const AdminAstrologers = () => {
       ratePerMinute: rateVal
     };
 
-    // Cloudinary Image Upload
+    // AWS S3 Image Upload
     if (imageFile) {
       try {
         const uploadRes = await adminApi.uploadImage(imageFile);
@@ -204,11 +204,11 @@ const AdminAstrologers = () => {
           payload.profilePicture = uploadRes.data.data.url;
           payload.image = payload.profilePicture;
         } else {
-          toast.error("Cloudinary upload failed, using fallback if available");
+          toast.error("Image upload failed, using fallback if available");
         }
       } catch (uploadError) {
         console.error("Image upload failed:", uploadError);
-        toast.error("Failed to upload image to Cloudinary");
+        toast.error("Failed to upload image to AWS S3");
         // Don't proceed with save if image upload was intended but failed?
         // For now, continue without updating image if it fails.
       }
