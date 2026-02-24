@@ -394,7 +394,7 @@ export default function AdminAnalytics() {
                   </td>
                   <td className="px-6 py-4">
                     <span className={`text-xs font-bold ${astro.conversionRate > 20 ? 'text-green-600' : 'text-slate-600'}`}>
-                      {astro.conversionRate || (idx === 0 ? 32 : (idx === 1 ? 28 : (idx === 2 ? 24 : 18)))}%
+                      {astro.conversionRate || 0}%
                     </span>
                   </td>
                   <td className="px-6 py-4">

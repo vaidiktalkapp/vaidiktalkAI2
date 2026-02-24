@@ -235,7 +235,7 @@ export default function AdminWallet() {
 
         {/* Transaction Summary / Stats */}
         <div className="space-y-6">
-          <div className="bg-slate-900 p-8 rounded-3xl text-white shadow-xl">
+          <div className="bg-slate-700 p-8 rounded-3xl text-white shadow-xl">
             <div className="flex justify-between items-start mb-6">
               <div>
                 <p className="text-xs font-bold opacity-60 uppercase tracking-widest mb-1">

@@ -20,6 +20,15 @@ async function migrate() {
         );
         console.log(`Updated ${sessionUpdate.modifiedCount} AI sessions.`);
 
+        // TODO:
+        // - [x] Fix AI Astrologer identity in chat history (Dynamic refPath)
+        // - [x] Migrate existing AI chat records to restore identities
+        // - [/] Implement real AI Analytics (Remove dummy values)
+        //     - [ ] Calculate real Growth Rate in backend
+        //     - [ ] Calculate real Conversion Rate and Funnel
+        //     - [ ] Calculate real Average Rating dynamically
+        //     - [ ] Update frontend to consume real data
+
         // 2. Update Human Sessions
         console.log('Updating Human Sessions...');
         const humanSessionUpdate = await db.collection('chat_sessions').updateMany(
