@@ -492,16 +492,21 @@ export class AiChatSessionService implements OnModuleInit {
 
         return {
             ...session,
-            astrologer,
+            astrologer: astrologer ? {
+                ...astrologer,
+                profileImage: astrologer.image,
+                experienceYears: astrologer.experience || 5
+            } : null,
             messages
         };
     }
 
     async getAiChatHistory(userId: string, page: number, limit: number): Promise<{ history: any[], total: number }> {
         const skip = (page - 1) * limit;
+
+        // 1. Fetch raw sessions first
         const [history, total] = await Promise.all([
             this.chatSessionModel.find({ userId, orderId: /^AI-/ })
-                .populate('astrologerId', 'name image specialization bio expertise rating experience')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
@@ -509,18 +514,33 @@ export class AiChatSessionService implements OnModuleInit {
             this.chatSessionModel.countDocuments({ userId, orderId: /^AI-/ })
         ]);
 
-        const mappedHistory = history.map(session => ({
-            ...session,
-            _id: session._id.toString(),
-            totalMessages: session.messageCount || 0,
-            startedAt: session.startTime || session.createdAt,
-            astrologer: session.astrologerId ? {
-                ...session.astrologerId,
-                name: (session.astrologerId as any).name,
-                profileImage: (session.astrologerId as any).image,
-                experienceYears: (session.astrologerId as any).experience || 5
-            } : null
-        }));
+        // 2. Extract unique astrologer IDs
+        const astroIds = [...new Set(history.map(s => s.astrologerId?.toString()).filter(id => !!id))];
+
+        // 3. Fetch all relevant AI profiles in one go
+        const profiles = await this.aiAstrologerModel.find({ _id: { $in: astroIds } }).lean();
+        const profileMap = new Map(profiles.map(p => [p._id.toString(), p]));
+
+        // 4. Map them together
+        const mappedHistory = history.map(session => {
+            const profile = session.astrologerId ? profileMap.get(session.astrologerId.toString()) : null;
+
+            return {
+                ...session,
+                _id: session._id.toString(),
+                totalMessages: session.messageCount || 0,
+                startedAt: session.startTime || session.createdAt,
+                astrologer: profile ? {
+                    ...profile,
+                    _id: profile._id.toString(),
+                    profileImage: profile.image || '/uploads/default-astrologer.png',
+                    experienceYears: profile.experience || 5
+                } : {
+                    name: 'AI Astrologer',
+                    profileImage: '/uploads/default-astrologer.png'
+                }
+            };
+        });
 
         return { history: mappedHistory, total };
     }

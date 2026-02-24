@@ -81,22 +81,43 @@ export class AiOrdersController {
         @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number
     ) {
         const userId = req.user.userId;
-        const skip = (page - 1) * limit;
-
-        const [history, total] = await Promise.all([
-            this.sessionModel.find({ userId, orderId: /^AI-/ })
-                .populate('astrologerId', 'name image')
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .lean(),
-            this.sessionModel.countDocuments({ userId, orderId: /^AI-/ })
-        ]);
+        const result = await this.chatSessionService.getAiChatHistory(userId, page, limit);
 
         return {
             success: true,
-            data: history,
-            pagination: { page, limit, total, pages: Math.ceil(total / limit) }
+            data: result.history,
+            pagination: { page, limit, total: result.total, pages: Math.ceil(result.total / limit) }
+        };
+    }
+
+    @Post('fix-identity-migration')
+    async fixIdentityMigration() {
+        this.logger.log('🚀 Starting AI identity migration...');
+
+        // 1. Fix AI Sessions (those with orderId starting with AI-)
+        const sessionResult = await this.sessionModel.updateMany(
+            { orderId: /^AI-/, astrologerModel: { $exists: false } },
+            { $set: { astrologerModel: 'AiAstrologerProfile' } }
+        );
+
+        // 2. Fix Human Sessions
+        const humanSessionResult = await this.sessionModel.updateMany(
+            { orderId: { $not: /^AI-/ }, astrologerModel: { $exists: false } },
+            { $set: { astrologerModel: 'Astrologer' } }
+        );
+
+        // 3. Fix Message Model for AI messages (where sender is not User)
+        // We look for messages in AI sessions where senderId is the astrologer
+        // Note: For simplicity, we just set the model on the session first.
+
+        this.logger.log(`✅ Migration completed. AI Sessions: ${sessionResult.modifiedCount}, Human Sessions: ${humanSessionResult.modifiedCount}`);
+
+        return {
+            success: true,
+            summary: {
+                aiSessionsUpdated: sessionResult.modifiedCount,
+                humanSessionsUpdated: humanSessionResult.modifiedCount
+            }
         };
     }
 
