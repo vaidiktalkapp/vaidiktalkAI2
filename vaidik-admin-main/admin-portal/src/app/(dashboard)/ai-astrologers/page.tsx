@@ -44,7 +44,6 @@ const AdminAstrologers = () => {
     bio: '',
     expertise: 'Vedic',
     personalityType: 'Traditional',
-    personalityPreset: 'custom',
     ratePerMinute: 10,
     languages: 'English, Hindi',
     experience: 5,
@@ -130,7 +129,6 @@ const AdminAstrologers = () => {
         bio: astrologer.bio || '',
         expertise: expertiseValue,
         personalityType: astrologer.personalityType || astrologer.personality || 'Traditional',
-        personalityPreset: astrologer.personalityPreset || 'custom',
         ratePerMinute: Number(rateValue),
         languages: Array.isArray(astrologer.languages) ? astrologer.languages.join(', ') : 'English',
         experience: astrologer.experience || 5,
@@ -148,7 +146,6 @@ const AdminAstrologers = () => {
         bio: '',
         expertise: 'Vedic',
         personalityType: 'Traditional',
-        personalityPreset: 'custom',
         ratePerMinute: 10,
         languages: 'English, Hindi',
         experience: 5,
@@ -178,7 +175,6 @@ const AdminAstrologers = () => {
       bio: formData.bio,
       personality: formData.personalityType,
       personalityType: formData.personalityType,
-      personalityPreset: formData.personalityPreset || 'custom',
       experience: formData.experience,
       education: formData.education,
       focusArea: formData.focusArea,
@@ -418,20 +414,6 @@ const AdminAstrologers = () => {
                 <div>
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Profile Name</label>
                   <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full mt-1 px-4 py-2 border border-gray-100 bg-gray-50 rounded-xl focus:ring-2 focus:ring-slate-900" placeholder="e.g. Swami Ajay" />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Personality Preset</label>
-                  <select
-                    value={formData.personalityPreset || 'custom'}
-                    onChange={(e) => setFormData({ ...formData, personalityPreset: e.target.value })}
-                    className="w-full mt-1 px-4 py-2 border border-gray-100 bg-gray-50 rounded-xl focus:ring-2 focus:ring-slate-900 font-bold"
-                  >
-                    <option value="compassionate">Compassionate Guide</option>
-                    <option value="direct">Direct Advisor</option>
-                    <option value="mystical">Mystical Sage</option>
-                    <option value="analytical">Data Analyst</option>
-                    <option value="custom">Custom Personality</option>
-                  </select>
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Personality Type</label>
