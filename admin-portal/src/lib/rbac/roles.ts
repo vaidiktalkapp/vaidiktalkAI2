@@ -1,42 +1,42 @@
 // src/lib/rbac/roles.ts
 
-export type RoleType = 
-  | 'super_admin' 
-  | 'admin' 
-  | 'moderator' 
-  | 'support' 
-  | 'finance' 
-  | 'analyst' 
+export type RoleType =
+  | 'super_admin'
+  | 'admin'
+  | 'moderator'
+  | 'support'
+  | 'finance'
+  | 'analyst'
   | 'content_manager';
 
-export type Permission = 
+export type Permission =
   // Dashboard
   | 'view_dashboard'
   | 'view_analytics'
-  
+
   // Users
   | 'view_users'
   | 'manage_users'      // Edit, Block, Suspend
   | 'export_users'
-  
+
   // Astrologers
   | 'view_astrologers'
   | 'manage_astrologers' // Approve, Reject, Suspend
   | 'manage_pricing'
-  
+
   // Interviews
   | 'view_interviews'
   | 'conduct_interview'
-  
+
   // Orders
   | 'view_orders'
   | 'manage_refunds'
   | 'cancel_orders'
-  
+
   // Finance
   | 'view_transactions'
   | 'manage_payouts'
-  
+
   // Content & Comms
   | 'manage_notifications'
   | 'manage_livestreams'
@@ -44,26 +44,26 @@ export type Permission =
   | 'view_shopify'
 
   | 'view_payments'
-| 'manage_payments'
-| 'view_payouts'
-| 'approve_payouts'
-| 'reject_payouts'
-| 'manage_refunds'
-  
-| 'view_reports'
-| 'export_reports'
+  | 'manage_payments'
+  | 'view_payouts'
+  | 'approve_payouts'
+  | 'reject_payouts'
+  | 'manage_refunds'
 
-| 'view_user_reports'    // For seeing flagged content/users
+  | 'view_reports'
+  | 'export_reports'
+
+  | 'view_user_reports'    // For seeing flagged content/users
   | 'manage_user_reports'  // For resolving reports
   | 'view_blocked_users'
   // System
   | 'manage_admins'
-   | 'create_admins'  // ✅ Add this
+  | 'create_admins'  // ✅ Add this
   | 'edit_admins'
   | 'delete_admins'
   | 'view_logs'
   | 'view_system_health'
-  
+
   //support
   | 'support:tickets:view'
   | 'support:tickets:edit'
@@ -82,11 +82,11 @@ export const ROLE_PERMISSIONS: Record<RoleType, Permission[]> = {
     'view_orders', 'manage_refunds', 'cancel_orders',
     'view_transactions', 'manage_payouts',
     'manage_notifications', 'manage_livestreams', 'view_remedies', 'view_shopify',
-    'manage_admins', 'view_logs', 'view_system_health',  'support:tickets:view',
+    'manage_admins', 'view_logs', 'view_system_health', 'support:tickets:view',
     'support:tickets:edit',
     'support:refund:process',
     'support:payout:approve',
-    'support:stats:view','view_user_reports', 'manage_user_reports', 'view_blocked_users'
+    'support:stats:view', 'view_user_reports', 'manage_user_reports', 'view_blocked_users'
   ],
   admin: [
     'view_dashboard', 'view_analytics',
@@ -95,7 +95,7 @@ export const ROLE_PERMISSIONS: Record<RoleType, Permission[]> = {
     'view_interviews', 'conduct_interview',
     'view_orders', 'manage_refunds',
     'manage_notifications', 'manage_livestreams', 'view_remedies', 'view_shopify',
-    'view_logs','support:tickets:view',
+    'view_logs', 'support:tickets:view',
     'support:tickets:edit',
     'support:refund:process',
     'support:payout:approve',
@@ -105,7 +105,7 @@ export const ROLE_PERMISSIONS: Record<RoleType, Permission[]> = {
   moderator: [
     'view_dashboard',
     'view_users', 'manage_users', // Can block bad users
-    'view_astrologers',
+    'view_astrologers', 'manage_astrologers',
     'manage_livestreams', // Can force end bad streams
     'manage_notifications',
     'view_user_reports', 'manage_user_reports', 'view_blocked_users'
@@ -114,7 +114,7 @@ export const ROLE_PERMISSIONS: Record<RoleType, Permission[]> = {
     'view_dashboard',
     'view_users',
     'view_orders', // Need to see orders to help
-    'view_transactions','support:tickets:view',
+    'view_transactions', 'support:tickets:view',
     'support:tickets:edit',
     'support:refund:process',
     'support:payout:approve',
@@ -123,7 +123,7 @@ export const ROLE_PERMISSIONS: Record<RoleType, Permission[]> = {
   finance: [
     'view_dashboard', 'view_analytics',
     'view_orders', 'manage_refunds',
-    'view_transactions', 'manage_payouts','support:tickets:view',
+    'view_transactions', 'manage_payouts', 'support:tickets:view',
     'support:tickets:edit',
     'support:refund:process',
     'support:payout:approve',
@@ -132,7 +132,7 @@ export const ROLE_PERMISSIONS: Record<RoleType, Permission[]> = {
   analyst: [
     'view_dashboard', 'view_analytics',
     'view_users', 'view_astrologers', 'view_orders',
-    'view_remedies', 'view_shopify','support:tickets:view',
+    'view_remedies', 'view_shopify', 'support:tickets:view',
     'support:stats:view'
   ],
   content_manager: [

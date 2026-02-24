@@ -12,13 +12,14 @@ interface ChatSession {
   _id: string;
   orderId: string;
   sessionId: string;
-  userId: { name: string; phoneNumber?: string; profileImage?: string };
-  astrologerId: { name: string; profilePicture?: string };
+  userId: { _id?: string; name: string; phoneNumber?: string; profileImage?: string };
+  astrologerId: { _id?: string; name: string; profilePicture?: string };
   type: string;
   status: string;
   duration?: number;
   messageCount?: number;
   createdAt: string;
+  endedBy?: string;
 }
 
 export default function ChatsPage() {
@@ -32,7 +33,7 @@ export default function ChatsPage() {
     queryKey: ['active-chats'],
     queryFn: async () => {
       const response = await adminApi.getAllChats({ status: 'active', limit: 50 });
-      return response.data.data.orders; 
+      return response.data.data.orders;
     },
     refetchInterval: 5000,
   });
@@ -60,21 +61,21 @@ export default function ChatsPage() {
   });
 
   const columns: Column<ChatSession>[] = [
-    { 
-      header: 'Session ID', 
-      accessorKey: 'sessionId', 
-      cell: (row) => <span className="font-mono text-xs">{row.sessionId || row.orderId}</span> 
+    {
+      header: 'Session ID',
+      accessorKey: 'sessionId',
+      cell: (row) => <span className="font-mono text-xs">{row.sessionId || row.orderId}</span>
     },
-    { 
-      header: 'User', 
-      cell: (row) => <span className="font-medium">{row.userId?.name}</span> 
+    {
+      header: 'User',
+      cell: (row) => <span className="font-medium">{row.userId?.name}</span>
     },
-    { 
-      header: 'Astrologer', 
-      cell: (row) => row.astrologerId?.name 
+    {
+      header: 'Astrologer',
+      cell: (row) => row.astrologerId?.name
     },
-    { 
-      header: 'Messages', 
+    {
+      header: 'Messages',
       cell: (row) => (
         <div className="flex items-center gap-1">
           <MessageCircle size={14} className="text-gray-400" />
@@ -82,31 +83,49 @@ export default function ChatsPage() {
         </div>
       )
     },
-    { 
-      header: 'Status', 
+    {
+      header: 'Status',
       accessorKey: 'status',
       cell: (row) => (
-        <span className={`px-2 py-1 rounded-full text-xs capitalize ${
-          row.status === 'active' ? 'bg-blue-100 text-blue-700 animate-pulse' : 
-          row.status === 'ended' ? 'bg-green-100 text-green-700' : 'bg-gray-100'
-        }`}>
-          {row.status}
-        </span>
+        <div className="flex flex-col gap-1 items-start">
+          <span className={`px-2 py-1 rounded-full text-xs capitalize ${row.status === 'active' ? 'bg-blue-100 text-blue-700 animate-pulse' :
+            row.status === 'ended' ? 'bg-green-100 text-green-700' : 'bg-gray-100'
+            }`}>
+            {row.status}
+          </span>
+          {row.status === 'ended' && row.endedBy && (
+            <span className="text-[10px] text-gray-500 font-medium">
+              Ended by: <span className="capitalize">
+                {row.endedBy === 'user' || row.endedBy === row.userId?._id ? 'User' :
+                  row.endedBy === 'astrologer' || row.endedBy === row.astrologerId?._id ? 'Astrologer' :
+                    'System'}
+              </span>
+            </span>
+          )}
+        </div>
       )
     },
-    { 
-      header: 'Date', 
-      cell: (row) => new Date(row.createdAt).toLocaleDateString() 
+    {
+      header: 'Date',
+      cell: (row) => new Date(row.createdAt).toLocaleDateString()
     },
-    { 
-      header: 'Actions', 
+    {
+      header: 'Actions',
       cell: (row) => (
-        <button 
-          onClick={() => setViewingChatSessionId(row.sessionId)}
-          className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
-        >
-          <Eye size={14} /> Read Chat
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setViewingChatSessionId(row.sessionId)}
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+          >
+            <Eye size={14} /> Read Chat
+          </button>
+          <button
+            onClick={() => router.push(`/orders/${row.orderId}`)}
+            className="text-gray-600 hover:text-gray-900 text-sm font-medium flex items-center gap-1"
+          >
+            <Eye size={14} /> View Order
+          </button>
+        </div>
       )
     },
   ];
@@ -149,10 +168,10 @@ export default function ChatsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeChats?.map((chat: ChatSession) => (
-              <ActiveChatCard 
-                key={chat._id} 
-                chat={chat} 
-                onEnd={() => endChatMutation.mutate(chat.sessionId)} 
+              <ActiveChatCard
+                key={chat._id}
+                chat={chat}
+                onEnd={() => endChatMutation.mutate(chat.sessionId)}
                 isEnding={endChatMutation.isPending && endChatMutation.variables === chat.sessionId}
                 // Pass the onView prop
                 onView={(id) => setViewingChatSessionId(id)}
@@ -181,9 +200,9 @@ export default function ChatsPage() {
 
       {/* NEW: Render Chat Modal when an ID is selected */}
       {viewingChatSessionId && (
-        <ChatViewerModal 
-          sessionId={viewingChatSessionId} 
-          onClose={() => setViewingChatSessionId(null)} 
+        <ChatViewerModal
+          sessionId={viewingChatSessionId}
+          onClose={() => setViewingChatSessionId(null)}
         />
       )}
     </div>
@@ -221,7 +240,7 @@ function ActiveChatCard({ chat, onEnd, isEnding, onView }: { chat: ChatSession; 
 
       {/* Wrap buttons in a flex container */}
       <div className="flex gap-2">
-        <button 
+        <button
           onClick={onEnd}
           disabled={isEnding}
           className="flex-1 py-2 bg-red-50 text-red-700 text-sm font-medium rounded-lg hover:bg-red-100 transition flex items-center justify-center gap-2 disabled:opacity-50"
@@ -229,7 +248,7 @@ function ActiveChatCard({ chat, onEnd, isEnding, onView }: { chat: ChatSession; 
           <Square size={14} fill="currentColor" />
           {isEnding ? 'Ending...' : 'Force End'}
         </button>
-        <button 
+        <button
           onClick={() => onView(chat.sessionId)}
           className="flex-1 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-100 transition flex items-center justify-center gap-2"
         >
@@ -250,7 +269,7 @@ function ChatViewerModal({ sessionId, onClose }: { sessionId: string; onClose: (
       const response = await adminApi.getChatMessages(sessionId);
       return response.data?.data?.messages || response.data?.data || [];
     },
-    refetchInterval: 5000 
+    refetchInterval: 5000
   });
 
   return (
@@ -269,7 +288,7 @@ function ChatViewerModal({ sessionId, onClose }: { sessionId: string; onClose: (
             <X size={20} className="text-gray-500" />
           </button>
         </div>
-        
+
         {/* Chat Canvas */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {isLoading ? (
@@ -279,14 +298,13 @@ function ChatViewerModal({ sessionId, onClose }: { sessionId: string; onClose: (
           ) : messages?.length > 0 ? (
             messages.map((msg: any) => {
               const isUser = msg.senderType === 'User' || msg.senderModel === 'User' || msg.sender === 'user';
-              
+
               return (
                 <div key={msg._id || msg.id} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
-                  <div className={`p-3 rounded-2xl max-w-[80%] ${
-                    isUser 
-                      ? 'bg-blue-600 text-white rounded-tr-sm shadow-sm' 
-                      : 'bg-white border shadow-sm rounded-tl-sm text-gray-800'
-                  }`}>
+                  <div className={`p-3 rounded-2xl max-w-[80%] ${isUser
+                    ? 'bg-blue-600 text-white rounded-tr-sm shadow-sm'
+                    : 'bg-white border shadow-sm rounded-tl-sm text-gray-800'
+                    }`}>
                     <p className="text-sm whitespace-pre-wrap">{msg.content || msg.message}</p>
                     <span className={`text-[10px] mt-1 block font-medium ${isUser ? 'text-blue-200' : 'text-gray-400'}`}>
                       {isUser ? 'User' : 'Astrologer'} • {new Date(msg.createdAt || msg.timestamp).toLocaleTimeString()}

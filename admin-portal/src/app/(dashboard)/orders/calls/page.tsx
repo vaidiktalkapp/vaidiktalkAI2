@@ -4,20 +4,22 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
-import { Phone, Video, Timer, Activity, Play, Square } from 'lucide-react'; // Added Square icon for stop
+import { Phone, Video, Timer, Activity, Play, Square, Eye } from 'lucide-react'; // Added Square icon for stop
 import { DataTable, Column } from '@/components/shared/DataTable';
 import { toast } from 'sonner';
 
 interface CallSession {
   _id: string;
   sessionId: string;
-  userId: { name: string; phoneNumber?: string; profileImage?: string };
-  astrologerId: { name: string; profilePicture?: string };
+  orderId?: string;
+  userId: { _id?: string; name: string; phoneNumber?: string; profileImage?: string };
+  astrologerId: { _id?: string; name: string; profilePicture?: string };
   callType: 'audio' | 'video';
   totalAmount: number;
   status: string;
   duration?: number;
   createdAt: string;
+  endedBy?: string;
 }
 
 export default function CallsPage() {
@@ -31,9 +33,9 @@ export default function CallsPage() {
     queryFn: async () => {
       // Ensure we get the 'orders' array from the response data structure
       const response = await adminApi.getAllCalls({ status: 'active', limit: 50 });
-      return response.data.data.orders; 
+      return response.data.data.orders;
     },
-    refetchInterval: 5000, 
+    refetchInterval: 5000,
   });
 
   // 2. Fetch Call History
@@ -59,42 +61,63 @@ export default function CallsPage() {
   });
 
   const columns: Column<CallSession>[] = [
-    { 
-      header: 'Session ID', 
-      accessorKey: 'sessionId', 
-      cell: (row) => <span className="font-mono text-xs">{row.sessionId}</span> 
+    {
+      header: 'Session ID',
+      accessorKey: 'sessionId',
+      cell: (row) => <span className="font-mono text-xs">{row.sessionId}</span>
     },
-    { 
-      header: 'Type', 
-      cell: (row) => row.callType === 'video' ? <Video size={16} className="text-purple-600" /> : <Phone size={16} className="text-green-600" /> 
+    {
+      header: 'Type',
+      cell: (row) => row.callType === 'video' ? <Video size={16} className="text-purple-600" /> : <Phone size={16} className="text-green-600" />
     },
-    { 
-      header: 'User', 
-      cell: (row) => <span className="font-medium">{row.userId?.name}</span> 
+    {
+      header: 'User',
+      cell: (row) => <span className="font-medium">{row.userId?.name}</span>
     },
-    { 
-      header: 'Astrologer', 
-      cell: (row) => row.astrologerId?.name 
+    {
+      header: 'Astrologer',
+      cell: (row) => row.astrologerId?.name
     },
-    { 
-      header: 'Duration', 
-      cell: (row) => row.duration ? `${Math.floor(row.duration / 60)}m ${row.duration % 60}s` : '-' 
+    {
+      header: 'Duration',
+      cell: (row) => row.duration ? `${Math.floor(row.duration / 60)}m ${row.duration % 60}s` : '-'
     },
-    { 
-      header: 'Status', 
+    {
+      header: 'Status',
       accessorKey: 'status',
       cell: (row) => (
-        <span className={`px-2 py-1 rounded-full text-xs capitalize ${
-          row.status === 'active' ? 'bg-blue-100 text-blue-700 animate-pulse' : 
-          row.status === 'ended' ? 'bg-green-100 text-green-700' : 'bg-gray-100'
-        }`}>
-          {row.status}
-        </span>
+        <div className="flex flex-col gap-1 items-start">
+          <span className={`px-2 py-1 rounded-full text-xs capitalize ${row.status === 'active' ? 'bg-blue-100 text-blue-700 animate-pulse' :
+            row.status === 'ended' ? 'bg-green-100 text-green-700' : 'bg-gray-100'
+            }`}>
+            {row.status}
+          </span>
+          {row.status === 'ended' && row.endedBy && (
+            <span className="text-[10px] text-gray-500 font-medium">
+              Ended by: <span className="capitalize">
+                {row.endedBy === 'user' || row.endedBy === row.userId?._id ? 'User' :
+                  row.endedBy === 'astrologer' || row.endedBy === row.astrologerId?._id ? 'Astrologer' :
+                    'System'}
+              </span>
+            </span>
+          )}
+        </div>
       )
     },
-    { 
-      header: 'Date', 
-      cell: (row) => new Date(row.createdAt).toLocaleDateString() 
+    {
+      header: 'Date',
+      cell: (row) => new Date(row.createdAt).toLocaleDateString()
+    },
+    {
+      header: 'Actions',
+      cell: (row) => (
+        <button
+          onClick={() => router.push(`/orders/${row.orderId || row.sessionId}`)}
+          className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+        >
+          <Eye size={14} /> View Order
+        </button>
+      )
     },
   ];
 
@@ -136,10 +159,10 @@ export default function CallsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeCalls?.map((call: any) => (
-              <ActiveCallCard 
-                key={call._id} 
-                call={call} 
-                onEnd={() => endCallMutation.mutate(call.sessionId)} 
+              <ActiveCallCard
+                key={call._id}
+                call={call}
+                onEnd={() => endCallMutation.mutate(call.sessionId)}
                 isEnding={endCallMutation.isPending && endCallMutation.variables === call.sessionId}
               />
             ))}
@@ -196,7 +219,7 @@ function ActiveCallCard({ call, onEnd, isEnding }: { call: any; onEnd: () => voi
           {durationMin} mins
         </div>
       </div>
-      <button 
+      <button
         onClick={onEnd}
         disabled={isEnding}
         className="w-full py-2 bg-red-50 text-red-700 text-sm font-medium rounded-lg hover:bg-red-100 transition flex items-center justify-center gap-2 disabled:opacity-50"
