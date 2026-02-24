@@ -146,7 +146,9 @@ export default function AdminAnalytics() {
             <>
               <div>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Growth Rate</p>
-                <h2 className="text-2xl font-bold mt-1">+{metrics?.growthRate || 0}%</h2>
+                <h2 className="text-2xl font-bold mt-1">
+                  {metrics?.growthRate > 0 ? '+' : ''}{metrics?.growthRate || 0}%
+                </h2>
                 <p className="text-blue-600 text-[10px] font-bold mt-1 flex items-center gap-1">
                   <Users className="w-3 h-3" /> Session Growth Today
                 </p>
