@@ -56,6 +56,7 @@ export class OrdersService {
           orderId: this.generateOrderId(),
           conversationThreadId,
           userId: this.toObjectId(userId),
+          astrologerModel: 'Astrologer',
           astrologerId: this.toObjectId(astrologerId),
           astrologerName,
           type: 'conversation',

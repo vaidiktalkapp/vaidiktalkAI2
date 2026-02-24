@@ -115,6 +115,7 @@ export class ChatSessionService {
       sessionId,
       userId: this.toObjectId(sessionData.userId),
       astrologerId: this.toObjectId(sessionData.astrologerId),
+      astrologerModel: 'Astrologer',
       orderId: order.orderId, // conversation thread orderId
       conversationThreadId: order.conversationThreadId,
       sessionNumber,

@@ -189,9 +189,9 @@ export class AiChatSessionService implements OnModuleInit {
         // Note: ChatMessage schema only accepts 'User' or 'Astrologer' enum values
         // We normalize the model name for message storage, while session uses dynamic refPath
         const messageId = uuidv4();
-        const senderModel = isSenderUser ? 'User' : 'Astrologer';
+        const senderModel = isSenderUser ? 'User' : 'AiAstrologerProfile';
         const receiverId = isSenderUser ? session.astrologerId : session.userId;
-        const receiverModel = isSenderUser ? 'Astrologer' : 'User';
+        const receiverModel = isSenderUser ? 'AiAstrologerProfile' : 'User';
 
         const message = new this.chatMessageModel({
             messageId,

@@ -13,7 +13,10 @@ export class ChatSession {
   @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
   userId: Types.ObjectId;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Astrologer' })
+  @Prop({ default: 'Astrologer', enum: ['Astrologer', 'AiAstrologerProfile'] })
+  astrologerModel: string;
+
+  @Prop({ required: true, type: Types.ObjectId, refPath: 'astrologerModel' })
   astrologerId: Types.ObjectId;
 
   @Prop({ required: true })

@@ -127,7 +127,7 @@ export default function AdminWallet() {
       <div className="flex justify-between items-end mb-2">
         <div>
           <h2 className="text-2xl font-black text-slate-800 tracking-tight">
-            Wallet <span className="text-orange-600">&amp; Billing</span>
+            Wallet <span className="text-slate-900">&amp; Billing</span>
           </h2>
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
             Manage user balances and platform transactions
@@ -141,7 +141,7 @@ export default function AdminWallet() {
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-slate-100 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full pl-10 pr-4 py-2 bg-white border border-slate-100 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-slate-900"
             />
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function AdminWallet() {
         <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
             <h3 className="font-bold flex items-center gap-2 text-sm">
-              <User className="w-4 h-4 text-orange-600" />
+              <User className="w-4 h-4 text-slate-900" />
               User Wallet Balances
             </h3>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -172,7 +172,7 @@ export default function AdminWallet() {
                 {isLoadingUsers ? (
                   <tr>
                     <td colSpan={3} className="px-6 py-8 text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 mx-auto"></div>
                     </td>
                   </tr>
                 ) : filteredUsers.length === 0 ? (
@@ -212,7 +212,7 @@ export default function AdminWallet() {
                               setSelectedUser(user);
                               setIsModalOpen(true);
                             }}
-                            className="bg-slate-900 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg hover:bg-orange-600 transition-colors"
+                            className="bg-slate-900 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg hover:bg-black transition-colors"
                           >
                             Grant Credit
                           </button>
@@ -235,7 +235,7 @@ export default function AdminWallet() {
 
         {/* Transaction Summary / Stats */}
         <div className="space-y-6">
-          <div className="bg-orange-600 p-8 rounded-3xl text-white shadow-xl">
+          <div className="bg-slate-900 p-8 rounded-3xl text-white shadow-xl">
             <div className="flex justify-between items-start mb-6">
               <div>
                 <p className="text-xs font-bold opacity-60 uppercase tracking-widest mb-1">
@@ -258,13 +258,13 @@ export default function AdminWallet() {
           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
             <h3 className="font-bold text-sm mb-4 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-orange-600" />
+                <CreditCard className="w-4 h-4 text-slate-900" />
                 {showFullStatement ? 'Full Billing Statement' : 'Recent Billing Activity'}
               </div>
               {showFullStatement && (
                 <button
                   onClick={() => setShowFullStatement(false)}
-                  className="text-[10px] font-bold text-orange-600 hover:text-orange-700 bg-orange-50 px-2 py-1 rounded-lg"
+                  className="text-[10px] font-bold text-slate-900 hover:text-black bg-slate-50 px-2 py-1 rounded-lg"
                 >
                   Show Less
                 </button>
@@ -277,7 +277,7 @@ export default function AdminWallet() {
                     <div
                       className={`w-8 h-8 rounded-xl flex items-center justify-center ${tx.type === 'credit'
                         ? 'bg-green-100 text-green-600'
-                        : 'bg-orange-100 text-orange-600'
+                        : 'bg-slate-100 text-slate-900'
                         }`}
                     >
                       {tx.type === 'credit' ? (
@@ -301,7 +301,7 @@ export default function AdminWallet() {
                     </div>
                   </div>
                   <div
-                    className={`text-xs font-black ${tx.type === 'credit' ? 'text-green-600' : 'text-orange-600'
+                    className={`text-xs font-black ${tx.type === 'credit' ? 'text-green-600' : 'text-slate-900'
                       }`}
                   >
                     {tx.type === 'credit' ? '+' : '-'}₹{tx.amount}
@@ -315,7 +315,7 @@ export default function AdminWallet() {
             {!showFullStatement && transactions.length > 5 && (
               <button
                 onClick={() => setShowFullStatement(true)}
-                className="w-full mt-4 py-2 text-[10px] font-bold text-slate-400 hover:text-orange-600 transition-colors uppercase tracking-widest border-t border-slate-50 pt-4"
+                className="w-full mt-4 py-2 text-[10px] font-bold text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest border-t border-slate-50 pt-4"
               >
                 View Full Statement
               </button>
@@ -341,9 +341,9 @@ export default function AdminWallet() {
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               className="relative bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden"
             >
-              <div className="bg-orange-600 p-6 text-white">
+              <div className="bg-slate-900 p-6 text-white">
                 <h3 className="text-xl font-bold">Grant Wallet Credit</h3>
-                <p className="text-xs text-orange-100">
+                <p className="text-xs text-slate-300">
                   Granting manual balance to {selectedUser?.name}
                 </p>
               </div>
@@ -359,7 +359,7 @@ export default function AdminWallet() {
                       required
                       value={creditAmount}
                       onChange={(e) => setCreditAmount(e.target.value)}
-                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-orange-500 font-bold text-lg focus:outline-none"
+                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-slate-900 font-bold text-lg focus:outline-none"
                       placeholder="0.00"
                     />
                   </div>
@@ -368,7 +368,7 @@ export default function AdminWallet() {
                   <button
                     type="submit"
                     disabled={grantCreditMutation.isPending}
-                    className="flex-1 bg-orange-600 text-white font-bold py-4 rounded-2xl hover:bg-orange-700 shadow-xl shadow-orange-100 transition-all disabled:opacity-50"
+                    className="flex-1 bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-black shadow-xl shadow-slate-100 transition-all disabled:opacity-50"
                   >
                     {grantCreditMutation.isPending ? 'Processing...' : 'Confirm Credit'}
                   </button>
