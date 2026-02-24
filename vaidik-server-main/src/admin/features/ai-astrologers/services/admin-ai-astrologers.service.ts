@@ -224,10 +224,25 @@ export class AdminAiAstrologersService {
     }
 
     async getPerformanceMetrics(): Promise<any> {
-        const metrics = await this.aiProfileModel.find()
-            .select('name rating totalSessions averageSessionDuration satisfactionScore totalRevenue averageLatency averageAccuracy')
+        const profiles = await this.aiProfileModel.find()
+            .select('name rating totalSessions averageSessionDuration satisfactionScore totalRevenue averageLatency averageAccuracy viewCount')
             .sort({ rating: -1 })
             .lean();
+
+        const metrics = profiles.map(profile => {
+            const totalSessions = (profile as any).totalSessions || 0;
+            const viewCount = (profile as any).viewCount || totalSessions;
+
+            const conversionRate = viewCount > 0
+                ? (totalSessions / Math.max(viewCount, totalSessions)) * 100
+                : 0;
+
+            return {
+                ...profile,
+                conversionRate: parseFloat(conversionRate.toFixed(1))
+            };
+        });
+
         return { items: metrics };
     }
 
@@ -589,12 +604,12 @@ export class AdminAiAstrologersService {
 
             const comparisonData = profiles.map(profile => {
                 const totalSessions = (profile as any).totalSessions || 0;
-                // Use a more accurate conversion: Successful (Ended) / Total Attempted
-                // If totalSessions is 0, conversion is 0. 
-                // We'll use a slightly more realistic conversion for the UI if data is missing, 
-                // but based on real fields like 'viewCount' or just successful completions.
-                const conversionRate = totalSessions > 0
-                    ? (totalSessions / ((profile as any).viewCount || totalSessions + 5)) * 100
+                const viewCount = (profile as any).viewCount || totalSessions;
+
+                // Conversion = (Total Successful Sessions / Total Profile Views)
+                // We use Math.max(viewCount, totalSessions) to ensure conversion doesn't exceed 100%
+                const conversionRate = viewCount > 0
+                    ? (totalSessions / Math.max(viewCount, totalSessions)) * 100
                     : 0;
 
                 return {

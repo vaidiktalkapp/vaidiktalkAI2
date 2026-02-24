@@ -44,8 +44,14 @@ export class AiAstrologersController {
             throw new NotFoundException(`Invalid astrologer ID format: ${id}`);
         }
 
-        const profile = await this.aiProfileModel.findById(id).select('-systemPromptAddition').lean();
-        if (!profile) throw new NotFoundException('AI Astrologer not found');
+        const profileDoc = await this.aiProfileModel.findById(id).select('-systemPromptAddition');
+        if (!profileDoc) throw new NotFoundException('AI Astrologer not found');
+
+        // Increment view count
+        profileDoc.viewCount = (profileDoc.viewCount || 0) + 1;
+        await profileDoc.save();
+
+        const profile = profileDoc.toObject();
 
         // Seed test reviews if none exist
         await this.ratingReviewService.seedTestReviewsIfEmpty(id);
