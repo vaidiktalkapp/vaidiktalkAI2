@@ -8,11 +8,11 @@ import { adminApi } from '@/lib/api';
 import { DataTable, Column } from '@/components/shared/DataTable';
 import { FilterBar } from '@/components/shared/FilterBar';
 import { usePermission } from '@/hooks/use-permission';
-import { 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  ArrowRight, 
+import {
+  CheckCircle,
+  XCircle,
+  Clock,
+  ArrowRight,
   Eye,
   Download,
   Search,
@@ -39,9 +39,9 @@ interface BankDetails {
 interface Payout {
   _id: string;
   payoutId: string;
-  astrologerId: { 
+  astrologerId: {
     _id: string;
-    name: string; 
+    name: string;
     phoneNumber: string;
     email?: string;
   };
@@ -72,9 +72,9 @@ export default function PayoutsPage() {
   const [showProcessModal, setShowProcessModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
-  
+
   const [selectedPayout, setSelectedPayout] = useState<Payout | null>(null);
-  
+
   // Form states
   const [approveRef, setApproveRef] = useState('');
   const [approveNotes, setApproveNotes] = useState('');
@@ -450,18 +450,18 @@ export default function PayoutsPage() {
               </p>
             </div>
             <div>
-  <label className="block text-sm font-medium text-gray-700 mb-2">
-    Transaction Reference
-  </label>
-  <input
-    type="text"
-    value={approveRef}
-    onChange={(e) => setApproveRef(e.target.value)}
-    className="w-full px-3 py-2 border border-gray-300 rounded-lg
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Transaction Reference
+              </label>
+              <input
+                type="text"
+                value={approveRef}
+                onChange={(e) => setApproveRef(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg
                focus:ring-2 focus:ring-green-500"
-    placeholder="UTR / Transaction ID"
-  />
-</div>
+                placeholder="UTR / Transaction ID"
+              />
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -658,184 +658,349 @@ function StatCard({ label, value, icon: Icon, color }: { label: string; value: s
 
 // Payout Details Modal Component
 function PayoutDetailsModal({ payout, onClose, onApprove, onProcess, onComplete, onReject, canApprove, canProcess }: any) {
+  const [activeTab, setActiveTab] = useState<'details' | 'audit'>('details');
+
+  // Fetch Financial Audit
+  const { data: audit, isLoading: loadingAudit } = useQuery({
+    queryKey: ['payout-audit', payout.payoutId],
+    queryFn: async () => {
+      const response = await adminApi.getPayoutFinancialAudit(payout.payoutId);
+      return response.data.data;
+    },
+    enabled: activeTab === 'audit',
+  });
+
   return (
     <Modal title="Payout Request Details" onClose={onClose} size="large">
+      {/* Tabs */}
+      <div className="flex border-b mb-6">
+        <button
+          onClick={() => setActiveTab('details')}
+          className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'details' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+        >
+          Request Details
+        </button>
+        <button
+          onClick={() => setActiveTab('audit')}
+          className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'audit' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+        >
+          Earnings Audit
+        </button>
+      </div>
+
       <div className="space-y-6">
-        {/* Amount Card */}
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
-          <p className="text-sm opacity-90">Payout Amount</p>
-          <p className="text-4xl font-bold mt-2">₹{payout.amount.toLocaleString('en-IN')}</p>
-          <div className="mt-4">
-            <StatusBadge status={payout.status} />
-          </div>
-        </div>
+        {activeTab === 'details' ? (
+          <>
+            {/* Amount Card */}
+            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
+              <p className="text-sm opacity-90">Payout Amount</p>
+              <p className="text-4xl font-bold mt-2">₹{payout.amount.toLocaleString('en-IN')}</p>
+              <div className="mt-4">
+                <StatusBadge status={payout.status} />
+              </div>
+            </div>
 
-        {/* Info Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <InfoCard icon={FileText} label="Payout ID" value={payout.payoutId} />
-          <InfoCard 
-            icon={Calendar} 
-            label="Requested On" 
-            value={new Date(payout.createdAt).toLocaleDateString('en-IN', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })} 
-          />
-        </div>
+            {/* Info Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              <InfoCard icon={FileText} label="Payout ID" value={payout.payoutId} />
+              <InfoCard
+                icon={Calendar}
+                label="Requested On"
+                value={new Date(payout.createdAt).toLocaleDateString('en-IN', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              />
+            </div>
 
-        {/* Astrologer Info */}
-        <div className="border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
-              {payout.astrologerId?.name?.charAt(0).toUpperCase()}
+            {/* Astrologer Info */}
+            <div className="border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
+                  {payout.astrologerId?.name?.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-900">{payout.astrologerId?.name}</p>
+                  <p className="text-sm text-gray-600">{payout.astrologerId?.phoneNumber}</p>
+                  {payout.astrologerId?.email && (
+                    <p className="text-xs text-gray-500">{payout.astrologerId.email}</p>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">{payout.astrologerId?.name}</p>
-              <p className="text-sm text-gray-600">{payout.astrologerId?.phoneNumber}</p>
-              {payout.astrologerId?.email && (
-                <p className="text-xs text-gray-500">{payout.astrologerId.email}</p>
-              )}
-            </div>
-          </div>
-        </div>
 
-        {/* Bank Details */}
-        <div className="border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Building2 className="text-gray-600" size={20} />
-            <h4 className="font-semibold text-gray-900">Bank Account Details</h4>
-          </div>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Account Holder:</span>
-              <span className="font-medium">{payout.bankDetails?.accountHolderName}</span>
+            {/* Bank Details */}
+            <div className="border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Building2 className="text-gray-600" size={20} />
+                <h4 className="font-semibold text-gray-900">Bank Account Details</h4>
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Account Holder:</span>
+                  <span className="font-medium">{payout.bankDetails?.accountHolderName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Bank Name:</span>
+                  <span className="font-medium">{payout.bankDetails?.bankName || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Account Number:</span>
+                  <span className="font-mono font-medium">{payout.bankDetails?.accountNumber}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">IFSC Code:</span>
+                  <span className="font-mono font-medium">{payout.bankDetails?.ifscCode}</span>
+                </div>
+                {payout.bankDetails?.upiId && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">UPI ID:</span>
+                    <span className="font-medium">{payout.bankDetails.upiId}</span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Bank Name:</span>
-              <span className="font-medium">{payout.bankDetails?.bankName || 'N/A'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Account Number:</span>
-              <span className="font-mono font-medium">{payout.bankDetails?.accountNumber}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">IFSC Code:</span>
-              <span className="font-mono font-medium">{payout.bankDetails?.ifscCode}</span>
-            </div>
-            {payout.bankDetails?.upiId && (
-              <div className="flex justify-between">
-                <span className="text-gray-600">UPI ID:</span>
-                <span className="font-medium">{payout.bankDetails.upiId}</span>
+
+            {/* Transaction Reference */}
+            {payout.transactionReference && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800 font-medium">Transaction Reference</p>
+                <p className="text-blue-900 font-mono mt-1">{payout.transactionReference}</p>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Transaction Reference */}
-        {payout.transactionReference && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-800 font-medium">Transaction Reference</p>
-            <p className="text-blue-900 font-mono mt-1">{payout.transactionReference}</p>
+            {/* Admin Notes */}
+            {payout.adminNotes && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <p className="text-sm text-gray-700 font-medium">Admin Notes</p>
+                <p className="text-gray-900 mt-1">{payout.adminNotes}</p>
+              </div>
+            )}
+
+            {/* Rejection Reason */}
+            {payout.rejectionReason && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm text-red-800 font-medium">Rejection Reason</p>
+                <p className="text-red-900 mt-1">{payout.rejectionReason}</p>
+              </div>
+            )}
+
+            {/* Timeline */}
+            <div className="border-t pt-4">
+              <h4 className="font-semibold text-gray-900 mb-3">Status Timeline</h4>
+              <div className="space-y-3">
+                <TimelineItem
+                  label="Request Created"
+                  date={payout.createdAt}
+                  completed={true}
+                />
+                {payout.approvedAt && (
+                  <TimelineItem
+                    label="Approved"
+                    date={payout.approvedAt}
+                    completed={true}
+                  />
+                )}
+                {payout.processedAt && (
+                  <TimelineItem
+                    label="Processing"
+                    date={payout.processedAt}
+                    completed={true}
+                  />
+                )}
+                {payout.completedAt && (
+                  <TimelineItem
+                    label="Completed"
+                    date={payout.completedAt}
+                    completed={true}
+                  />
+                )}
+                {payout.rejectedAt && (
+                  <TimelineItem
+                    label="Rejected"
+                    date={payout.rejectedAt}
+                    completed={true}
+                    isRejected={true}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4 border-t">
+              {payout.status === 'pending' && canApprove && (
+                <>
+                  <button
+                    onClick={onApprove}
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+                  >
+                    Approve Payout
+                  </button>
+                  <button
+                    onClick={onReject}
+                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+                  >
+                    Reject
+                  </button>
+                </>
+              )}
+
+              {payout.status === 'approved' && canProcess && (
+                <button
+                  onClick={onProcess}
+                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+                >
+                  Mark as Processing
+                </button>
+              )}
+
+              {payout.status === 'processing' && canProcess && (
+                <button
+                  onClick={onComplete}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                >
+                  Complete Payout
+                </button>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="space-y-6">
+            {!audit && loadingAudit ? (
+              <div className="flex justify-center p-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+              </div>
+            ) : audit ? (
+              <>
+                {/* Financial Summary */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+                    <p className="text-sm text-green-700 font-medium">Earned (Orders)</p>
+                    <p className="text-2xl font-bold text-green-900 mt-1">₹{audit.summary.totalOrderRevenue}</p>
+                  </div>
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+                    <p className="text-sm text-red-700 font-medium">Refund Loss</p>
+                    <p className="text-2xl font-bold text-red-900 mt-1">₹{audit.summary.totalRefundLoss}</p>
+                  </div>
+                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
+                    <p className="text-sm text-yellow-700 font-medium">Penalty Loss</p>
+                    <p className="text-2xl font-bold text-yellow-900 mt-1">₹{audit.summary.totalPenaltyLoss}</p>
+                  </div>
+                </div>
+
+                <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded text-center">
+                  Audit Period: {new Date(audit.auditWindow.from).toLocaleDateString()} to {new Date(audit.auditWindow.to).toLocaleDateString()}
+                </div>
+
+                {/* Audit Tables */}
+                <div className="space-y-6">
+                  {/* Completed Orders */}
+                  {audit.records.completedOrders?.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                        <CheckCircle size={18} className="text-green-500" /> Completed Orders ({audit.records.completedOrders.length})
+                      </h4>
+                      <div className="border border-gray-200 rounded-lg overflow-hidden max-h-60 overflow-y-auto">
+                        <table className="min-w-full divide-y divide-gray-200 text-sm">
+                          <thead className="bg-gray-50 sticky top-0">
+                            <tr>
+                              <th className="px-4 py-2 text-left font-medium text-gray-500">Order ID</th>
+                              <th className="px-4 py-2 text-left font-medium text-gray-500">Date</th>
+                              <th className="px-4 py-2 text-left font-medium text-gray-500">Type</th>
+                              <th className="px-4 py-2 text-right font-medium text-gray-500">Revenue</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200 bg-white">
+                            {audit.records.completedOrders.map((order: any) => (
+                              <tr key={order.orderId}>
+                                <td className="px-4 py-2 font-mono text-xs">{order.orderId}</td>
+                                <td className="px-4 py-2">{new Date(order.createdAt).toLocaleDateString()}</td>
+                                <td className="px-4 py-2 capitalize">{order.type}</td>
+                                <td className="px-4 py-2 text-right font-medium text-green-600">₹{order.totalAmount}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Refunds */}
+                  {audit.records.refundedOrders?.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                        <TrendingUp size={18} className="text-red-500" /> Refunded Orders ({audit.records.refundedOrders.length})
+                      </h4>
+                      <div className="border border-gray-200 rounded-lg overflow-hidden max-h-60 overflow-y-auto">
+                        <table className="min-w-full divide-y divide-gray-200 text-sm">
+                          <thead className="bg-gray-50 sticky top-0">
+                            <tr>
+                              <th className="px-4 py-2 text-left font-medium text-gray-500">Order ID</th>
+                              <th className="px-4 py-2 text-left font-medium text-gray-500">Date</th>
+                              <th className="px-4 py-2 text-right font-medium text-gray-500">Refund Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200 bg-white">
+                            {audit.records.refundedOrders.map((order: any) => (
+                              <tr key={order.orderId}>
+                                <td className="px-4 py-2 font-mono text-xs">{order.orderId}</td>
+                                <td className="px-4 py-2">{new Date(order.createdAt).toLocaleDateString()}</td>
+                                <td className="px-4 py-2 text-right font-medium text-red-600">-₹{order.refundRequest?.refundAmount}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Penalties */}
+                  {audit.records.penalties?.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                        <AlertTriangle size={18} className="text-yellow-500" /> Applied Penalties ({audit.records.penalties.length})
+                      </h4>
+                      <div className="border border-gray-200 rounded-lg overflow-hidden max-h-60 overflow-y-auto">
+                        <table className="min-w-full divide-y divide-gray-200 text-sm">
+                          <thead className="bg-gray-50 sticky top-0">
+                            <tr>
+                              <th className="px-4 py-2 text-left font-medium text-gray-500">Date</th>
+                              <th className="px-4 py-2 text-left font-medium text-gray-500">Reason</th>
+                              <th className="px-4 py-2 text-right font-medium text-gray-500">Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200 bg-white">
+                            {audit.records.penalties.map((penalty: any) => (
+                              <tr key={penalty._id}>
+                                <td className="px-4 py-2">{new Date(penalty.appliedAt).toLocaleDateString()}</td>
+                                <td className="px-4 py-2 text-gray-600">{penalty.reason}</td>
+                                <td className="px-4 py-2 text-right font-medium text-yellow-600">-₹{penalty.amount}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {audit.records.completedOrders?.length === 0 && audit.records.refundedOrders?.length === 0 && audit.records.penalties?.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      No financial activity found in this audit window.
+                    </div>
+                  )}
+
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-center p-8 text-red-500">Failed to load audit data.</div>
+            )}
           </div>
         )}
-
-        {/* Admin Notes */}
-        {payout.adminNotes && (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <p className="text-sm text-gray-700 font-medium">Admin Notes</p>
-            <p className="text-gray-900 mt-1">{payout.adminNotes}</p>
-          </div>
-        )}
-
-        {/* Rejection Reason */}
-        {payout.rejectionReason && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-sm text-red-800 font-medium">Rejection Reason</p>
-            <p className="text-red-900 mt-1">{payout.rejectionReason}</p>
-          </div>
-        )}
-
-        {/* Timeline */}
-        <div className="border-t pt-4">
-          <h4 className="font-semibold text-gray-900 mb-3">Status Timeline</h4>
-          <div className="space-y-3">
-            <TimelineItem
-              label="Request Created"
-              date={payout.createdAt}
-              completed={true}
-            />
-            {payout.approvedAt && (
-              <TimelineItem
-                label="Approved"
-                date={payout.approvedAt}
-                completed={true}
-              />
-            )}
-            {payout.processedAt && (
-              <TimelineItem
-                label="Processing"
-                date={payout.processedAt}
-                completed={true}
-              />
-            )}
-            {payout.completedAt && (
-              <TimelineItem
-                label="Completed"
-                date={payout.completedAt}
-                completed={true}
-              />
-            )}
-            {payout.rejectedAt && (
-              <TimelineItem
-                label="Rejected"
-                date={payout.rejectedAt}
-                completed={true}
-                isRejected={true}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3 pt-4 border-t">
-          {payout.status === 'pending' && canApprove && (
-            <>
-              <button
-                onClick={onApprove}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
-              >
-                Approve Payout
-              </button>
-              <button
-                onClick={onReject}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
-              >
-                Reject
-              </button>
-            </>
-          )}
-
-          {payout.status === 'approved' && canProcess && (
-            <button
-              onClick={onProcess}
-              className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
-            >
-              Mark as Processing
-            </button>
-          )}
-
-          {payout.status === 'processing' && canProcess && (
-            <button
-              onClick={onComplete}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-            >
-              Complete Payout
-            </button>
-          )}
-        </div>
       </div>
     </Modal>
   );

@@ -617,6 +617,12 @@ Send full-screen notification to a single User or Astrologer
   deleteAstrologer: (astrologerId: string, reason?: string) =>
     apiClient.delete(`/admin/astrologers/${astrologerId}`, { data: { reason } }),
 
+  /**
+   * Waive a penalty applied to an astrologer
+   */
+  waivePenalty: (astrologerId: string, penaltyId: string, reason: string) =>
+    apiClient.post(`/admin/astrologers/penalties/${penaltyId}/waive`, { astrologerId, reason }),
+
   // ==================== REFUNDS ====================
 
   /**
@@ -701,6 +707,12 @@ Send full-screen notification to a single User or Astrologer
    */
   rejectPayout: (payoutId: string, reason: string) =>
     apiClient.post(`/admin/payments/payouts/${payoutId}/reject`, { reason }),
+
+  /**
+   * Get an exhaustive financial audit for a payout (Orders, Refunds, Penalties)
+   */
+  getPayoutFinancialAudit: (payoutId: string) =>
+    apiClient.get(`/admin/payments/payouts/${payoutId}/financial-audit`),
 
   // ==================== WALLET REFUNDS ====================
 

@@ -39,6 +39,16 @@ export interface Astrologer {
   };
   createdAt: string;
   updatedAt: string;
+  penalties?: Array<{
+    _id: string;
+    amount: number;
+    reason: string;
+    status: 'pending' | 'applied' | 'waived' | 'disputed';
+    appliedAt: string;
+    waivedAt?: string;
+    waivedBy?: string;
+    waiverReason?: string;
+  }>;
 }
 
 export interface AstrologerPerformance {

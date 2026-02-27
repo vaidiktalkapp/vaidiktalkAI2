@@ -56,6 +56,11 @@ export default function AstrologerDetailPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
 
+  // Waive Penalty State
+  const [showWaiveModal, setShowWaiveModal] = useState(false);
+  const [selectedPenaltyId, setSelectedPenaltyId] = useState('');
+  const [waiveReason, setWaiveReason] = useState('');
+
   // Fetch Astrologer Details
   const { data: astrologer, isLoading } = useQuery<Astrologer>({
     queryKey: ['astrologer-detail', astrologerId],
@@ -94,6 +99,21 @@ export default function AstrologerDetailPage() {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to delete astrologer');
+    },
+  });
+
+  // Waive Penalty Mutation
+  const waiveMutation = useMutation({
+    mutationFn: () => adminApi.waivePenalty(astrologerId, selectedPenaltyId, waiveReason),
+    onSuccess: () => {
+      toast.success('Penalty waived successfully');
+      queryClient.invalidateQueries({ queryKey: ['astrologer-detail', astrologerId] });
+      setShowWaiveModal(false);
+      setWaiveReason('');
+      setSelectedPenaltyId('');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to waive penalty');
     },
   });
 
@@ -380,6 +400,59 @@ export default function AstrologerDetailPage() {
         />
       </div>
 
+      {/* Penalties */}
+      {astrologer.penalties && astrologer.penalties.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-red-100 p-6">
+          <h3 className="text-lg font-semibold text-red-900 mb-4 flex items-center gap-2">
+            <Ban size={20} className="text-red-500" /> Penalty History
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {astrologer.penalties.map((penalty) => (
+                  <tr key={penalty._id}>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(penalty.appliedAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-red-600">
+                      ₹{penalty.amount}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {penalty.reason}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <StatusBadge status={penalty.status} />
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                      {(penalty.status === 'applied' || penalty.status === 'pending') && (
+                        <button
+                          onClick={() => {
+                            setSelectedPenaltyId(penalty._id);
+                            setShowWaiveModal(true);
+                          }}
+                          className="text-indigo-600 hover:text-indigo-900 px-3 py-1 rounded border border-indigo-200 hover:bg-indigo-50 transition-colors"
+                        >
+                          Waive
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Recent Orders */}
       {performance?.recentOrders && performance.recentOrders.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -570,6 +643,48 @@ export default function AstrologerDetailPage() {
           </div>
         </Modal>
       )}
+
+      {/* Waive Penalty Modal */}
+      {showWaiveModal && (
+        <Modal title="Waive Astrologer Penalty" onClose={() => setShowWaiveModal(false)}>
+          <div className="space-y-4">
+            <div className="p-3 bg-yellow-50 text-yellow-800 rounded-lg text-sm border border-yellow-200">
+              <strong>Note:</strong> Waiving this penalty will return the deducted amount back to the Astrologer's Withdrawable Balance immediately.
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Reason for Waiver *</label>
+              <textarea
+                value={waiveReason}
+                onChange={(e) => setWaiveReason(e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="Example: Software glitch during call, System error, etc."
+                required
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => waiveMutation.mutate()}
+                disabled={!waiveReason || waiveMutation.isPending}
+                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {waiveMutation.isPending ? 'Waiving...' : 'Confirm Waive'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowWaiveModal(false);
+                  setWaiveReason('');
+                  setSelectedPenaltyId('');
+                }}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {/* ✅ NEW: Delete Confirmation Modal */}
       {showDeleteModal && (
         <Modal title="Delete Astrologer Account" onClose={() => setShowDeleteModal(false)}>
