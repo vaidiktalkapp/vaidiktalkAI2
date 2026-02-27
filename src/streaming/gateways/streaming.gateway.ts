@@ -30,97 +30,97 @@ export class StreamGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private streamHeartbeats: Map<string, NodeJS.Timeout> = new Map();
 
   constructor(
-    @Inject(forwardRef(() => StreamSessionService)) 
+    @Inject(forwardRef(() => StreamSessionService))
     private streamSessionService: StreamSessionService,
     private blockingService: AstrologerBlockingService
-  ) {}
+  ) { }
 
   handleConnection(client: Socket) {
-  console.log('====================================');
-  console.log('✅ NEW CLIENT CONNECTED');
-  console.log('Socket ID:', client.id);
-  console.log('Handshake Query:', client.handshake.query);
-  console.log('Handshake Auth:', client.handshake.auth);
-  console.log('====================================');
-  
-}
+    console.log('====================================');
+    console.log('✅ NEW CLIENT CONNECTED');
+    console.log('Socket ID:', client.id);
+    console.log('Handshake Query:', client.handshake.query);
+    console.log('Handshake Auth:', client.handshake.auth);
+    console.log('====================================');
 
-async handleDisconnect(client: Socket) {
-  console.log('====================================');
-  console.log('❌ CLIENT DISCONNECTED');
-  console.log('Socket ID:', client.id);
-  console.log('Timestamp:', new Date().toISOString());
-  console.log('====================================');
-
-  // ✅ Find userId from socketId
-  let disconnectedUserId: string | null = null;
-  for (const [userId, socketId] of this.userSockets.entries()) {
-    if (socketId === client.id) {
-      disconnectedUserId = userId;
-      break;
-    }
   }
 
-  if (disconnectedUserId) {
-    console.log(`📝 Disconnected User ID: ${disconnectedUserId}`);
-    
-    // Remove from user sockets
-    this.userSockets.delete(disconnectedUserId);
-    console.log(`🗑️ User socket removed from registry`);
-    console.log(`📊 Remaining mapped users: ${this.userSockets.size}`);
-    
-    // Handle user disconnect (if on call)
-    try {
-      await this.streamSessionService.handleUserDisconnect(disconnectedUserId);
-    } catch (err) {
-      console.error('❌ Error handling user disconnect:', err);
+  async handleDisconnect(client: Socket) {
+    console.log('====================================');
+    console.log('❌ CLIENT DISCONNECTED');
+    console.log('Socket ID:', client.id);
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('====================================');
+
+    // ✅ Find userId from socketId
+    let disconnectedUserId: string | null = null;
+    for (const [userId, socketId] of this.userSockets.entries()) {
+      if (socketId === client.id) {
+        disconnectedUserId = userId;
+        break;
+      }
     }
-  }
 
-  // ✅ Check if this was a host
-  const streamId = this.socketToStream.get(client.id);
-  
-  if (streamId) {
-    console.log('🔴 HOST DISCONNECTED - ENDING STREAM');
-    console.log('Stream ID:', streamId);
+    if (disconnectedUserId) {
+      console.log(`📝 Disconnected User ID: ${disconnectedUserId}`);
 
-    const hostUserId = this.streamHosts.get(streamId);
-    
-    if (hostUserId) {
+      // Remove from user sockets
+      this.userSockets.delete(disconnectedUserId);
+      console.log(`🗑️ User socket removed from registry`);
+      console.log(`📊 Remaining mapped users: ${this.userSockets.size}`);
+
+      // Handle user disconnect (if on call)
       try {
-        await this.streamSessionService.endStream(streamId, hostUserId);
-        
-        this.server.to(streamId).emit('stream_ended', {
-          reason: 'Host disconnected',
-          timestamp: new Date().toISOString(),
-        });
+        await this.streamSessionService.handleUserDisconnect(disconnectedUserId);
+      } catch (err) {
+        console.error('❌ Error handling user disconnect:', err);
+      }
+    }
 
-        console.log('✅ Stream automatically ended');
-      } catch (error) {
-        console.error('❌ Error ending stream:', error);
+    // ✅ Check if this was a host
+    const streamId = this.socketToStream.get(client.id);
+
+    if (streamId) {
+      console.log('🔴 HOST DISCONNECTED - ENDING STREAM');
+      console.log('Stream ID:', streamId);
+
+      const hostUserId = this.streamHosts.get(streamId);
+
+      if (hostUserId) {
+        try {
+          await this.streamSessionService.endStream(streamId, hostUserId);
+
+          this.server.to(streamId).emit('stream_ended', {
+            reason: 'Host disconnected',
+            timestamp: new Date().toISOString(),
+          });
+
+          console.log('✅ Stream automatically ended');
+        } catch (error) {
+          console.error('❌ Error ending stream:', error);
+        }
+
+        this.streamHosts.delete(streamId);
       }
 
-      this.streamHosts.delete(streamId);
+      this.socketToStream.delete(client.id);
+
+      // Clear heartbeat timeout
+      if (this.streamHeartbeats.has(streamId)) {
+        clearTimeout(this.streamHeartbeats.get(streamId));
+        this.streamHeartbeats.delete(streamId);
+      }
     }
 
-    this.socketToStream.delete(client.id);
-    
-    // Clear heartbeat timeout
-    if (this.streamHeartbeats.has(streamId)) {
-      clearTimeout(this.streamHeartbeats.get(streamId));
-      this.streamHeartbeats.delete(streamId);
-    }
+    console.log('====================================\n');
   }
 
-  console.log('====================================\n');
-}
 
 
-
- /**
-   * Notify host of call request
-   * ✅ FIX: Accept hostId directly to avoid cache misses
-   */
+  /**
+    * Notify host of call request
+    * ✅ FIX: Accept hostId directly to avoid cache misses
+    */
   notifyCallRequest(
     streamId: string,
     hostId: string, // <--- ADDED PARAMETER
@@ -142,13 +142,13 @@ async handleDisconnect(client: Socket) {
 
     // 2. Fallback to stream-host map if direct lookup fails
     if (!hostSocketId) {
-       console.warn('⚠️ Host socket not found via ID, trying stream map...');
-       const mappedHostId = this.streamHosts.get(streamId);
-       if (mappedHostId) {
-           hostSocketId = this.userSockets.get(mappedHostId);
-       }
+      console.warn('⚠️ Host socket not found via ID, trying stream map...');
+      const mappedHostId = this.streamHosts.get(streamId);
+      if (mappedHostId) {
+        hostSocketId = this.userSockets.get(mappedHostId);
+      }
     }
-    
+
     if (!hostSocketId) {
       console.error('❌ Host is OFFLINE (No active socket found for hostId):', hostId);
       return;
@@ -173,69 +173,69 @@ async handleDisconnect(client: Socket) {
   /**
    * Join stream room
    */
- @SubscribeMessage('join_stream')
-async handleJoinStream(
-  @ConnectedSocket() client: Socket,
-  @MessageBody() data: { 
-    streamId: string; 
-    userId: string; 
-    userName: string;
-    isHost?: boolean;
-  }
-) {
-  console.log('====================================');
-  console.log('📺 JOIN_STREAM EVENT RECEIVED');
-  console.log('Socket ID:', client.id);
-  console.log('User ID:', data.userId);
-  console.log('User Name:', data.userName);
-  console.log('Is Host:', !!data.isHost);
-  console.log('Stream ID:', data.streamId);
-  console.log('====================================');
+  @SubscribeMessage('join_stream')
+  async handleJoinStream(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: {
+      streamId: string;
+      userId: string;
+      userName: string;
+      isHost?: boolean;
+    }
+  ) {
+    console.log('====================================');
+    console.log('📺 JOIN_STREAM EVENT RECEIVED');
+    console.log('Socket ID:', client.id);
+    console.log('User ID:', data.userId);
+    console.log('User Name:', data.userName);
+    console.log('Is Host:', !!data.isHost);
+    console.log('Stream ID:', data.streamId);
+    console.log('====================================');
 
-  if (!data.userId || data.userId === 'undefined' || data.userId === 'null') {
-    console.error('❌ REJECTED JOIN: Invalid User ID');
-    return { success: false, error: 'Invalid User ID' };
-  }
-
-  // ✅ CHECK BLOCKING BEFORE JOINING
-    if (!data.isHost) { // Only check viewers
-       // We need the hostId. It's not in the data, so we must fetch the stream or look it up.
-       // For efficiency, you might want to cache stream owners, but for now fetch it:
-       const stream = await this.streamSessionService.getStreamById(data.streamId); // Ensure this method exists and is public
-       if (stream) {
-           const isBlocked = await this.blockingService.isUserBlocked(stream.hostId.toString(), data.userId);
-           if (isBlocked) {
-               console.log(`🚫 Blocked user ${data.userId} tried to join stream ${data.streamId}`);
-               client.emit('error', { message: 'You are blocked by this astrologer' });
-               return { success: false, error: 'Blocked' };
-           }
-       }
+    if (!data.userId || data.userId === 'undefined' || data.userId === 'null') {
+      console.error('❌ REJECTED JOIN: Invalid User ID');
+      return { success: false, error: 'Invalid User ID' };
     }
 
-  // ✅ CRITICAL: map userId → socketId for ALL users
-  this.userSockets.set(data.userId, client.id);
-  console.log(`✅ USER SOCKET MAPPED: ${data.userId} → ${client.id}`);
-  console.log('📋 Current userSockets:', Array.from(this.userSockets.entries()));
+    // ✅ CHECK BLOCKING BEFORE JOINING
+    if (!data.isHost) { // Only check viewers
+      // We need the hostId. It's not in the data, so we must fetch the stream or look it up.
+      // For efficiency, you might want to cache stream owners, but for now fetch it:
+      const stream = await this.streamSessionService.getStreamById(data.streamId); // Ensure this method exists and is public
+      if (stream) {
+        const isBlocked = await this.blockingService.isUserBlocked(stream.hostId.toString(), data.userId);
+        if (isBlocked) {
+          console.log(`🚫 Blocked user ${data.userId} tried to join stream ${data.streamId}`);
+          client.emit('error', { message: 'You are blocked by this astrologer' });
+          return { success: false, error: 'Blocked' };
+        }
+      }
+    }
 
-  client.join(data.streamId);
-  console.log(`✅ Socket ${client.id} joined room: ${data.streamId}`);
+    // ✅ CRITICAL: map userId → socketId for ALL users
+    this.userSockets.set(data.userId, client.id);
+    console.log(`✅ USER SOCKET MAPPED: ${data.userId} → ${client.id}`);
+    console.log('📋 Current userSockets:', Array.from(this.userSockets.entries()));
 
-  if (data.isHost) {
-    this.streamHosts.set(data.streamId, data.userId);
-    this.socketToStream.set(client.id, data.streamId);
-    console.log('🎬 HOST REGISTERED FOR STREAM', data.streamId);
-  } else {
-    console.log('👤 VIEWER REGISTERED:', data.userId, 'socket:', client.id);
+    client.join(data.streamId);
+    console.log(`✅ Socket ${client.id} joined room: ${data.streamId}`);
+
+    if (data.isHost) {
+      this.streamHosts.set(data.streamId, data.userId);
+      this.socketToStream.set(client.id, data.streamId);
+      console.log('🎬 HOST REGISTERED FOR STREAM', data.streamId);
+    } else {
+      console.log('👤 VIEWER REGISTERED:', data.userId, 'socket:', client.id);
+    }
+
+    client.to(data.streamId).emit('viewer_joined', {
+      userId: data.userId,
+      userName: data.userName,
+      timestamp: new Date(),
+    });
+
+    return { success: true };
   }
-
-  client.to(data.streamId).emit('viewer_joined', {
-    userId: data.userId,
-    userName: data.userName,
-    timestamp: new Date(),
-  });
-
-  return { success: true };
-}
 
   /**
    * Leave stream room
@@ -246,7 +246,7 @@ async handleJoinStream(
     @MessageBody() data: { streamId: string; userId: string; userName: string }
   ) {
     client.leave(data.streamId);
-    
+
     await this.streamSessionService.leaveStream(data.streamId, data.userId);
 
     client.to(data.streamId).emit('viewer_left', {
@@ -266,12 +266,12 @@ async handleJoinStream(
   @SubscribeMessage('send_comment')
   async handleSendComment(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { 
-      streamId: string; 
-      userId: string; 
-      userName: string; 
+    @MessageBody() data: {
+      streamId: string;
+      userId: string;
+      userName: string;
       userAvatar?: string;
-      comment: string 
+      comment: string
     }
   ) {
     // Broadcast to all viewers
@@ -297,36 +297,36 @@ async handleJoinStream(
    * ✅ NEW: Handle User Cancelling Call Request
    * Syncs with Host UI to remove request immediately
    */
-@SubscribeMessage('cancel_call_request')
-async handleCancelCallRequest(
-  @ConnectedSocket() client: Socket,
-  @MessageBody() data: { streamId: string; userId: string }
-) {
-  console.log(`❌ [User Control] Cancel Request: ${data.userId} for stream ${data.streamId}`);
-  
-  const hostUserId = this.streamHosts.get(data.streamId);
-  if (hostUserId) {
-    const hostSocketId = this.userSockets.get(hostUserId);
-    if (hostSocketId) {
-      // ✅ FIXED: Add await
-      await this.streamSessionService.cancelCallRequest(data.streamId, data.userId);
-      
-      // Notify Host specifically
-      this.server.to(hostSocketId).emit('call_request_cancelled', {
-        userId: data.userId,
-        timestamp: new Date().toISOString()
-      });
-      
-      console.log(`✅ Cancel request processed for user ${data.userId}`);
+  @SubscribeMessage('cancel_call_request')
+  async handleCancelCallRequest(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { streamId: string; userId: string }
+  ) {
+    console.log(`❌ [User Control] Cancel Request: ${data.userId} for stream ${data.streamId}`);
+
+    const hostUserId = this.streamHosts.get(data.streamId);
+    if (hostUserId) {
+      const hostSocketId = this.userSockets.get(hostUserId);
+      if (hostSocketId) {
+        // ✅ FIXED: Add await
+        await this.streamSessionService.cancelCallRequest(data.streamId, data.userId);
+
+        // Notify Host specifically
+        this.server.to(hostSocketId).emit('call_request_cancelled', {
+          userId: data.userId,
+          timestamp: new Date().toISOString()
+        });
+
+        console.log(`✅ Cancel request processed for user ${data.userId}`);
+      } else {
+        console.error(`❌ Host socket not found for stream ${data.streamId}`);
+      }
     } else {
-      console.error(`❌ Host socket not found for stream ${data.streamId}`);
+      console.error(`❌ Host not registered for stream ${data.streamId}`);
     }
-  } else {
-    console.error(`❌ Host not registered for stream ${data.streamId}`);
+
+    return { success: true };
   }
-  
-  return { success: true };
-}
 
   /**
    * ✅ NEW: Handle User Ending Call
@@ -349,7 +349,7 @@ async handleCancelCallRequest(
           timestamp: new Date().toISOString()
         });
       }
-      
+
       // Ensure backend session is closed
       try {
         await this.streamSessionService.endUserCall(data.streamId, data.userId);
@@ -360,7 +360,7 @@ async handleCancelCallRequest(
 
     // 2. Notify all viewers that call is over (to revert split screen)
     this.server.to(data.streamId).emit('call_ended', {
-      duration: 0, 
+      duration: 0,
       charge: 0,
       timestamp: new Date().toISOString()
     });
@@ -400,194 +400,211 @@ async handleCancelCallRequest(
     return { success: true };
   }
 
-/**
- * Call accepted - FIXED VERSION WITH TYPE SAFETY
- */
-@SubscribeMessage('call_accepted')
-async handleCallAccepted(
-  @ConnectedSocket() client: Socket,
-  @MessageBody() data: {
-    streamId: string;
-    userId: string;
-    userName: string;
-    callType: 'voice' | 'video';
-    callMode: 'public' | 'private';
-    callerAgoraUid: number;
-  }
-) {
-  try {
-    console.log('====================================');
-    console.log('✅ CALL ACCEPTED EVENT (GATEWAY)');
-    console.log('Stream ID:', data.streamId);
-    console.log('User ID:', data.userId);
-    console.log('====================================');
+  /**
+   * Call accepted - FIXED VERSION WITH TYPE SAFETY
+   */
+  @SubscribeMessage('call_accepted')
+  async handleCallAccepted(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: {
+      streamId: string;
+      userId: string;
+      userName: string;
+      callType: 'voice' | 'video';
+      callMode: 'public' | 'private';
+      callerAgoraUid: number;
+    }
+  ) {
+    try {
+      console.log('====================================');
+      console.log('✅ CALL ACCEPTED EVENT (GATEWAY)');
+      console.log('Stream ID:', data.streamId);
+      console.log('User ID:', data.userId);
+      console.log('====================================');
 
-    // ✅ Get the caller's socket ID
-    const callerSocketId = this.userSockets.get(data.userId);
-    
-    console.log('📝 Found caller socket:', callerSocketId);
+      // ✅ Get the caller's socket ID
+      const callerSocketId = this.userSockets.get(data.userId);
 
-    if (callerSocketId) {
-      // ✅ Get the full stream data
-      const stream = await this.streamSessionService.getStreamById(data.streamId);
-      
-      if (!stream) {
-        console.error('❌ Stream not found');
-        return { success: false, message: 'Stream not found' };
+      console.log('📝 Found caller socket:', callerSocketId);
+
+      // Default values mapping
+      let maxDuration = 600;
+      let finalUid = data.callerAgoraUid;
+
+      if (callerSocketId) {
+        // ✅ Get the full stream data
+        const stream = await this.streamSessionService.getStreamById(data.streamId);
+
+        if (!stream) {
+          console.error('❌ Stream not found');
+          return { success: false, message: 'Stream not found' };
+        }
+
+        if (!stream.currentCall) {
+          console.error('❌ No current call found');
+          return { success: false, message: 'No current call' };
+        }
+
+        // ✅ TYPE SAFETY: Check if agoraChannelName exists
+        if (!stream.agoraChannelName) {
+          console.error('❌ Agora channel name not found');
+          return { success: false, message: 'Invalid stream configuration' };
+        }
+
+        // ✅ NEW: We must properly create the transaction and calculate duration.
+        // ⚠️ DO NOT MANUALLY COMPILE TOKENS HERE. USE THE SERVICE.
+        const hostId = stream.hostId.toString();
+
+        maxDuration = stream.callSettings.maxCallDuration || 600;
+        let finalToken = '';
+
+        try {
+          // This handles Balance checks, Transaction Creation, and Timer Starts
+          const acceptRes = await this.streamSessionService.acceptCallRequest(data.streamId, data.userId, hostId);
+          maxDuration = acceptRes.data.maxDuration;
+          finalToken = acceptRes.data.token;
+          finalUid = acceptRes.data.uid;
+        } catch (err: any) {
+          console.error('❌ Service rejected call accept:', err.message);
+          return { success: false, message: err.message };
+        }
+
+        // ✅ Send FULL credentials to the specific caller
+        const callCredentials = {
+          streamId: data.streamId,
+          userId: data.userId,
+          userName: data.userName,
+          callType: data.callType,
+          callMode: data.callMode,
+          callerAgoraUid: finalUid,
+          // ✅ CRITICAL: Include these for the caller to join
+          channelName: stream.agoraChannelName,
+          token: finalToken,
+          uid: finalUid,
+          appId: process.env.AGORA_APP_ID || '203397a168f8469bb8e672cd15eb3eb6',
+          hostAgoraUid: stream.hostAgoraUid,
+          maxDuration: maxDuration, // ✅ Now reliably populated
+        };
+
+        console.log('====================================');
+        console.log('📡 SENDING CALL CREDENTIALS TO CALLER');
+        console.log('To Socket:', callerSocketId);
+        console.log('Channel:', callCredentials.channelName);
+        console.log('Caller UID:', callCredentials.callerAgoraUid);
+        console.log('====================================');
+
+        // ✅ Send to SPECIFIC caller with credentials
+        this.server.to(callerSocketId).emit('call_accepted', callCredentials);
+
+        console.log('✅ Call credentials sent to caller');
+      } else {
+        console.error('❌ Caller socket not found for user:', data.userId);
       }
 
-      if (!stream.currentCall) {
-        console.error('❌ No current call found');
-        return { success: false, message: 'No current call' };
-      }
-
-      // ✅ TYPE SAFETY: Check if agoraChannelName exists
-      if (!stream.agoraChannelName) {
-        console.error('❌ Agora channel name not found');
-        return { success: false, message: 'Invalid stream configuration' };
-      }
-
-      // ✅ Generate NEW token for the caller with their UID
-      const agoraService = this.streamSessionService.getAgoraService();
-      const callerToken = agoraService.generateBroadcasterToken(
-        stream.agoraChannelName, // ✅ Now TypeScript knows this is a string
-        data.callerAgoraUid
-      );
-
-      // ✅ Send FULL credentials to the specific caller
-      const callCredentials = {
-        streamId: data.streamId,
+      // ✅ Broadcast to ALL viewers (for split-screen display)
+      this.server.to(data.streamId).emit('call_started', {
         userId: data.userId,
         userName: data.userName,
         callType: data.callType,
         callMode: data.callMode,
-        callerAgoraUid: data.callerAgoraUid,
-        // ✅ CRITICAL: Include these for the caller to join
-        channelName: stream.agoraChannelName,
-        token: callerToken,
-        uid: data.callerAgoraUid,
-        appId: process.env.AGORA_APP_ID || '203397a168f8469bb8e672cd15eb3eb6',
-        hostAgoraUid: stream.hostAgoraUid,
-      };
+        callerAgoraUid: finalUid,
+        maxDuration: maxDuration,
+        timestamp: new Date()
+      });
 
-      console.log('====================================');
-      console.log('📡 SENDING CALL CREDENTIALS TO CALLER');
-      console.log('To Socket:', callerSocketId);
-      console.log('Channel:', callCredentials.channelName);
-      console.log('Caller UID:', callCredentials.callerAgoraUid);
+      console.log('✅ Call started broadcast to all viewers');
       console.log('====================================');
 
-      // ✅ Send to SPECIFIC caller with credentials
-      this.server.to(callerSocketId).emit('call_accepted', callCredentials);
-      
-      console.log('✅ Call credentials sent to caller');
-    } else {
-      console.error('❌ Caller socket not found for user:', data.userId);
+      return { success: true };
+    } catch (error) {
+      console.error('====================================');
+      console.error('❌ CALL ACCEPTED ERROR');
+      console.error('Error:', error);
+      console.error('====================================');
+      return { success: false, message: error.message };
     }
+  }
 
-    // ✅ Broadcast to ALL viewers (for split-screen display)
-    this.server.to(data.streamId).emit('call_started', {
-      userId: data.userId,
-      userName: data.userName,
-      callType: data.callType,
-      callMode: data.callMode,
-      callerAgoraUid: data.callerAgoraUid,
-      timestamp: new Date()
-    });
 
-    console.log('✅ Call started broadcast to all viewers');
+  /**
+  * Reject call request
+  */
+  @SubscribeMessage('call_rejected')
+  handleCallRejected(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: {
+      streamId: string;
+      userId: string;
+    }
+  ) {
+    console.log('====================================');
+    console.log('❌ HOST REJECTED CALL');
+    console.log('Stream ID:', data.streamId);
+    console.log('Rejected User ID:', data.userId);
     console.log('====================================');
 
+    // ✅ Get user's socket ID from the map
+    const userSocketId = this.userSockets.get(data.userId);
+
+    console.log('📝 User socket map:', Array.from(this.userSockets.entries()));
+    console.log('📝 Looking for user:', data.userId);
+    console.log('📝 Found socket ID:', userSocketId);
+
+    if (userSocketId) {
+      // ✅ Emit DIRECTLY to the user's socket
+      this.server.to(userSocketId).emit('call_request_rejected', {
+        streamId: data.streamId,
+        userId: data.userId,
+        reason: 'Host declined your request',
+        timestamp: new Date().toISOString(),
+      });
+
+      console.log('✅ Rejection sent to socket:', userSocketId);
+    } else {
+      console.error('❌ User socket not found!');
+    }
+
     return { success: true };
-  } catch (error) {
-    console.error('====================================');
-    console.error('❌ CALL ACCEPTED ERROR');
-    console.error('Error:', error);
-    console.error('====================================');
-    return { success: false, message: error.message };
   }
-}
+
+  /**
+  * Call ended - FIXED VERSION
+  */
+  @SubscribeMessage('call_ended')
+  handleCallEnded(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: {
+      streamId: string;
+      duration: number;
+      charge: number;
+    }
+  ) {
+    console.log('====================================');
+    console.log('📞 CALL ENDED EVENT');
+    console.log('Stream ID:', data.streamId);
+    console.log('Duration:', data.duration);
+    console.log('====================================');
 
 
- /**
- * Reject call request
- */
-@SubscribeMessage('call_rejected')
-handleCallRejected(
-  @ConnectedSocket() client: Socket,
-  @MessageBody() data: {
-    streamId: string;
-    userId: string;
-  }
-) {
-  console.log('====================================');
-  console.log('❌ HOST REJECTED CALL');
-  console.log('Stream ID:', data.streamId);
-  console.log('Rejected User ID:', data.userId);
-  console.log('====================================');
 
-  // ✅ Get user's socket ID from the map
-  const userSocketId = this.userSockets.get(data.userId);
-  
-  console.log('📝 User socket map:', Array.from(this.userSockets.entries()));
-  console.log('📝 Looking for user:', data.userId);
-  console.log('📝 Found socket ID:', userSocketId);
-
-  if (userSocketId) {
-    // ✅ Emit DIRECTLY to the user's socket
-    this.server.to(userSocketId).emit('call_request_rejected', {
-      streamId: data.streamId,
-      userId: data.userId,
-      reason: 'Host declined your request',
-      timestamp: new Date().toISOString(),
+    // ✅ Emit BOTH events for compatibility
+    this.server.to(data.streamId).emit('call_ended', {
+      duration: data.duration,
+      charge: data.charge,
+      timestamp: new Date().toISOString()
     });
-    
-    console.log('✅ Rejection sent to socket:', userSocketId);
-  } else {
-    console.error('❌ User socket not found!');
+
+    this.server.to(data.streamId).emit('call_finished', {
+      duration: data.duration,
+      charge: data.charge,
+      timestamp: new Date().toISOString()
+    });
+
+    console.log('✅ Call ended events emitted to all viewers');
+
+
+    return { success: true };
   }
-
-  return { success: true };
-}
-
- /**
- * Call ended - FIXED VERSION
- */
-@SubscribeMessage('call_ended')
-handleCallEnded(
-  @ConnectedSocket() client: Socket,
-  @MessageBody() data: {
-    streamId: string;
-    duration: number;
-    charge: number;
-  }
-) {
-  console.log('====================================');
-  console.log('📞 CALL ENDED EVENT');
-  console.log('Stream ID:', data.streamId);
-  console.log('Duration:', data.duration);
-  console.log('====================================');
-
-
-  
-  // ✅ Emit BOTH events for compatibility
-  this.server.to(data.streamId).emit('call_ended', {
-    duration: data.duration,
-    charge: data.charge,
-    timestamp: new Date().toISOString()
-  });
-  
-  this.server.to(data.streamId).emit('call_finished', {
-    duration: data.duration,
-    charge: data.charge,
-    timestamp: new Date().toISOString()
-  });
-  
-  console.log('✅ Call ended events emitted to all viewers');
-
-
-  return { success: true };
-}
 
 
   // ==================== HOST CONTROL EVENTS ====================
@@ -667,52 +684,52 @@ handleCallEnded(
   }
 
   @SubscribeMessage('stream_heartbeat')
-handleStreamHeartbeat(
-  @ConnectedSocket() client: Socket,
-  @MessageBody() data: { streamId: string }
-) {
-  console.log('💓 Heartbeat received for stream:', data.streamId);
+  handleStreamHeartbeat(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { streamId: string }
+  ) {
+    console.log('💓 Heartbeat received for stream:', data.streamId);
 
-  // Clear existing timeout
-  if (this.streamHeartbeats.has(data.streamId)) {
-    clearTimeout(this.streamHeartbeats.get(data.streamId));
+    // Clear existing timeout
+    if (this.streamHeartbeats.has(data.streamId)) {
+      clearTimeout(this.streamHeartbeats.get(data.streamId));
+    }
+
+    // Set new timeout - if no heartbeat in 30 seconds, end stream
+    const timeout = setTimeout(async () => {
+      console.log('⚠️ No heartbeat received - ending stream:', data.streamId);
+
+      const hostUserId = this.streamHosts.get(data.streamId);
+      if (hostUserId) {
+        try {
+          await this.streamSessionService.endStream(data.streamId, hostUserId);
+
+          this.server.to(data.streamId).emit('stream_ended', {
+            reason: 'Connection lost',
+            timestamp: new Date().toISOString(),
+          });
+        } catch (error) {
+          console.error('Error ending stream:', error);
+        }
+
+        this.streamHosts.delete(data.streamId);
+        this.streamHeartbeats.delete(data.streamId);
+      }
+    }, 30000); // 30 seconds
+
+    this.streamHeartbeats.set(data.streamId, timeout);
+
+    return { success: true };
   }
 
-  // Set new timeout - if no heartbeat in 30 seconds, end stream
-  const timeout = setTimeout(async () => {
-    console.log('⚠️ No heartbeat received - ending stream:', data.streamId);
-    
-    const hostUserId = this.streamHosts.get(data.streamId);
-    if (hostUserId) {
-      try {
-        await this.streamSessionService.endStream(data.streamId, hostUserId);
-        
-        this.server.to(data.streamId).emit('stream_ended', {
-          reason: 'Connection lost',
-          timestamp: new Date().toISOString(),
-        });
-      } catch (error) {
-        console.error('Error ending stream:', error);
-      }
-
-      this.streamHosts.delete(data.streamId);
-      this.streamHeartbeats.delete(data.streamId);
-    }
-  }, 30000); // 30 seconds
-
-  this.streamHeartbeats.set(data.streamId, timeout);
-
-  return { success: true };
-}
-
-public notifyCallEnded(streamId: string, duration: number, charge: number) {
-  console.log(`📢 Emitting call_ended for stream ${streamId}`);
-  this.server.to(streamId).emit('call_ended', {
-    streamId,
-    duration,
-    charge,
-    timestamp: new Date().toISOString()
-  });
-}
+  public notifyCallEnded(streamId: string, duration: number, charge: number) {
+    console.log(`📢 Emitting call_ended for stream ${streamId}`);
+    this.server.to(streamId).emit('call_ended', {
+      streamId,
+      duration,
+      charge,
+      timestamp: new Date().toISOString()
+    });
+  }
 
 }

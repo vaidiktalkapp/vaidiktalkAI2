@@ -34,6 +34,50 @@ export class StreamSessionService {
     @Inject(forwardRef(() => StreamGateway)) private streamGateway: StreamGateway,
   ) { }
 
+  private activeTimers: Map<string, NodeJS.Timeout> = new Map();
+
+  // ==================== INTERVAL TIMERS ====================
+
+  private startTimer(streamId: string, maxDuration: number, userId: string) {
+    if (this.activeTimers.has(streamId)) {
+      clearInterval(this.activeTimers.get(streamId));
+    }
+
+    let remainingSeconds = maxDuration;
+    this.logger.log(`⏳ Starting server timer for stream call ${streamId} (${remainingSeconds}s)`);
+
+    const interval = setInterval(() => {
+      remainingSeconds--;
+
+      if (remainingSeconds % 5 === 0 || remainingSeconds <= 10) {
+        // Emit tick every 5 seconds or every second when under 10 seconds
+        this.streamGateway.server.to(streamId).emit('timer_tick', {
+          streamId,
+          remainingSeconds
+        });
+      }
+
+      if (remainingSeconds <= 0) {
+        this.logger.warn(`⏱️ Time's up for stream call ${streamId}. Ending automatically.`);
+        this.stopTimer(streamId);
+        // We use an internal end function call to safely wrap it up
+        this.endCurrentCall(streamId, '').catch(err =>
+          this.logger.error(`Error auto-ending livestream call ${streamId}: ${err.message}`)
+        );
+      }
+    }, 1000);
+
+    this.activeTimers.set(streamId, interval);
+  }
+
+  private stopTimer(streamId: string) {
+    if (this.activeTimers.has(streamId)) {
+      this.logger.log(`🛑 Stopping server timer for stream call ${streamId}`);
+      clearInterval(this.activeTimers.get(streamId));
+      this.activeTimers.delete(streamId);
+    }
+  }
+
   // ==================== INSTANT GO LIVE ====================
 
   async goLive(hostId: string, settings: CreateStreamDto): Promise<any> {
@@ -157,6 +201,9 @@ export class StreamSessionService {
     if (stream.isRecording && stream.recordingResourceId && stream.recordingSid) {
       this.handleBackgroundStreamStop(stream);
     }
+
+    // ✅ Clean up any active timers
+    this.stopTimer(streamId);
 
     stream.status = 'ended';
     stream.endedAt = new Date();
@@ -330,7 +377,7 @@ export class StreamSessionService {
 
     // Take the smaller of: Wallet Limit vs Stream Settings Limit
     const sessionLimitSeconds = stream.callSettings.maxCallDuration;
-    const finalMaxDuration = affordableSeconds;
+    const finalMaxDuration = Math.min(affordableSeconds, sessionLimitSeconds);
 
     const callerUid = this.streamAgoraService.generateUid();
     const callerToken = this.streamAgoraService.generateBroadcasterToken(stream.agoraChannelName!, callerUid);
@@ -361,6 +408,9 @@ export class StreamSessionService {
     stream.callWaitlist[reqIndex].status = 'accepted';
 
     await stream.save();
+
+    // ✅ START SERVER TIMER LAUNCH
+    this.startTimer(streamId, finalMaxDuration, userId);
 
     return {
       success: true,
@@ -494,6 +544,8 @@ export class StreamSessionService {
     } else {
       this.logger.error(`❌ No ongoing transaction found for stream ${streamId} during endCurrentCall`);
     }
+
+    this.stopTimer(streamId);
 
     stream.currentCall = undefined as any;
     stream.currentState = 'streaming';
