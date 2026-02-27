@@ -255,8 +255,11 @@ export class CallSessionService {
     }).catch(err => this.logger.error(`Call accepted notification error: ${err.message}`));
 
     if (this.callGateway && typeof this.callGateway.notifyUserOfAcceptance === 'function') {
-      this.callGateway.notifyUserOfAcceptance(sessionId, astrologerId)
-        .catch(err => this.logger.error(`Failed to emit call_accepted socket: ${err.message}`));
+      this.callGateway.notifyUserOfAcceptance(sessionId, astrologerId, {
+        orderId: session.orderId,
+        callType: session.callType,
+        ratePerMinute: session.ratePerMinute
+      }).catch(err => this.logger.error(`Failed to emit call_accepted socket: ${err.message}`));
     }
 
     return {

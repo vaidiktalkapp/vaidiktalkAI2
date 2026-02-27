@@ -49,8 +49,8 @@ export const NOTIFICATION_TYPE_CONFIGS: Record<string, NotificationTypeConfig> =
   // ========================================
   [RefinedNotificationType.CALL_VIDEO]: {
     priority: 'urgent',
-    sound: 'call_ringtone.mp3',
-    androidChannelId: 'call-channel',
+    sound: 'call_ringtone',
+    androidChannelId: 'vaidik_alert_v3',
     iosCategory: 'call',
     isFullScreen: true,
     vibrate: true,
@@ -59,8 +59,8 @@ export const NOTIFICATION_TYPE_CONFIGS: Record<string, NotificationTypeConfig> =
   },
   [RefinedNotificationType.CALL_AUDIO]: {
     priority: 'urgent',
-    sound: 'call_ringtone.mp3',
-    androidChannelId: 'call-channel',
+    sound: 'call_ringtone',
+    androidChannelId: 'vaidik_alert_v3',
     iosCategory: 'call',
     isFullScreen: true,
     vibrate: true,
@@ -73,8 +73,8 @@ export const NOTIFICATION_TYPE_CONFIGS: Record<string, NotificationTypeConfig> =
   // ========================================
   [RefinedNotificationType.CALL_REQUEST_VIDEO]: {
     priority: 'urgent',
-    sound: 'call_ringtone.mp3',
-    androidChannelId: 'astro_urgent_v7',
+    sound: 'call_ringtone',
+    androidChannelId: 'astro_urgent_v10',
     iosCategory: 'call',
     isFullScreen: true,
     vibrate: true,
@@ -83,8 +83,8 @@ export const NOTIFICATION_TYPE_CONFIGS: Record<string, NotificationTypeConfig> =
   },
   [RefinedNotificationType.CALL_REQUEST_AUDIO]: {
     priority: 'urgent',
-    sound: 'call_ringtone.mp3',
-    androidChannelId: 'astro_urgent_v7',
+    sound: 'call_ringtone',
+    androidChannelId: 'astro_urgent_v10',
     iosCategory: 'call',
     isFullScreen: true,
     vibrate: true,
@@ -93,8 +93,8 @@ export const NOTIFICATION_TYPE_CONFIGS: Record<string, NotificationTypeConfig> =
   },
   [RefinedNotificationType.CHAT_REQUEST]: {
     priority: 'urgent',
-    sound: 'call_ringtone.mp3',
-    androidChannelId: 'astro_urgent_v7',
+    sound: 'call_ringtone',
+    androidChannelId: 'astro_urgent_v10',
     iosCategory: 'call',
     isFullScreen: true,
     vibrate: true,
@@ -103,8 +103,8 @@ export const NOTIFICATION_TYPE_CONFIGS: Record<string, NotificationTypeConfig> =
   },
   [RefinedNotificationType.REQUEST_ACCEPTED]: {
     priority: 'urgent',
-    sound: 'call_ringtone.mp3',
-    androidChannelId: 'vaidik_alert_v1',
+    sound: 'call_ringtone',
+    androidChannelId: 'vaidik_alert_v3',
     iosCategory: 'call',
     isFullScreen: true,
     vibrate: true,

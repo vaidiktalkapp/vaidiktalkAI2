@@ -432,58 +432,21 @@ export class StreamGateway implements OnGatewayConnection, OnGatewayDisconnect {
       let finalUid = data.callerAgoraUid;
 
       if (callerSocketId) {
-        // ✅ Get the full stream data
-        const stream = await this.streamSessionService.getStreamById(data.streamId);
-
-        if (!stream) {
-          console.error('❌ Stream not found');
-          return { success: false, message: 'Stream not found' };
-        }
-
-        if (!stream.currentCall) {
-          console.error('❌ No current call found');
-          return { success: false, message: 'No current call' };
-        }
-
-        // ✅ TYPE SAFETY: Check if agoraChannelName exists
-        if (!stream.agoraChannelName) {
-          console.error('❌ Agora channel name not found');
-          return { success: false, message: 'Invalid stream configuration' };
-        }
-
-        // ✅ NEW: We must properly create the transaction and calculate duration.
-        // ⚠️ DO NOT MANUALLY COMPILE TOKENS HERE. USE THE SERVICE.
-        const hostId = stream.hostId.toString();
-
-        maxDuration = stream.callSettings.maxCallDuration || 600;
-        let finalToken = '';
-
-        try {
-          // This handles Balance checks, Transaction Creation, and Timer Starts
-          const acceptRes = await this.streamSessionService.acceptCallRequest(data.streamId, data.userId, hostId);
-          maxDuration = acceptRes.data.maxDuration;
-          finalToken = acceptRes.data.token;
-          finalUid = acceptRes.data.uid;
-        } catch (err: any) {
-          console.error('❌ Service rejected call accept:', err.message);
-          return { success: false, message: err.message };
-        }
-
-        // ✅ Send FULL credentials to the specific caller
+        // ✅ Send FULL credentials to the specific caller directly from payload
+        // The API has already called acceptCallRequest and populated these fields
         const callCredentials = {
           streamId: data.streamId,
           userId: data.userId,
           userName: data.userName,
           callType: data.callType,
           callMode: data.callMode,
-          callerAgoraUid: finalUid,
-          // ✅ CRITICAL: Include these for the caller to join
-          channelName: stream.agoraChannelName,
-          token: finalToken,
-          uid: finalUid,
-          appId: process.env.AGORA_APP_ID || '203397a168f8469bb8e672cd15eb3eb6',
-          hostAgoraUid: stream.hostAgoraUid,
-          maxDuration: maxDuration, // ✅ Now reliably populated
+          callerAgoraUid: data.callerAgoraUid,
+          channelName: data['channelName'] || data['agoraChannelName'], // Fallback for safety
+          token: data['token'] || data['agoraToken'],
+          uid: data.callerAgoraUid, // Usually same as callerAgoraUid
+          appId: data['appId'] || process.env.AGORA_APP_ID || '203397a168f8469bb8e672cd15eb3eb6',
+          hostAgoraUid: data['hostAgoraUid'],
+          maxDuration: data['maxDuration'] || 600,
         };
 
         console.log('====================================');

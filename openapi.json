@@ -5677,6 +5677,29 @@
         ]
       }
     },
+    "/api/v1/admin/astrologers/penalties/{penaltyId}/waive": {
+      "post": {
+        "operationId": "AdminAstrologersController_waivePenalty",
+        "parameters": [
+          {
+            "name": "penaltyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAstrologers"
+        ]
+      }
+    },
     "/api/v1/admin/registrations": {
       "get": {
         "operationId": "AdminRegistrationController_getAllRegistrations",
@@ -6386,6 +6409,29 @@
     "/api/v1/admin/payments/payouts/{payoutId}": {
       "get": {
         "operationId": "AdminPaymentsController_getPayoutDetails",
+        "parameters": [
+          {
+            "name": "payoutId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminPayments"
+        ]
+      }
+    },
+    "/api/v1/admin/payments/payouts/{payoutId}/financial-audit": {
+      "get": {
+        "operationId": "AdminPaymentsController_getFinancialAudit",
         "parameters": [
           {
             "name": "payoutId",
