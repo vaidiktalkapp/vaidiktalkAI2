@@ -41,6 +41,7 @@ export interface Astrologer {
   updatedAt: string;
   penalties?: Array<{
     _id: string;
+    penaltyId: string;
     amount: number;
     reason: string;
     status: 'pending' | 'applied' | 'waived' | 'disputed';
