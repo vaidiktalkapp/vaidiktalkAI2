@@ -16,7 +16,7 @@ export class AdminReportsService {
     @InjectModel(Astrologer.name) private astrologerModel: Model<AstrologerDocument>,
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
     @InjectModel(WalletTransaction.name) private transactionModel: Model<WalletTransactionDocument>,
-  ) {}
+  ) { }
 
   /**
    * Helper: Get End of Day Date Object
@@ -48,7 +48,7 @@ export class AdminReportsService {
   /**
    * Get revenue report with time-based grouping
    */
-  async getRevenueReport(startDate: string, endDate: string, groupBy: string = 'day'): Promise<any> {
+  async getRevenueReport(startDate: string, endDate: string, groupBy: string = 'day', excludeFilter: any = {}): Promise<any> {
     const start = this.getStartOfDay(startDate);
     const end = this.getEndOfDay(endDate);
 
@@ -91,7 +91,7 @@ export class AdminReportsService {
   /**
    * Get user growth report
    */
-  async getUserGrowthReport(startDate: string, endDate: string): Promise<any> {
+  async getUserGrowthReport(startDate: string, endDate: string, excludedUserIds: any[] = []): Promise<any> {
     const start = this.getStartOfDay(startDate);
     const end = this.getEndOfDay(endDate);
 
@@ -120,6 +120,7 @@ export class AdminReportsService {
       {
         $match: {
           createdAt: { $gte: start, $lte: end },
+          _id: { $nin: excludedUserIds }
         },
       },
       {
@@ -145,7 +146,7 @@ export class AdminReportsService {
   /**
    * Get astrologer performance report
    */
-  async getAstrologerPerformanceReport(startDate: string, endDate: string, limit: number = 10): Promise<any> {
+  async getAstrologerPerformanceReport(startDate: string, endDate: string, limit: number = 10, excludedAstrologerIds: any[] = []): Promise<any> {
     const start = this.getStartOfDay(startDate);
     const end = this.getEndOfDay(endDate);
 
@@ -154,6 +155,7 @@ export class AdminReportsService {
         $match: {
           status: this.getStatusRegex('completed'),
           createdAt: { $gte: start, $lte: end },
+          astrologerId: { $nin: excludedAstrologerIds }
         },
       },
       {
@@ -201,28 +203,28 @@ export class AdminReportsService {
   /**
    * Get orders report
    */
-  async getOrdersReport(startDate: string, endDate: string): Promise<any> {
+  async getOrdersReport(startDate: string, endDate: string, excludeFilter: any = {}): Promise<any> {
     const start = this.getStartOfDay(startDate);
     const end = this.getEndOfDay(endDate);
 
     // Using Promise.all for parallel execution
     const [totalOrders, completedOrders, cancelledOrders, pendingOrders, totalRevenue, ordersByType] = await Promise.all([
       // 1. Total
-      this.orderModel.countDocuments({ createdAt: { $gte: start, $lte: end } }),
+      this.orderModel.countDocuments({ createdAt: { $gte: start, $lte: end }, ...excludeFilter }),
       // 2. Completed (Case Insensitive)
-      this.orderModel.countDocuments({ status: this.getStatusRegex('completed'), createdAt: { $gte: start, $lte: end } }),
+      this.orderModel.countDocuments({ status: this.getStatusRegex('completed'), createdAt: { $gte: start, $lte: end }, ...excludeFilter }),
       // 3. Cancelled (Case Insensitive)
-      this.orderModel.countDocuments({ status: this.getStatusRegex('cancelled'), createdAt: { $gte: start, $lte: end } }),
+      this.orderModel.countDocuments({ status: this.getStatusRegex('cancelled'), createdAt: { $gte: start, $lte: end }, ...excludeFilter }),
       // 4. Pending (Case Insensitive)
-      this.orderModel.countDocuments({ status: this.getStatusRegex('pending'), createdAt: { $gte: start, $lte: end } }),
+      this.orderModel.countDocuments({ status: this.getStatusRegex('pending'), createdAt: { $gte: start, $lte: end }, ...excludeFilter }),
       // 5. Total Revenue Aggregation
       this.orderModel.aggregate([
-        { $match: { status: this.getStatusRegex('completed'), createdAt: { $gte: start, $lte: end } } },
+        { $match: { status: this.getStatusRegex('completed'), createdAt: { $gte: start, $lte: end }, ...excludeFilter } },
         { $group: { _id: null, total: { $sum: '$totalAmount' } } },
       ]),
       // 6. Type Breakdown
       this.orderModel.aggregate([
-        { $match: { createdAt: { $gte: start, $lte: end } } },
+        { $match: { createdAt: { $gte: start, $lte: end }, ...excludeFilter } },
         { $group: { _id: '$type', count: { $sum: 1 } } },
       ]),
     ]);
@@ -244,13 +246,13 @@ export class AdminReportsService {
   /**
    * Get payments report
    */
-  async getPaymentsReport(startDate: string, endDate: string): Promise<any> {
+  async getPaymentsReport(startDate: string, endDate: string, excludedUserIds: any[] = [], excludedAstrologerIds: any[] = []): Promise<any> {
     const start = this.getStartOfDay(startDate);
     const end = this.getEndOfDay(endDate);
 
     const getSum = async (matchCriteria: any) => {
       const res = await this.transactionModel.aggregate([
-        { $match: { ...matchCriteria, createdAt: { $gte: start, $lte: end } } },
+        { $match: { ...matchCriteria, createdAt: { $gte: start, $lte: end }, userId: { $nin: [...excludedUserIds, ...excludedAstrologerIds] } } },
         { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } }
       ]);
       return { total: res[0]?.total || 0, count: res[0]?.count || 0 };
@@ -284,12 +286,34 @@ export class AdminReportsService {
     const start = startDate ? this.getStartOfDay(startDate).toISOString() : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     const end = endDate ? this.getEndOfDay(endDate).toISOString() : new Date().toISOString();
 
+    const [
+      testUserIds,
+      testAstrologerIds
+    ] = await Promise.all([
+      // Fetch ObjectIDs of designated test accounts to exclude them from platform math
+      this.userModel.find({ phone: { $in: ['+919873211086', '+917878787878', '9873211086', '7878787878'] } }).select('_id'),
+      this.astrologerModel.find({ phoneNumber: { $in: ['+919873211086', '+917878787878', '9873211086', '7878787878'] } }).select('_id')
+    ]);
+
+    const excludedUserIds = testUserIds.map(u => u._id);
+    const excludedAstrologerIds = testAstrologerIds.map(a => a._id);
+
+    // Apply the filter globally to revenue streams
+    const excludeFilter = {
+      userId: { $nin: excludedUserIds },
+      astrologerId: { $nin: excludedAstrologerIds }
+    };
+
+    // We can directly pass the filtered data queries here or override the individual methods.
+    // For simplicity, we'll let the methods run but ideally we'd pass excludeFilter down!
+    // Since getDashboardSummary is the primary endpoint, we need to enforce exclusions inside the individual methods:
+
     const [users, astrologers, orders, revenue, payments] = await Promise.all([
-      this.getUserGrowthReport(start, end),
-      this.getAstrologerPerformanceReport(start, end, 5),
-      this.getOrdersReport(start, end),
-      this.getRevenueReport(start, end, 'day'),
-      this.getPaymentsReport(start, end),
+      this.getUserGrowthReport(start, end, excludedUserIds),
+      this.getAstrologerPerformanceReport(start, end, 5, excludedAstrologerIds),
+      this.getOrdersReport(start, end, excludeFilter),
+      this.getRevenueReport(start, end, 'day', excludeFilter),
+      this.getPaymentsReport(start, end, excludedUserIds, excludedAstrologerIds),
     ]);
 
     return {
@@ -305,22 +329,22 @@ export class AdminReportsService {
   }
 
   // --- Export Methods ---
-  
+
   async exportRevenueReport(startDate: string, endDate: string): Promise<string> {
     const report = await this.getRevenueReport(startDate, endDate, 'day');
-    
+
     // Excel-friendly UTF-8 BOM
     let csv = '\uFEFFDate,Total Revenue,Order Count,Avg Order Value\n';
-    
+
     report.data.revenueData.forEach((row: any) => {
       const date = `${row._id.year}-${String(row._id.month).padStart(2, '0')}-${String(row._id.day).padStart(2, '0')}`;
       csv += `${date},"${row.totalRevenue.toFixed(2)}","${row.orderCount}","${row.avgOrderValue.toFixed(2)}"\n`;
     });
-    
+
     csv += `\nSummary\n`;
     csv += `Total Revenue,"${report.data.summary.totalRevenue.toFixed(2)}"\n`;
     csv += `Total Orders,"${report.data.summary.totalOrders}"\n`;
-    
+
     return csv;
   }
 
@@ -331,16 +355,16 @@ export class AdminReportsService {
     const users = await this.userModel.find(query)
       .select('name phoneNumber email status wallet.balance createdAt isPhoneVerified')
       .lean();
-    
+
     let csv = '\uFEFFName,Phone Number,Email,Status,Verified,Wallet Balance,Registered At\n';
-    
+
     users.forEach((user) => {
       const name = (user.name || 'N/A').replace(/"/g, '""');
       const phone = `="${user.phoneNumber}"`;
-      
+
       csv += `"${name}",${phone},${user.status},${user.isPhoneVerified ? 'Yes' : 'No'},"${(user.wallet?.balance || 0).toFixed(2)}",${new Date(user.createdAt).toISOString()}\n`;
     });
-    
+
     return csv;
   }
 
@@ -349,16 +373,16 @@ export class AdminReportsService {
       .find()
       .select('name phoneNumber email accountStatus stats ratings experienceYears')
       .lean();
-    
+
     let csv = '\uFEFFName,Phone Number,Email,Status,Total Earnings,Total Orders,Avg Rating,Experience (Years)\n';
-    
+
     astrologers.forEach((astro) => {
       const name = (astro.name || 'N/A').replace(/"/g, '""');
       const phone = `="${astro.phoneNumber}"`;
-      
+
       csv += `"${name}",${phone},"${astro.email || 'N/A'}",${astro.accountStatus},"${(astro.stats?.totalEarnings || 0).toFixed(2)}",${astro.stats?.totalOrders || 0},${(astro.ratings?.average || 0).toFixed(2)},${astro.experienceYears || 0}\n`;
     });
-    
+
     return csv;
   }
 
@@ -373,9 +397,9 @@ export class AdminReportsService {
       .select('orderId type status totalAmount billedMinutes createdAt')
       .sort({ createdAt: -1 })
       .lean();
-    
+
     let csv = '\uFEFFOrder ID,Type,Status,User Name,User Phone,Astrologer Name,Amount,Billed Minutes,Created At\n';
-    
+
     orders.forEach((order: any) => {
       const userName = (order.userId?.name || 'N/A').replace(/"/g, '""');
       const userPhone = `="${order.userId?.phoneNumber || 'N/A'}"`;
@@ -383,7 +407,7 @@ export class AdminReportsService {
 
       csv += `${order.orderId},${order.type},${order.status},"${userName}",${userPhone},"${astroName}","${order.totalAmount.toFixed(2)}",${order.billedMinutes || 0},${new Date(order.createdAt).toISOString()}\n`;
     });
-    
+
     return csv;
   }
 

@@ -23,7 +23,7 @@ export class AdminUsersService {
     private activityLogService: AdminActivityLogService,
     private notificationService: NotificationService,
     private notificationGateway: NotificationGateway,
-  ) {}
+  ) { }
 
   /**
    * Get all users with filters and pagination
@@ -425,9 +425,9 @@ export class AdminUsersService {
     };
   }
 
- /**
-   * Adjust user wallet balance
-   */
+  /**
+    * Adjust user wallet balance
+    */
   async adjustWalletBalance(
     userId: string,
     adminId: string,
@@ -445,6 +445,25 @@ export class AdminUsersService {
 
     const oldBalance = user.wallet.balance;
     user.wallet.balance += amount;
+
+    // ✅ FIX: Ensure admin additions are available for calls by routing to cashBalance
+    if (amount > 0) {
+      user.wallet.cashBalance = (user.wallet.cashBalance || 0) + amount;
+    } else {
+      // It's a penalty deduction, deduct from cash first, then bonus
+      let remainingToDeduct = Math.abs(amount);
+      const availableCash = user.wallet.cashBalance || 0;
+
+      const cashDebited = Math.min(availableCash, remainingToDeduct);
+      user.wallet.cashBalance = availableCash - cashDebited;
+      remainingToDeduct -= cashDebited;
+
+      if (remainingToDeduct > 0) {
+        const availableBonus = user.wallet.bonusBalance || 0;
+        const bonusDebited = Math.min(availableBonus, remainingToDeduct);
+        user.wallet.bonusBalance = availableBonus - bonusDebited;
+      }
+    }
 
     if (user.wallet.balance < 0) {
       throw new BadRequestException('Insufficient wallet balance');

@@ -14,6 +14,7 @@ import { WalletService } from '../../../../payments/services/wallet.service';
 import { ProcessPayoutDto } from '../dto/process-payout.dto';
 import { ProcessWalletRefundDto } from '../dto/process-wallet-refund.dto';
 import { Astrologer, AstrologerDocument } from '../../../../astrologers/schemas/astrologer.schema';
+import { Order, OrderDocument } from '../../../../orders/schemas/orders.schema';
 import { CompletePayoutDto } from '../dto/complete-payout.dto';
 
 @Injectable()
@@ -25,11 +26,12 @@ export class AdminPaymentsService {
     @InjectModel(PayoutRequest.name) private payoutModel: Model<PayoutRequestDocument>,
     @InjectModel(WalletRefundRequest.name) private walletRefundModel: Model<WalletRefundRequestDocument>,
     @InjectModel(GiftCard.name) private giftCardModel: Model<GiftCardDocument>,
-     @InjectModel(Astrologer.name) private astrologerModel: Model<AstrologerDocument>, // ✅ Add this
+    @InjectModel(Astrologer.name) private astrologerModel: Model<AstrologerDocument>,
+    @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
     private activityLogService: AdminActivityLogService,
     private notificationService: NotificationService,
     private walletService: WalletService,
-  ) {}
+  ) { }
 
   // ===== TRANSACTIONS =====
 
@@ -489,6 +491,89 @@ export class AdminPaymentsService {
     };
   }
 
+  /**
+   * Financial Audit for a specific payout
+   */
+  async getFinancialAudit(payoutId: string): Promise<any> {
+    const payout = await this.payoutModel.findOne({ payoutId }).lean();
+    if (!payout) {
+      throw new NotFoundException('Payout request not found');
+    }
+
+    const astrologerId = payout.astrologerId;
+
+    // 1. Establish the Audit Window (From previous payout -> This payout)
+    const previousPayout = await this.payoutModel
+      .findOne({
+        astrologerId,
+        status: 'completed',
+        createdAt: { $lt: payout.createdAt },
+      })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const fromDate = previousPayout ? previousPayout.createdAt : new Date(0); // Epoch if first payout
+    const toDate = payout.createdAt;
+
+    // 2. Fetch Orders (Organic Revenue generation)
+    const completedOrders = await this.orderModel
+      .find({
+        astrologerId,
+        status: 'completed',
+        createdAt: { $gte: fromDate, $lte: toDate },
+      })
+      .select('orderId type createdAt totalAmount billedMinutes')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // 3. Fetch Refunds (Revenue loss/User chargebacks)
+    const refundedOrders = await this.orderModel
+      .find({
+        astrologerId,
+        status: 'refunded',
+        createdAt: { $gte: fromDate, $lte: toDate },
+      })
+      .select('orderId type createdAt refundRequest.refundAmount status')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // 4. Fetch Penalties (Platform fines)
+    const astrologer = await this.astrologerModel.findById(astrologerId).lean();
+    const penalties = astrologer?.penalties?.filter(
+      (p) =>
+        p.appliedAt && // ✅ Fix for undefined validation
+        new Date(p.appliedAt) >= fromDate &&
+        new Date(p.appliedAt) <= toDate &&
+        p.status === 'applied',
+    ) || [];
+
+    // Calculate Totals within this Window
+    const totalOrderRevenue = completedOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+    const totalRefundLoss = refundedOrders.reduce((sum, order) => sum + (order.refundRequest?.refundAmount || 0), 0);
+    const totalPenaltyLoss = penalties.reduce((sum, p) => sum + p.amount, 0);
+
+    return {
+      success: true,
+      data: {
+        auditWindow: {
+          from: fromDate,
+          to: toDate,
+        },
+        summary: {
+          totalOrderRevenue,
+          totalRefundLoss,
+          totalPenaltyLoss,
+          requestedPayout: payout.amount,
+        },
+        records: {
+          completedOrders,
+          refundedOrders,
+          penalties,
+        }
+      },
+    };
+  }
+
   // ===== WALLET REFUNDS =====
 
   /**
@@ -738,11 +823,11 @@ export class AdminPaymentsService {
   }
 
   async refundRazorpayTransaction(transactionId: string, adminId: string, reason: string) {
-      // Delegate to WalletService
-      return this.walletService.refundRazorpayTransaction(transactionId, adminId, reason);
+    // Delegate to WalletService
+    return this.walletService.refundRazorpayTransaction(transactionId, adminId, reason);
   }
 
   async manageUserBonus(userId: string, amount: number, action: 'add' | 'deduct', reason: string, adminId: string) {
-      return this.walletService.manageUserBonus(userId, amount, action, reason, adminId);
+    return this.walletService.manageUserBonus(userId, amount, action, reason, adminId);
   }
 }

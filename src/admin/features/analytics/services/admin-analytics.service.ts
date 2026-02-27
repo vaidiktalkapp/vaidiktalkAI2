@@ -20,7 +20,7 @@ export class AdminAnalyticsService {
     @InjectModel(CallSession.name) private callSessionModel: Model<CallSessionDocument>,
     @InjectModel(ChatSession.name) private chatSessionModel: Model<ChatSessionDocument>,
     @InjectModel(WalletTransaction.name) private transactionModel: Model<WalletTransactionDocument>,
-  ) {}
+  ) { }
 
   async getDashboardAnalytics(): Promise<any> {
     const today = new Date();
@@ -29,41 +29,63 @@ export class AdminAnalyticsService {
     const [
       totalUsers,
       totalAstrologers,
+      testUserIds,
+      testAstrologerIds
+    ] = await Promise.all([
+      this.userModel.countDocuments(),
+      this.astrologerModel.countDocuments(),
+      // Fetch ObjectIDs of designated test accounts to exclude them from platform math
+      this.userModel.find({ phone: { $in: ['+919873211086', '+917878787878', '9873211086', '7878787878'] } }).select('_id'),
+      this.astrologerModel.find({ phoneNumber: { $in: ['+919873211086', '+917878787878', '9873211086', '7878787878'] } }).select('_id')
+    ]);
+
+    const excludedUserIds = testUserIds.map(u => u._id);
+    const excludedAstrologerIds = testAstrologerIds.map(a => a._id);
+
+    // Apply the filter globally to revenue streams
+    const excludeFilter = {
+      userId: { $nin: excludedUserIds },
+      astrologerId: { $nin: excludedAstrologerIds } // Many schemas use either one or both
+    };
+
+    const transactionExclude = { userId: { $nin: [...excludedUserIds, ...excludedAstrologerIds] } };
+
+    const [
       totalOrders,
       callStats,
       chatStats,
       bonusUsage,
       penalties
     ] = await Promise.all([
-      this.userModel.countDocuments(),
-      this.astrologerModel.countDocuments(),
-      this.orderModel.countDocuments(),
-      
+      this.orderModel.countDocuments({ ...excludeFilter }),
+
       // Call Commissions
       this.callSessionModel.aggregate([
-        { $match: { status: 'ended' } },
+        { $match: { status: 'ended', ...excludeFilter } },
         { $group: { _id: null, commission: { $sum: '$platformCommission' } } }
       ]),
 
       // Chat Commissions
       this.chatSessionModel.aggregate([
-        { $match: { status: 'ended' } },
+        { $match: { status: 'ended', ...excludeFilter } },
         { $group: { _id: null, commission: { $sum: '$platformCommission' } } }
       ]),
 
       // Bonus Usage (Deductions)
       this.transactionModel.aggregate([
-        { 
-          $match: { 
-            type: 'debit', 
-            $or: [{ subType: 'bonus' }, { subType: 'gift_card' }] 
-          } 
+        {
+          $match: {
+            status: 'completed',
+            type: { $in: ['deduction', 'session_payment', 'charge', 'gift'] },
+            ...transactionExclude
+          }
         },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
+        { $group: { _id: null, total: { $sum: '$bonusAmount' } } }
       ]),
 
       // Penalties (Add to Revenue)
       this.astrologerModel.aggregate([
+        { $match: { _id: { $nin: excludedAstrologerIds } } },
         { $unwind: '$penalties' },
         { $match: { 'penalties.status': 'applied' } },
         { $group: { _id: null, total: { $sum: '$penalties.amount' } } }
@@ -73,7 +95,7 @@ export class AdminAnalyticsService {
     const grossCommission = (callStats[0]?.commission || 0) + (chatStats[0]?.commission || 0);
     const totalPenalties = penalties[0]?.total || 0;
     const bonusDeductions = bonusUsage[0]?.total || 0;
-    
+
     // Net Revenue = (Commissions + Penalties) - Bonus Usage
     const netRevenue = (grossCommission + totalPenalties) - bonusDeductions;
 
@@ -85,7 +107,7 @@ export class AdminAnalyticsService {
         totalOrders,
         financials: {
           grossCommission,
-          netRevenue, 
+          netRevenue,
           bonusDeductions,
           penaltiesCollected: totalPenalties
         }
@@ -102,11 +124,28 @@ export class AdminAnalyticsService {
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999); // ✅ Include the full end day
 
+    const [testUserIds, testAstrologerIds] = await Promise.all([
+      // Fetch ObjectIDs of designated test accounts to exclude them from platform math
+      this.userModel.find({ phone: { $in: ['+919873211086', '+917878787878', '9873211086', '7878787878'] } }).select('_id'),
+      this.astrologerModel.find({ phoneNumber: { $in: ['+919873211086', '+917878787878', '9873211086', '7878787878'] } }).select('_id')
+    ]);
+
+    const excludedUserIds = testUserIds.map(u => u._id);
+    const excludedAstrologerIds = testAstrologerIds.map(a => a._id);
+
+    const excludeFilter = {
+      userId: { $nin: excludedUserIds },
+      astrologerId: { $nin: excludedAstrologerIds }
+    };
+
+    const transactionExclude = { userId: { $nin: [...excludedUserIds, ...excludedAstrologerIds] } };
+
     // 1. Aggregations (Full Code Restored)
     const callRevenue = await this.callSessionModel.aggregate([
       {
         $match: {
           status: 'ended',
+          ...excludeFilter,
           createdAt: { $gte: start, $lte: end }
         }
       },
@@ -123,6 +162,7 @@ export class AdminAnalyticsService {
       {
         $match: {
           status: 'ended',
+          ...excludeFilter,
           createdAt: { $gte: start, $lte: end }
         }
       },
@@ -139,15 +179,15 @@ export class AdminAnalyticsService {
       {
         $match: {
           status: 'completed',
-          // Matches your WalletTransaction schema types for 'deductions'
-          type: { $in: ['bonus', 'giftcard', 'admin_credit'] }, 
-          createdAt: { $gte: start, $lte: end }
+          type: { $in: ['deduction', 'session_payment', 'charge', 'gift'] },
+          createdAt: { $gte: start, $lte: end },
+          ...transactionExclude
         }
       },
       {
         $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          amount: { $sum: "$amount" }
+          amount: { $sum: "$bonusAmount" }
         }
       }
     ]);
@@ -187,19 +227,19 @@ export class AdminAnalyticsService {
 
     // 3. Fill Missing Dates (Continuous Timeline)
     const dailyData: DailyStats[] = [];
-    
+
     // Clone start date to avoid mutation issues
     const current = new Date(start);
-    
+
     while (current <= end) {
       const dateStr = current.toISOString().split('T')[0];
       const data = dateMap.get(dateStr) || { date: dateStr, gross: 0, deductions: 0, net: 0, orders: 0 };
-      
+
       // Net Calculation
       data.net = data.gross - data.deductions;
-      
+
       dailyData.push(data);
-      
+
       // Move to next day
       current.setDate(current.getDate() + 1);
     }
