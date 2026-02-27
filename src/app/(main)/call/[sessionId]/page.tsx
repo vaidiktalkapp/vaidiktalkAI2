@@ -69,14 +69,11 @@ export default function CallScreen() {
 
     timerIntervalRef.current = setInterval(() => {
       if (remainingTimeRef.current <= 0) {
-        if (timerIntervalRef.current) {
-          clearInterval(timerIntervalRef.current);
-        }
         if (!hasEndedRef.current) {
-          console.log('⏰ [Call] Timer expired - auto ending');
-          handleAutoEnd();
+          remainingTimeRef.current = 0;
+          setRemainingTime(0);
         }
-        return;
+        return; // Wait for backend call_ended event
       }
       remainingTimeRef.current -= 1;
       setRemainingTime(remainingTimeRef.current);
@@ -214,13 +211,9 @@ export default function CallScreen() {
         callService.on('timer_tick', (payload: any) => {
           if (payload.sessionId !== sessionId) return;
 
-          // Only sync if difference is significant (>2 seconds)
-          const diff = Math.abs(remainingTimeRef.current - payload.remainingSeconds);
-          if (diff > 2) {
-            console.log(`🔄 [Call] Syncing timer: \${payload.remainingSeconds}s`);
-            remainingTimeRef.current = payload.remainingSeconds;
-            setRemainingTime(payload.remainingSeconds);
-          }
+          // Force sync to the server's truth quietly
+          remainingTimeRef.current = payload.remainingSeconds;
+          setRemainingTime(payload.remainingSeconds);
         });
 
         // ✅ LISTENER 4: Call Ended
@@ -318,10 +311,10 @@ export default function CallScreen() {
     setStatusText('Ending Call...');
 
     try {
-      callService.emit('end_call', { 
-        sessionId, 
-        endedBy: user._id, 
-        reason 
+      callService.emit('end_call', {
+        sessionId,
+        endedBy: user._id,
+        reason
       });
     } catch (error) {
       console.error('❌ [Call] End call error:', error);
@@ -400,8 +393,8 @@ export default function CallScreen() {
 
         {/* Controls */}
         <div className="flex gap-6 z-10">
-          <button 
-            onClick={toggleMic} 
+          <button
+            onClick={toggleMic}
             className={`group relative w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 active:scale-95 shadow-lg \${
               isMicOn 
                 ? 'bg-white/20 backdrop-blur-md hover:bg-white/30 text-white border-2 border-white/30 hover:border-yellow-400/50' 
@@ -411,8 +404,8 @@ export default function CallScreen() {
             {isMicOn ? <Mic className="w-6 h-6" strokeWidth={2.5} /> : <MicOff className="w-6 h-6" strokeWidth={2.5} />}
           </button>
 
-          <button 
-            onClick={() => handleHangup('ended_by_user')} 
+          <button
+            onClick={() => handleHangup('ended_by_user')}
             disabled={hasEndedRef.current}
             className="group relative w-20 h-20 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white shadow-2xl shadow-red-600/50 transform hover:scale-110 active:scale-95 transition-all duration-300 hover:from-red-600 hover:to-red-800 ring-4 ring-red-500/30 hover:ring-red-400/50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -467,8 +460,8 @@ export default function CallScreen() {
 
       {/* Bottom Controls */}
       <div className="absolute bottom-12 left-0 right-0 z-20 flex justify-center gap-6">
-        <button 
-          onClick={toggleMic} 
+        <button
+          onClick={toggleMic}
           className={`group w-16 h-16 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-md transition-all transform hover:scale-110 active:scale-95 \${
             isMicOn ? 'bg-white/20 border-2 border-white/30' : 'bg-red-500'
           }`}
@@ -476,8 +469,8 @@ export default function CallScreen() {
           {isMicOn ? <Mic className="w-6 h-6 text-white" strokeWidth={2.5} /> : <MicOff className="w-6 h-6 text-white" strokeWidth={2.5} />}
         </button>
 
-        <button 
-          onClick={toggleVideo} 
+        <button
+          onClick={toggleVideo}
           className={`group w-16 h-16 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-md transition-all transform hover:scale-110 active:scale-95 \${
             isVideoOn ? 'bg-white/20 border-2 border-white/30' : 'bg-blue-600'
           }`}
@@ -485,8 +478,8 @@ export default function CallScreen() {
           {isVideoOn ? <Video className="w-6 h-6 text-white" strokeWidth={2.5} /> : <VideoOff className="w-6 h-6 text-white" strokeWidth={2.5} />}
         </button>
 
-        <button 
-          onClick={() => handleHangup('ended_by_user')} 
+        <button
+          onClick={() => handleHangup('ended_by_user')}
           disabled={hasEndedRef.current}
           className="group w-20 h-20 rounded-full bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center shadow-2xl transform hover:scale-110 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
