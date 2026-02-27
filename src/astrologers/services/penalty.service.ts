@@ -9,7 +9,7 @@ import { Astrologer, AstrologerDocument } from '../schemas/astrologer.schema';
 export class PenaltyService {
   constructor(
     @InjectModel(Astrologer.name) private astrologerModel: Model<AstrologerDocument>,
-  ) {}
+  ) { }
 
   /**
    * ✅ FIXED: Apply penalty to astrologer
@@ -34,7 +34,7 @@ export class PenaltyService {
 
     // ✅ FIXED: Handle 'system' appliedBy
     let appliedByObjectId: Types.ObjectId | undefined;
-    
+
     if (data.appliedBy !== 'system') {
       try {
         appliedByObjectId = new Types.ObjectId(data.appliedBy);
@@ -103,7 +103,9 @@ export class PenaltyService {
       throw new NotFoundException('Astrologer not found');
     }
 
-    const penalty = astrologer.penalties.find((p) => p.penaltyId === penaltyId);
+    const penalty = astrologer.penalties.find(
+      (p) => p.penaltyId === penaltyId || (p as any)._id?.toString() === penaltyId,
+    );
 
     if (!penalty) {
       throw new NotFoundException('Penalty not found');
