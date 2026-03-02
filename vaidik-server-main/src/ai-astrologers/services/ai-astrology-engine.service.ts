@@ -211,18 +211,30 @@ Remedies → Behavioral, mindset, and energy-based guidance
        
        - **SPECIFIC LANGUAGE RULES**:
          ${language === 'Hindi' ? `
-         - **Hinglish Input** (e.g., "Mera future kaisa hai?"): **ALLOWED**. Reply in simple Hindi (Devanagari).
-         - **Standard English Input** (e.g., "Tell me about my future"): **REFUSE**. Politely ask them to use Hindi.
+         - **Hinglish Input** (Hindi written in Roman script, e.g., "Mera future kaisa hai?", "mera date of birth kya hai?", "mere janam tithi kya hai?"): **STRICTLY ALLOWED**. These are NOT language mismatches.
+         - **Mixed English terms**: Users often use English words like 'date of birth', 'career', 'education' within Hindi queries. This is **ALLOWED**.
+         - **Standard Pure English Input** (e.g., "Tell me about my future"): **REFUSE**. Politely ask them to use Hindi or Hinglish.
          ` : `
          - **Hinglish Input** (e.g., "Mera future kaisa hai?"): **REFUSE**. Politely ask them to use English.
          - **Hindi Input** (Devanagari): **REFUSE**. Politely ask them to use English.
          - **Standard English Input**: **ALLOWED**.
          `}
     
-    4. **HINDI TONE (CRITICAL)**: If ${language} is **Hindi**:
-       - Use **SIMPLE, CONVERSATIONAL HINDI** (Bolchal ki bhasha).
-       - **AVOID** complex Sanskritized Hindi (Shuddh Hindi) or difficult textbook words.
-       - Use English words for common terms if it makes it easier (e.g., 'Career', 'Job', 'Love', 'Marriage' written in Hindi script or English).
+    4. **HINDI TONE (CRITICAL - ALWAYS APPLY)**: If ${language} is **Hindi**:
+       - Use **NORMAL, CONVERSATIONAL HINDI** (Bolchal ki bhasha).
+       - **AVOID** overly complex Sanskritized Hindi or heavy textbook words that a normal user won't understand.
+       - **STRICTLY PROHIBITED (DO NOT USE THESE WORDS)**:
+         - Do NOT use "Avlokan" (use "Dekhkar").
+         - Do NOT use "Prashasaniya" (use "Achha").
+         - Do NOT use "Vyavasayik" (use "Career" or "Job").
+         - Do NOT use "Dampatya" (use "Marriage" or "Married life").
+         - Do NOT use "Bhavishyavani" (use "Predictions" or "Aage kya hoga").
+         - Do NOT use "Anukul" (use "Sahi" or "Achha").
+         - Do NOT use "Pratikul" (use "Mushkil" or "Bura").
+       - **PRACTICAL EXAMPLES**:
+         - Instead of "Aapka janam kundali ka avlokan karte hue", use "Aapka chart dekhkar" or "Aapki janam kundali ke hisab se".
+         - Instead of "Aapke liye yeh samay anukul hai", use "Yeh time aapke liye achha hai".
+       - Use common English words (written in Hindi script or Roman) for technical terms like 'Career', 'Job', 'Love', 'Marriage', 'Chart', 'Date of birth', 'Future'.
 
     **VIOLATION CHECK**: Is the user asking in a different language than **${language}**? 
     - If YES -> Refuse politely in **${language}**.
@@ -427,7 +439,10 @@ Remedies → Behavioral, mindset, and energy-based guidance
     **CRITICAL LANGUAGE CHECK**:
     - Current Session Language: **${language}**
     - User Message: "${userMessage}"
-    - If the message is NOT in **${language}**, you MUST politely refuse to answer in **${language}**.
+    - If language is Hindi and user uses Hinglish (Roman script Hindi), it is **ALLOWED**.
+    - Only refuse if it's purely standard English when session is Hindi, or purely Hindi when session is English.
+    - If message is refused, do so politely in **${language}**.
+    - If accepted, respond in **NORMAL, SIMPLE HINDI** (no complex Sanskrit words).
     `;
             }
 
