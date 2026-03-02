@@ -359,13 +359,13 @@ export default function CreateAIAstrologerPage() {
                 {formData.specializations.map((spec) => (
                   <div
                     key={spec}
-                    className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full flex items-center gap-2"
+                    className="bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1 rounded-full flex items-center gap-2 text-xs font-bold"
                   >
                     {spec}
                     <button
                       type="button"
                       onClick={() => handleRemoveSpecialization(spec)}
-                      className="hover:bg-blue-200 rounded-full p-1"
+                      className="hover:bg-indigo-100 rounded-full p-0.5"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -397,13 +397,13 @@ export default function CreateAIAstrologerPage() {
                 {formData.languages.map((lang) => (
                   <div
                     key={lang}
-                    className="bg-green-100 text-green-800 px-3 py-1 rounded-full flex items-center gap-2"
+                    className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1 rounded-full flex items-center gap-2 text-xs font-bold"
                   >
                     {lang}
                     <button
                       type="button"
                       onClick={() => handleRemoveLanguage(lang)}
-                      className="hover:bg-green-200 rounded-full p-1"
+                      className="hover:bg-emerald-100 rounded-full p-0.5"
                     >
                       <X className="w-3 h-3" />
                     </button>

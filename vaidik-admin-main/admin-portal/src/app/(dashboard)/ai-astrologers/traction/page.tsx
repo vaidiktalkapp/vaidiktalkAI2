@@ -87,8 +87,8 @@ export default function AiTractionPage() {
             header: 'Status',
             accessorKey: 'status',
             cell: (row) => (
-                <span className={`px-2 py-1 rounded-full text-xs capitalize ${row.status === 'active' ? 'bg-orange-100 text-orange-700 animate-pulse' :
-                        row.status === 'ended' ? 'bg-green-100 text-green-700' : 'bg-gray-100'
+                <span className={`px-2 py-1 rounded-full text-xs capitalize ${row.status === 'active' ? 'bg-indigo-100 text-indigo-700 animate-pulse' :
+                    row.status === 'ended' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100'
                     }`}>
                     {row.status}
                 </span>
@@ -105,8 +105,8 @@ export default function AiTractionPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <Zap className="text-orange-600" /> AI Chat Traction
+                    <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+                        <Zap className="text-indigo-600" /> AI Chat Traction
                     </h1>
                     <p className="text-sm text-gray-500">Live monitoring of AI astrologer sessions</p>
                 </div>
@@ -117,8 +117,8 @@ export default function AiTractionPage() {
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                         <span className="relative flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
                         </span>
                         Live AI Chats ({activeChats?.length || 0})
                     </h2>
@@ -169,13 +169,13 @@ function ActiveChatCard({ chat, onEnd, isEnding }: { chat: ChatSession; onEnd: (
     const durationMin = Math.floor((Date.now() - startTime) / 60000);
 
     return (
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-orange-200 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-2 bg-orange-50 rounded-bl-xl text-orange-700 text-xs font-bold flex items-center gap-1">
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden group hover:border-indigo-200 transition-all">
+            <div className="absolute top-0 right-0 p-2 bg-indigo-50 rounded-bl-xl text-indigo-700 text-xs font-bold flex items-center gap-1">
                 <Activity size={12} className="animate-pulse" /> LIVE AI
             </div>
 
             <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-orange-600 font-bold text-lg border-2 border-white shadow-sm">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg border-2 border-white shadow-md">
                     {chat.userId?.name?.[0] || 'U'}
                 </div>
                 <div>
@@ -186,7 +186,7 @@ function ActiveChatCard({ chat, onEnd, isEnding }: { chat: ChatSession; onEnd: (
 
             <div className="bg-gray-50 p-3 rounded-lg mb-4 flex justify-between items-center">
                 <span className="text-xs text-gray-500 font-medium uppercase">Current Duration</span>
-                <div className="flex items-center gap-1 text-orange-700 font-mono font-bold">
+                <div className="flex items-center gap-1 text-indigo-700 font-mono font-bold">
                     <Timer size={14} />
                     {durationMin} mins
                 </div>

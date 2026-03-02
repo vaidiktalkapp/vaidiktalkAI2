@@ -247,19 +247,23 @@ export class AdminAiAstrologersService {
     }
 
     async getOverallStats(timeRange: string = 'monthly'): Promise<any> {
-        const { start, end } = this.getTimeRangeDates(timeRange);
+        const { start, end, groupByFormat } = this.getTimeRangeDates(timeRange);
 
-        const [revenueChart, peakHours] = await Promise.all([
+        const [revenueData, hourlyData] = await Promise.all([
             this.sessionModel.aggregate([
                 {
                     $match: {
-                        orderId: /AI-/,
-                        createdAt: { $gte: start, $lte: end }
+                        $or: [
+                            { astrologerModel: 'AiAstrologerProfile' },
+                            { orderId: /^AI-/ }
+                        ],
+                        status: 'ended',
+                        endTime: { $gte: start, $lte: end }
                     }
                 },
                 {
                     $group: {
-                        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: 'Asia/Kolkata' } },
+                        _id: { $dateToString: { format: groupByFormat, date: "$endTime", timezone: 'Asia/Kolkata' } },
                         sessions: { $sum: 1 },
                         revenue: { $sum: "$totalCost" }
                     }
@@ -268,10 +272,18 @@ export class AdminAiAstrologersService {
                 { $sort: { "date": 1 } }
             ]),
             this.sessionModel.aggregate([
-                { $match: { orderId: /AI-/, createdAt: { $gte: start, $lte: end } } },
+                {
+                    $match: {
+                        $or: [
+                            { astrologerModel: 'AiAstrologerProfile' },
+                            { orderId: /^AI-/ }
+                        ],
+                        startTime: { $gte: start, $lte: end }
+                    }
+                },
                 {
                     $group: {
-                        _id: { $hour: { date: "$createdAt", timezone: 'Asia/Kolkata' } },
+                        _id: { $hour: { date: "$startTime", timezone: 'Asia/Kolkata' } },
                         sessions: { $sum: 1 }
                     }
                 },
@@ -279,6 +291,19 @@ export class AdminAiAstrologersService {
                 { $sort: { "hour": 1 } }
             ])
         ]);
+
+        // Fill gaps for revenue chart
+        const revenueChart = this.fillDateGaps(revenueData, start, end, timeRange);
+
+        // Fill gaps for peak hours (Ensure all 24 hours are represented)
+        const peakHours: any[] = [];
+        for (let h = 0; h < 24; h++) {
+            const hourData = hourlyData.find(item => item.hour === h);
+            peakHours.push({
+                hour: h.toString(),
+                sessions: hourData?.sessions || 0,
+            });
+        }
 
         return { revenueChart, peakHours };
     }
@@ -450,6 +475,49 @@ export class AdminAiAstrologersService {
 
     // ===== 6. ENHANCED ANALYTICS (Moved from AnalyticsService) =====
 
+    private fillDateGaps(data: any[], start: Date, end: Date, timeRange: string) {
+        const filledData: any[] = [];
+        const dataMap = new Map(data.map((item) => [item.date || item._id, item]));
+
+        const current = new Date(start);
+
+        while (current <= end) {
+            const dateStr = this.formatDateForTimeRange(current, timeRange);
+            const existing = dataMap.get(dateStr);
+
+            filledData.push({
+                date: dateStr,
+                revenue: existing?.revenue || existing?.totalRevenue || 0,
+                sessions: existing?.sessions || existing?.totalSessions || 0,
+                avgDuration: existing?.avgDuration || 0,
+            });
+
+            // Increment based on time range
+            if (timeRange === 'daily') {
+                current.setHours(current.getHours() + 1);
+            } else if (timeRange === 'yearly') {
+                current.setMonth(current.getMonth() + 1);
+            } else {
+                current.setDate(current.getDate() + 1);
+            }
+        }
+
+        return filledData;
+    }
+
+    private formatDateForTimeRange(date: Date, timeRange: string): string {
+        const istOffset = 5.5 * 60 * 60 * 1000;
+        const istDate = new Date(date.getTime() + istOffset);
+
+        if (timeRange === 'daily') {
+            return `${istDate.getFullYear()}-${String(istDate.getMonth() + 1).padStart(2, '0')}-${String(istDate.getDate()).padStart(2, '0')} ${String(istDate.getHours()).padStart(2, '0')}:00`;
+        } else if (timeRange === 'yearly') {
+            return `${istDate.getFullYear()}-${String(istDate.getMonth() + 1).padStart(2, '0')}`;
+        } else {
+            return `${istDate.getFullYear()}-${String(istDate.getMonth() + 1).padStart(2, '0')}-${String(istDate.getDate()).padStart(2, '0')}`;
+        }
+    }
+
     private getTimeRangeDates(timeRange: string, startDate?: string, endDate?: string) {
         // Use Asia/Kolkata timezone for starting/ending dates
         const getISTNow = () => {
@@ -541,15 +609,17 @@ export class AdminAiAstrologersService {
             ]);
 
             const totals = {
-                totalRevenue: revenueData.reduce((sum, item) => sum + (item.totalRevenue || 0), 0),
-                totalSessions: revenueData.reduce((sum, item) => sum + (item.totalSessions || 0), 0),
+                totalRevenue: revenueData.reduce((sum, item) => sum + (item.totalRevenue || item.revenue || 0), 0),
+                totalSessions: revenueData.reduce((sum, item) => sum + (item.totalSessions || item.sessions || 0), 0),
                 avgSessionDuration: revenueData.reduce((sum, item) => sum + (item.avgDuration || 0), 0) / (revenueData.length || 1),
             };
+
+            const filledChartData = this.fillDateGaps(revenueData, start, end, timeRange);
 
             return {
                 success: true,
                 data: {
-                    chartData: revenueData,
+                    chartData: filledChartData,
                     totals,
                     period: { start, end, timeRange },
                 },

@@ -130,11 +130,15 @@ export class AiAnalyticsService {
             // Format for heatmap (24 hours x 7 days)
             const heatmapData = this.formatHeatmapData(timeSlotData);
 
-            // Format for peak hours chart
-            const peakHours = hourlyData.map((item) => ({
-                hour: item._id,
-                sessions: item.sessions,
-            }));
+            // Format for peak hours chart (Ensure all 24 hours are represented)
+            const peakHours: any[] = [];
+            for (let h = 0; h < 24; h++) {
+                const hourData = hourlyData.find(item => item._id === h);
+                peakHours.push({
+                    hour: h.toString(),
+                    sessions: hourData?.sessions || 0,
+                });
+            }
 
             // Find top 5 peak time slots
             const topSlots = timeSlotData

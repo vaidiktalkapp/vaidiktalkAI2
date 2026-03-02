@@ -77,10 +77,10 @@ export default function AIAstrologerDetailPage() {
 
             <div
               className={`inline-block px-4 py-2 rounded-full font-medium mb-4 ${astrologer.accountStatus === 'active'
-                  ? 'bg-green-100 text-green-800'
-                  : astrologer.accountStatus === 'inactive'
-                    ? 'bg-gray-100 text-gray-800'
-                    : 'bg-red-100 text-red-800'
+                ? 'bg-emerald-100 text-emerald-800'
+                : astrologer.accountStatus === 'inactive'
+                  ? 'bg-gray-100 text-gray-800'
+                  : 'bg-red-100 text-red-800'
                 }`}
             >
               {astrologer.accountStatus.charAt(0).toUpperCase() + astrologer.accountStatus.slice(1)}
@@ -94,39 +94,47 @@ export default function AIAstrologerDetailPage() {
 
         {/* Key Stats */}
         <div className="grid grid-cols-2 gap-4 md:col-span-2">
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <MessageCircle className="w-8 h-8 text-purple-500" />
+          <Card className="p-5 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm">Total Chats</p>
-                <p className="text-2xl font-bold">{astrologer.stats?.totalChats || 0}</p>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Total Chats</p>
+                <p className="text-2xl font-bold text-indigo-600 tracking-tight">{astrologer.stats?.totalChats || 0}</p>
+              </div>
+              <div className="p-3 bg-indigo-50 rounded-xl">
+                <MessageCircle className="w-6 h-6 text-indigo-600" />
               </div>
             </div>
           </Card>
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <Star className="w-8 h-8 text-yellow-500" />
+          <Card className="p-5 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm">Average Rating</p>
-                <p className="text-2xl font-bold">{(astrologer.ratings?.average || 0).toFixed(1)}</p>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Average Rating</p>
+                <p className="text-2xl font-bold text-yellow-600 tracking-tight">{(astrologer.ratings?.average || 0).toFixed(1)}</p>
+              </div>
+              <div className="p-3 bg-yellow-50 rounded-xl">
+                <Star className="w-6 h-6 text-yellow-600" />
               </div>
             </div>
           </Card>
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="w-8 h-8 text-green-500" />
+          <Card className="p-5 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm">Total Earnings</p>
-                <p className="text-2xl font-bold">₹{(astrologer.stats?.totalEarnings || 0).toLocaleString()}</p>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Total Earnings</p>
+                <p className="text-2xl font-bold text-emerald-600 tracking-tight">₹{(astrologer.stats?.totalEarnings || 0).toLocaleString()}</p>
+              </div>
+              <div className="p-3 bg-emerald-50 rounded-xl">
+                <TrendingUp className="w-6 h-6 text-emerald-600" />
               </div>
             </div>
           </Card>
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <Wallet className="w-8 h-8 text-blue-500" />
+          <Card className="p-5 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm">Wallet Balance</p>
-                <p className="text-2xl font-bold">₹{(astrologer.wallet?.balance || 0).toLocaleString()}</p>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Wallet Balance</p>
+                <p className="text-2xl font-bold text-indigo-600 tracking-tight">₹{(astrologer.wallet?.balance || 0).toLocaleString()}</p>
+              </div>
+              <div className="p-3 bg-indigo-50 rounded-xl">
+                <Wallet className="w-6 h-6 text-indigo-600" />
               </div>
             </div>
           </Card>
@@ -172,19 +180,19 @@ export default function AIAstrologerDetailPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Status:</span>
-                    <span className={`font-medium ${astrologer.availability?.isOnline ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`font-medium ${astrologer.availability?.isOnline ? 'text-emerald-600' : 'text-red-600'}`}>
                       {astrologer.availability?.isOnline ? 'Online' : 'Offline'}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Available:</span>
-                    <span className={`font-medium ${astrologer.availability?.isAvailable ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`font-medium ${astrologer.availability?.isAvailable ? 'text-emerald-600' : 'text-red-600'}`}>
                       {astrologer.availability?.isAvailable ? 'Yes' : 'No'}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Chat Enabled:</span>
-                    <span className={`font-medium ${astrologer.isChatEnabled ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`font-medium ${astrologer.isChatEnabled ? 'text-emerald-600' : 'text-red-600'}`}>
                       {astrologer.isChatEnabled ? 'Yes' : 'No'}
                     </span>
                   </div>
@@ -228,21 +236,27 @@ export default function AIAstrologerDetailPage() {
           {/* Pricing Tab */}
           <TabsContent value="pricing" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="p-4 border-2 border-blue-200">
-                <p className="text-gray-600 text-sm mb-2">Chat Price</p>
-                <p className="text-3xl font-bold text-blue-600">₹{astrologer.pricing?.chat || 0}</p>
-                <p className="text-xs text-gray-600 mt-2">/min</p>
-              </Card>
-              <Card className="p-4 border-2 border-green-200">
-                <p className="text-gray-600 text-sm mb-2">Call Price</p>
-                <p className="text-3xl font-bold text-green-600">₹{astrologer.pricing?.call || 0}</p>
-                <p className="text-xs text-gray-600 mt-2">/min</p>
-              </Card>
-              <Card className="p-4 border-2 border-purple-200">
-                <p className="text-gray-600 text-sm mb-2">Video Call Price</p>
-                <p className="text-3xl font-bold text-purple-600">₹{astrologer.pricing?.videoCall || 0}</p>
-                <p className="text-xs text-gray-600 mt-2">/min</p>
-              </Card>
+              <div className="p-6 rounded-2xl bg-white border border-gray-100 shadow-sm">
+                <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-2">Chat Price</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-3xl font-bold text-indigo-600 tracking-tight">₹{astrologer.pricing?.chat || 0}</p>
+                  <p className="text-sm text-gray-500">/min</p>
+                </div>
+              </div>
+              <div className="p-6 rounded-2xl bg-white border border-gray-100 shadow-sm">
+                <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-2">Call Price</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-3xl font-bold text-emerald-600 tracking-tight">₹{astrologer.pricing?.call || 0}</p>
+                  <p className="text-sm text-gray-500">/min</p>
+                </div>
+              </div>
+              <div className="p-6 rounded-2xl bg-white border border-gray-100 shadow-sm">
+                <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-2">Video Call</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-3xl font-bold text-indigo-600 tracking-tight">₹{astrologer.pricing?.videoCall || 0}</p>
+                  <p className="text-sm text-gray-500">/min</p>
+                </div>
+              </div>
             </div>
           </TabsContent>
 

@@ -169,10 +169,10 @@ export default function AIChatLogsPage() {
             <ArrowLeft className="w-5 h-5 text-gray-700" />
           </button>
           <div>
-            <h2 className="text-3xl font-black text-slate-800 tracking-tight">
-              AI Chat <span className="text-orange-600">Intelligence Logs</span>
+            <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
+              AI Chat <span className="text-indigo-600">Intelligence Logs</span>
             </h2>
-            <p className="text-sm font-medium text-slate-500 mt-1">
+            <p className="text-sm font-medium text-gray-500 mt-1">
               Monitor AI quality, session accuracy, and user satisfaction
             </p>
           </div>
@@ -184,34 +184,34 @@ export default function AIChatLogsPage() {
           {/* Main Top Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-              <Card className="p-4 bg-gradient-to-br from-blue-50 to-white border-blue-100 shadow-sm rounded-xl">
+              <Card className="p-4 bg-gradient-to-br from-indigo-50 to-white border-indigo-100 shadow-sm rounded-xl">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">Total Chats</p>
-                    <p className="text-2xl font-black text-slate-900 leading-tight">{stats.totalChats || stats.totalSessions || 0}</p>
-                    <p className="text-[10px] text-blue-600 font-semibold mt-1 flex items-center gap-1">
+                    <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">Total Chats</p>
+                    <p className="text-2xl font-bold text-gray-900 leading-tight">{stats.totalChats || stats.totalSessions || 0}</p>
+                    <p className="text-[10px] text-indigo-600 font-semibold mt-1 flex items-center gap-1">
                       <TrendingUp className="w-3 h-3" /> Platform Total
                     </p>
                   </div>
-                  <div className="bg-blue-100 p-2.5 rounded-lg">
-                    <MessageSquare className="w-5 h-5 text-blue-600" />
+                  <div className="bg-indigo-100 p-2.5 rounded-lg">
+                    <MessageSquare className="w-5 h-5 text-indigo-600" />
                   </div>
                 </div>
               </Card>
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-              <Card className="p-4 bg-gradient-to-br from-green-50 to-white border-green-100 shadow-sm rounded-xl">
+              <Card className="p-4 bg-gradient-to-br from-emerald-50 to-white border-emerald-100 shadow-sm rounded-xl">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">Total Revenue</p>
-                    <p className="text-2xl font-black text-slate-900 leading-tight">₹{(stats.totalRevenue || stats.totalEarnings || 0).toLocaleString()}</p>
-                    <p className="text-[10px] text-green-600 font-semibold mt-1 flex items-center gap-1">
+                    <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wider mb-0.5">Total Revenue</p>
+                    <p className="text-2xl font-bold text-gray-900 leading-tight">₹{(stats.totalRevenue || stats.totalEarnings || 0).toLocaleString()}</p>
+                    <p className="text-[10px] text-emerald-600 font-semibold mt-1 flex items-center gap-1">
                       <Activity className="w-3 h-3" /> AI Earnings
                     </p>
                   </div>
-                  <div className="bg-green-100 p-2.5 rounded-lg">
-                    <Activity className="w-5 h-5 text-green-600" />
+                  <div className="bg-emerald-100 p-2.5 rounded-lg">
+                    <Activity className="w-5 h-5 text-emerald-600" />
                   </div>
                 </div>
               </Card>
@@ -219,38 +219,38 @@ export default function AIChatLogsPage() {
           </div>
 
           {/* Narrower Revenue Breakdown */}
-          <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 max-w-2xl">
-            <h3 className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1.5 px-1">
-              <Calendar className="w-3.5 h-3.5 text-orange-600" />
+          <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 max-w-2xl">
+            <h3 className="text-xs font-bold text-gray-600 mb-2 flex items-center gap-1.5 px-1">
+              <Calendar className="w-3.5 h-3.5 text-indigo-600" />
               Revenue Breakdown
             </h3>
             <div className="grid grid-cols-3 gap-2">
-              <div className="p-2 bg-gradient-to-br from-orange-50 to-white border border-orange-100 rounded-lg">
-                <p className="text-[9px] font-bold text-slate-500 uppercase">Today</p>
-                <p className="text-lg font-black text-slate-900 leading-none mt-1">
+              <div className="p-2 bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 rounded-lg">
+                <p className="text-[9px] font-bold text-gray-500 uppercase">Today</p>
+                <p className="text-lg font-bold text-gray-900 leading-none mt-1">
                   ₹{(dailyRevenue?.totals?.totalRevenue || dailyRevenue?.totalRevenue || 0).toLocaleString()}
                 </p>
-                <p className="text-[9px] text-orange-600 font-bold mt-1">
+                <p className="text-[9px] text-indigo-600 font-bold mt-1">
                   {dailyRevenue?.totals?.totalSessions || dailyRevenue?.totalSessions || 0} sessions
                 </p>
               </div>
 
-              <div className="p-2 bg-gradient-to-br from-purple-50 to-white border border-purple-100 rounded-lg">
-                <p className="text-[9px] font-bold text-slate-500 uppercase">Week</p>
-                <p className="text-lg font-black text-slate-900 leading-none mt-1">
+              <div className="p-2 bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 rounded-lg">
+                <p className="text-[9px] font-bold text-gray-500 uppercase">Week</p>
+                <p className="text-lg font-bold text-gray-900 leading-none mt-1">
                   ₹{(weeklyRevenue?.totals?.totalRevenue || weeklyRevenue?.totalRevenue || 0).toLocaleString()}
                 </p>
-                <p className="text-[9px] text-purple-600 font-bold mt-1">
+                <p className="text-[9px] text-emerald-600 font-bold mt-1">
                   {weeklyRevenue?.totals?.totalSessions || weeklyRevenue?.totalSessions || 0} sessions
                 </p>
               </div>
 
-              <div className="p-2 bg-gradient-to-br from-blue-50 to-white border border-blue-100 rounded-lg">
-                <p className="text-[9px] font-bold text-slate-500 uppercase">Month</p>
-                <p className="text-lg font-black text-slate-900 leading-none mt-1">
+              <div className="p-2 bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 rounded-lg">
+                <p className="text-[9px] font-bold text-gray-500 uppercase">Month</p>
+                <p className="text-lg font-bold text-gray-900 leading-none mt-1">
                   ₹{(monthlyRevenue?.totals?.totalRevenue || monthlyRevenue?.totalRevenue || 0).toLocaleString()}
                 </p>
-                <p className="text-[9px] text-blue-600 font-bold mt-1">
+                <p className="text-[9px] text-indigo-600 font-bold mt-1">
                   {monthlyRevenue?.totals?.totalSessions || monthlyRevenue?.totalSessions || 0} sessions
                 </p>
               </div>
@@ -262,10 +262,10 @@ export default function AIChatLogsPage() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Session List */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden h-[650px] flex flex-col">
-          <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex justify-between items-center">
-            <span className="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2">
-              <Users className="w-4 h-4 text-orange-600" />
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-[650px] flex flex-col">
+          <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white flex justify-between items-center">
+            <span className="text-xs font-bold text-gray-600 uppercase tracking-wider flex items-center gap-2">
+              <Users className="w-4 h-4 text-indigo-600" />
               Recent Sessions ({chatLogs?.total || chatLogs?.items?.length || 0})
             </span>
           </div>
@@ -273,7 +273,7 @@ export default function AIChatLogsPage() {
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {isLoading ? (
               <div className="h-full flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
               </div>
             ) : chatLogs?.items && chatLogs.items.length > 0 ? (
               <div className="divide-y divide-slate-50">
@@ -281,42 +281,42 @@ export default function AIChatLogsPage() {
                   <motion.div
                     key={session._id}
                     onClick={() => viewSession(session)}
-                    className={`p-4 cursor-pointer transition-all hover:bg-orange-50/50 group relative ${selectedSession?._id === session._id || selectedSession?.sessionId === session.id
-                      ? 'bg-orange-50 border-l-4 border-orange-600'
+                    className={`p-4 cursor-pointer transition-all hover:bg-indigo-50/50 group relative ${selectedSession?._id === session._id || selectedSession?.sessionId === session.id
+                      ? 'bg-indigo-50 border-l-4 border-indigo-600'
                       : ''
                       }`}
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-bold shadow-md">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold shadow-md">
                           {session.userName?.charAt(0)?.toUpperCase() || 'U'}
                         </div>
                         <div>
-                          <div className="text-sm font-black text-slate-900">{session.userName || 'Unknown User'}</div>
-                          <div className="text-xs text-slate-500 font-semibold mt-0.5 flex items-center gap-1">
+                          <div className="text-sm font-bold text-gray-900">{session.userName || 'Unknown User'}</div>
+                          <div className="text-xs text-gray-500 font-semibold mt-0.5 flex items-center gap-1">
                             <ChevronRight className="w-3 h-3" />
                             {session.aiAstrologerName || 'AI Astrologer'}
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-xs font-bold text-orange-600">₹{session.earnings || 0}</div>
-                        <div className="text-[10px] text-slate-400 font-semibold mt-1">
+                        <div className="text-xs font-bold text-indigo-600">₹{session.earnings || 0}</div>
+                        <div className="text-[10px] text-gray-400 font-semibold mt-1">
                           {new Date(session.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-3 flex-wrap">
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-50 px-2 py-1 rounded-full">
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
                         <Clock className="w-3 h-3" /> {session.duration || 0}m
                       </div>
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">
                         <MessageSquare className="w-3 h-3" /> {session.messages || 0} msgs
                       </div>
-                      <div className={`ml-auto text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${session.resolution === 'resolved' || session.status === 'ended'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-blue-100 text-blue-700'
+                      <div className={`ml-auto text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ${session.resolution === 'resolved' || session.status === 'ended'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-indigo-100 text-indigo-700'
                         }`}>
                         {session.resolution || session.status}
                       </div>
@@ -325,8 +325,8 @@ export default function AIChatLogsPage() {
                 ))}
               </div>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-slate-400 p-8 text-center">
-                <MessageSquare className="w-16 h-16 mb-4 opacity-20" />
+              <div className="h-full flex flex-col items-center justify-center text-gray-400 p-8 text-center">
+                <MessageSquare className="w-16 h-16 mb-4 opacity-20 text-indigo-600" />
                 <p className="text-sm font-bold">No sessions found</p>
               </div>
             )}
@@ -334,19 +334,19 @@ export default function AIChatLogsPage() {
 
           {/* Pagination */}
           {chatLogs && chatLogs.pages > 1 && (
-            <div className="flex items-center justify-between p-4 border-t border-slate-100">
+            <div className="flex items-center justify-between p-4 border-t border-gray-100">
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg disabled:opacity-50"
+                className="px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-lg disabled:opacity-50"
               >
                 Previous
               </button>
-              <span className="text-sm font-bold text-slate-600">Page {page} of {chatLogs.pages}</span>
+              <span className="text-sm font-bold text-gray-600">Page {page} of {chatLogs.pages}</span>
               <button
                 onClick={() => setPage(p => Math.min(chatLogs.pages, p + 1))}
                 disabled={page === chatLogs.pages}
-                className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-lg disabled:opacity-50"
+                className="px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-lg disabled:opacity-50"
               >
                 Next
               </button>
@@ -355,42 +355,42 @@ export default function AIChatLogsPage() {
         </div>
 
         {/* Chat Details */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[650px]">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[650px]">
           <AnimatePresence mode="wait">
             {selectedSession ? (
               <motion.div key="details" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col h-full">
-                <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-slate-900 to-slate-800 text-white">
+                <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-900 to-gray-800 text-white">
                   <div className="flex justify-between items-center">
                     <div>
-                      <h3 className="text-lg font-black flex items-center gap-2">
-                        <ShieldCheck className="w-5 h-5 text-orange-500" /> Session Diagnostics
+                      <h3 className="text-lg font-bold flex items-center gap-2 text-white">
+                        <ShieldCheck className="w-5 h-5 text-indigo-400" /> Session Diagnostics
                       </h3>
-                      <p className="text-xs text-slate-400 mt-1">ID: {selectedSession.orderId || selectedSession.sessionId}</p>
+                      <p className="text-xs text-gray-400 mt-1">ID: {selectedSession.orderId || selectedSession.sessionId}</p>
                     </div>
-                    <button onClick={() => setSelectedSession(null)} className="text-slate-400 hover:text-white">
+                    <button onClick={() => setSelectedSession(null)} className="text-gray-400 hover:text-white">
                       <AlertCircle className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/50 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/50 custom-scrollbar">
                   {/* Quality Metrics */}
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-orange-500" /> AI Quality
+                  <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-indigo-600" /> AI Quality
                     </h4>
                     <div className="grid grid-cols-3 gap-4">
                       <div className="text-center">
-                        <div className="text-2xl font-black text-slate-900">{metrics.accuracy}/100</div>
-                        <div className="text-[9px] font-bold text-slate-500 uppercase mt-1">Accuracy</div>
+                        <div className="text-2xl font-bold text-gray-900">{metrics.accuracy}/100</div>
+                        <div className="text-[9px] font-bold text-gray-500 uppercase mt-1">Accuracy</div>
                       </div>
-                      <div className="text-center border-x border-slate-100">
-                        <div className="text-2xl font-black text-green-600">{metrics.latency}</div>
-                        <div className="text-[9px] font-bold text-slate-500 uppercase mt-1">Latency</div>
+                      <div className="text-center border-x border-gray-100">
+                        <div className="text-2xl font-bold text-emerald-600">{metrics.latency}</div>
+                        <div className="text-[9px] font-bold text-gray-500 uppercase mt-1">Latency</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-black text-orange-600">{metrics.empathy}</div>
-                        <div className="text-[9px] font-bold text-slate-500 uppercase mt-1">Empathy</div>
+                        <div className="text-2xl font-bold text-indigo-600">{metrics.empathy}</div>
+                        <div className="text-[9px] font-bold text-gray-500 uppercase mt-1">Empathy</div>
                       </div>
                     </div>
                   </div>
@@ -398,14 +398,14 @@ export default function AIChatLogsPage() {
                   {/* Messages */}
                   <div className="space-y-3">
                     {loadingMessages ? (
-                      <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"></div></div>
+                      <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div></div>
                     ) : messages.map((msg, i) => (
                       <div key={i} className={`flex flex-col ${msg.senderModel === 'User' ? 'items-end' : 'items-start'}`}>
-                        <div className={`max-w-[85%] p-3 rounded-2xl text-xs font-medium ${msg.senderModel === 'User' ? 'bg-slate-900 text-white rounded-tr-none' : 'bg-white border text-slate-800 rounded-tl-none'
+                        <div className={`max-w-[85%] p-3 rounded-2xl text-xs font-medium ${msg.senderModel === 'User' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white border border-gray-100 text-gray-800 rounded-tl-none'
                           }`}>
                           {msg.content}
                         </div>
-                        <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase">
+                        <span className="text-[9px] font-bold text-gray-400 mt-1 uppercase">
                           {msg.senderModel} · {new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
@@ -414,9 +414,9 @@ export default function AIChatLogsPage() {
                 </div>
               </motion.div>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-12 text-center">
-                <Activity className="w-16 h-16 mb-6 opacity-10 animate-pulse" />
-                <h3 className="text-xl font-black text-slate-900 mb-2">Diagnostics Engine</h3>
+              <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-12 text-center">
+                <Activity className="w-16 h-16 mb-6 opacity-10 animate-pulse text-indigo-600" />
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Diagnostics Engine</h3>
                 <p className="text-sm font-medium">Select a session to view analysis.</p>
               </div>
             )}

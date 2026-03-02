@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area
+  ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, CartesianGrid
 } from 'recharts';
 import {
   TrendingUp, Users, ShoppingBag, Target,
@@ -79,21 +79,17 @@ export default function AdminAnalytics() {
   return (
     <div className="space-y-8 p-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-2">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">
-            Platform <span className="text-orange-600">Analytics</span>
-          </h2>
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-            In-depth performance tracking
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">AI Analytics</h1>
+          <p className="text-gray-500 mt-1">In-depth performance tracking for AI personalities</p>
         </div>
         <div className="flex gap-3">
           <div className="relative group">
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value as any)}
-              className="appearance-none bg-white px-10 py-2 rounded-xl shadow-sm border border-slate-100 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all outline-none cursor-pointer"
+              className="appearance-none bg-white px-10 py-2 rounded-xl shadow-sm border border-gray-200 text-sm font-medium text-gray-600 hover:border-indigo-300 transition-all outline-none cursor-pointer"
             >
               <option value="daily">Daily</option>
               <option value="weekly">Weekly</option>
@@ -102,79 +98,73 @@ export default function AdminAnalytics() {
               <option value="monthly">Monthly</option>
               <option value="yearly">Yearly</option>
             </select>
-            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
           <button
             onClick={handleExportCSV}
             disabled={isExporting}
-            className="flex items-center gap-2 bg-orange-600 px-4 py-2 rounded-xl shadow-lg shadow-orange-100 text-xs font-bold text-white hover:bg-orange-700 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 bg-indigo-600 px-4 py-2 rounded-xl shadow-sm text-sm font-bold text-white hover:bg-indigo-700 transition-all disabled:opacity-50"
           >
             {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            CSV
+            Export CSV
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-orange-50 flex items-center justify-between">
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-lg transition-all">
           {isLoadingStats ? (
-            <div className="w-full h-full flex items-center justify-center">
-              <Loader2 className="w-4 h-4 animate-spin text-orange-500" />
-            </div>
+            <div className="w-full h-32 flex items-center justify-center animate-pulse bg-gray-50 rounded-2xl" />
           ) : (
             <>
               <div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Average Session</p>
-                <h2 className="text-2xl font-bold mt-1">{metrics?.averageSessionDuration || 0}s</h2>
-                <p className="text-green-600 text-[10px] font-bold mt-1 flex items-center gap-1">
+                <p className="text-sm font-medium text-gray-500">Average Session</p>
+                <h2 className="text-2xl font-bold mt-2 text-gray-900 tracking-tight">{metrics?.averageSessionDuration || 0}s</h2>
+                <p className="text-green-600 text-xs font-medium mt-1 flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" /> Real-time Average
                 </p>
               </div>
-              <div className="bg-orange-50 p-4 rounded-2xl">
-                <ShoppingBag className="w-6 h-6 text-orange-600" />
+              <div className="bg-indigo-50 p-4 rounded-2xl group-hover:scale-110 transition-transform">
+                <ShoppingBag className="w-6 h-6 text-indigo-600" />
               </div>
             </>
           )}
         </div>
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-blue-50 flex items-center justify-between">
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-lg transition-all">
           {isLoadingStats ? (
-            <div className="w-full h-full flex items-center justify-center">
-              <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-            </div>
+            <div className="w-full h-32 flex items-center justify-center animate-pulse bg-gray-50 rounded-2xl" />
           ) : (
             <>
               <div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Growth Rate</p>
-                <h2 className="text-2xl font-bold mt-1">
+                <p className="text-sm font-medium text-gray-500">Growth Rate</p>
+                <h2 className="text-2xl font-bold mt-2 text-gray-900 tracking-tight">
                   {metrics?.growthRate > 0 ? '+' : ''}{metrics?.growthRate || 0}%
                 </h2>
-                <p className="text-blue-600 text-[10px] font-bold mt-1 flex items-center gap-1">
+                <p className="text-indigo-600 text-xs font-medium mt-1 flex items-center gap-1">
                   <Users className="w-3 h-3" /> Session Growth Today
                 </p>
               </div>
-              <div className="bg-blue-50 p-4 rounded-2xl">
-                <Users className="w-6 h-6 text-blue-600" />
+              <div className="bg-indigo-50 p-4 rounded-2xl group-hover:scale-110 transition-transform">
+                <Users className="w-6 h-6 text-indigo-600" />
               </div>
             </>
           )}
         </div>
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-green-50 flex items-center justify-between">
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-lg transition-all">
           {isLoadingStats ? (
-            <div className="w-full h-full flex items-center justify-center">
-              <Loader2 className="w-4 h-4 animate-spin text-green-500" />
-            </div>
+            <div className="w-full h-32 flex items-center justify-center animate-pulse bg-gray-50 rounded-2xl" />
           ) : (
             <>
               <div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Users</p>
-                <h2 className="text-2xl font-bold mt-1">{metrics?.totalUsers || 0}</h2>
-                <p className="text-green-600 text-[10px] font-bold mt-1 flex items-center gap-1">
+                <p className="text-sm font-medium text-gray-500">Total Users</p>
+                <h2 className="text-2xl font-bold mt-2 text-gray-900 tracking-tight">{metrics?.totalUsers || 0}</h2>
+                <p className="text-emerald-600 text-xs font-medium mt-1 flex items-center gap-1">
                   <Target className="w-3 h-3" /> Registered Base
                 </p>
               </div>
-              <div className="bg-green-50 p-4 rounded-2xl">
-                <Target className="w-6 h-6 text-green-600" />
+              <div className="bg-emerald-50 p-4 rounded-2xl group-hover:scale-110 transition-transform">
+                <Target className="w-6 h-6 text-emerald-600" />
               </div>
             </>
           )}
@@ -187,13 +177,13 @@ export default function AdminAnalytics() {
         <div className="lg:col-span-2 space-y-8">
           {/* Revenue Deep Dive */}
           <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-            <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-orange-600" />
+            <h3 className="font-bold text-lg mb-6 flex items-center gap-2 text-gray-900">
+              <TrendingUp className="w-5 h-5 text-indigo-600" />
               Revenue Performance ({timeRange.charAt(0).toUpperCase() + timeRange.slice(1)})
             </h3>
             {isLoadingOverall ? (
               <div className="h-96 w-full flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
               </div>
             ) : (
               <div className="h-96 w-full">
@@ -201,14 +191,34 @@ export default function AdminAnalytics() {
                   <AreaChart data={revenueData}>
                     <defs>
                       <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#ea580c" stopOpacity={0.1} />
-                        <stop offset="95%" stopColor="#ea580c" stopOpacity={0} />
+                        <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.1} />
+                        <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-                    <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                    <Area type="monotone" dataKey="revenue" stroke="#ea580c" strokeWidth={3} fill="url(#colorRevenue)" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                    <XAxis
+                      dataKey="date"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#6b7280', fontSize: 12 }}
+                      tickFormatter={(dateStr) => {
+                        const date = new Date(dateStr);
+                        return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+                      }}
+                      dy={10}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      allowDecimals={false}
+                      tick={{ fill: '#6b7280', fontSize: 12 }}
+                      tickFormatter={(value: number) => `₹${value >= 1000 ? `${value / 1000}k` : value}`}
+                    />
+                    <Tooltip
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Revenue']}
+                    />
+                    <Area type="monotone" dataKey="revenue" stroke="#4f46e5" strokeWidth={3} fill="url(#colorRevenue)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -218,12 +228,12 @@ export default function AdminAnalytics() {
 
         {/* Right Column: Revenue Share */}
         <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col h-full">
-          <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
-            <Target className="w-5 h-5 text-orange-600" />
+          <h3 className="font-bold text-lg mb-6 flex items-center gap-2 text-gray-900">
+            <Target className="w-5 h-5 text-indigo-600" />
             Revenue Share
           </h3>
           {isLoadingPerformance ? (
-            <div className="h-64 w-full flex items-center justify-center text-orange-600">
+            <div className="h-64 w-full flex items-center justify-center text-indigo-600">
               <Loader2 className="w-8 h-8 animate-spin" />
             </div>
           ) : astrologerStats.length === 0 ? (
@@ -273,35 +283,45 @@ export default function AdminAnalytics() {
         {/* Full-width Row: Peak Activity Analysis */}
         <div className="lg:col-span-3 bg-white p-8 rounded-3xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-3">
-            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-blue-600" />
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-gray-900">
+              <Clock className="w-5 h-5 text-indigo-600" />
               Peak Activity Hours
             </h3>
             {isLoadingOverall ? (
               <div className="h-40 w-full flex items-center justify-center">
-                <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
               </div>
             ) : (
               <div className="h-40 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={timeSlotData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                     <XAxis
                       dataKey="hour"
                       tickLine={false}
                       axisLine={false}
+                      interval={3} // Show every 4th hour to avoid clutter (12 AM, 4 AM, 8 AM, 12 PM, 4 PM, 8 PM)
                       tickFormatter={(h) => {
                         const hour = parseInt(h);
                         const ampm = hour >= 12 ? 'PM' : 'AM';
                         const displayHour = hour % 12 || 12;
                         return `${displayHour} ${ampm}`;
                       }}
-                      tick={{ fontSize: 10 }}
+                      tick={{ fill: '#6b7280', fontSize: 12 }}
+                      dy={10}
                     />
-                    <YAxis hide />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      allowDecimals={false}
+                      domain={[0, 'auto']}
+                      minTickGap={1}
+                      tick={{ fill: '#6b7280', fontSize: 12 }}
+                    />
                     <Tooltip
-                      cursor={{ fill: 'transparent' }}
-                      formatter={(value) => [`${value} Sessions`, 'Peak Demand']}
-                      labelFormatter={(h) => {
+                      cursor={{ fill: 'rgba(79, 70, 229, 0.05)' }}
+                      formatter={(value: number) => [`${value} Sessions`, 'Peak Demand']}
+                      labelFormatter={(h: string) => {
                         const hour = parseInt(h);
                         const ampm = hour >= 12 ? 'PM' : 'AM';
                         const displayHour = hour % 12 || 12;
@@ -309,19 +329,19 @@ export default function AdminAnalytics() {
                       }}
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                     />
-                    <Bar dataKey="sessions" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={35} />
+                    <Bar dataKey="sessions" fill="#4f46e5" radius={[4, 4, 0, 0]} barSize={35} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             )}
           </div>
 
-          <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col justify-center">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 text-center md:text-left">High Demand Summary</h4>
+          <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 flex flex-col justify-center">
+            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 text-center md:text-left">High Demand Summary</h4>
             <div className="space-y-4">
               <div className="flex md:flex-col justify-between items-center md:items-start">
-                <p className="text-xs font-bold text-slate-500">Peak Hour</p>
-                <p className="text-xl font-black text-slate-900">
+                <p className="text-sm font-medium text-gray-500">Peak Hour</p>
+                <p className="text-xl font-bold text-gray-900 mt-1">
                   {timeSlotData.length > 0
                     ? (() => {
                       const peak = [...timeSlotData].sort((a, b) => b.sessions - a.sessions)[0];
@@ -333,16 +353,16 @@ export default function AdminAnalytics() {
                     : 'N/A'}
                 </p>
               </div>
-              <div className="flex md:flex-col justify-between items-center md:items-start pt-4 md:pt-0 border-t md:border-t-0 border-slate-100">
-                <p className="text-xs font-bold text-slate-500">Peak Demand</p>
-                <p className="text-2xl font-black text-orange-600">
+              <div className="flex md:flex-col justify-between items-center md:items-start pt-4 md:pt-0 border-t md:border-t-0 border-gray-100">
+                <p className="text-sm font-medium text-gray-500">Peak Demand</p>
+                <p className="text-2xl font-bold text-indigo-600 mt-1">
                   {timeSlotData.length > 0
                     ? `${[...timeSlotData].sort((a, b) => b.sessions - a.sessions)[0].sessions} Sessions`
                     : '0 Sessions'}
                 </p>
               </div>
-              <div className="pt-4 border-t border-slate-200 hidden md:block">
-                <p className="text-[10px] font-bold text-slate-400 italic leading-relaxed">Recommendation: Increase AI capacity during these hours to maintain &lt;4s response time.</p>
+              <div className="pt-4 border-t border-gray-200 hidden md:block">
+                <p className="text-[10px] font-medium text-gray-400 italic leading-relaxed">Recommendation: Increase AI capacity during these hours to maintain &lt;4s response time.</p>
               </div>
             </div>
           </div>
@@ -352,8 +372,8 @@ export default function AdminAnalytics() {
       {/* Performance Table */}
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
-          <h3 className="font-bold flex items-center gap-2">
-            <Users className="w-5 h-5 text-orange-600" />
+          <h3 className="font-bold text-gray-900 flex items-center gap-2">
+            <Users className="w-5 h-5 text-indigo-600" />
             Top Performing AI Personalities
           </h3>
           <button className="p-2 border border-gray-200 rounded-lg hover:bg-white transition-all">
@@ -375,27 +395,27 @@ export default function AdminAnalytics() {
             {isLoadingPerformance ? (
               <tr>
                 <td colSpan={6} className="px-6 py-8 text-center">
-                  <Loader2 className="w-6 h-6 animate-spin text-orange-600 mx-auto" />
+                  <Loader2 className="w-6 h-6 animate-spin text-indigo-600 mx-auto" />
                 </td>
               </tr>
             ) : astrologerStats.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-xs text-slate-400 font-bold">
+                <td colSpan={6} className="px-6 py-8 text-center text-xs text-gray-400 font-bold">
                   No performance data available for this period.
                 </td>
               </tr>
             ) : (
               astrologerStats.map((astro: any, idx: number) => (
-                <tr key={idx} className="hover:bg-orange-50/20 transition-all">
-                  <td className="px-6 py-4 font-bold text-sm">{astro.name}</td>
-                  <td className="px-6 py-4 text-sm font-bold text-orange-600">
+                <tr key={idx} className="hover:bg-indigo-50/20 transition-all border-b border-gray-50 last:border-0">
+                  <td className="px-6 py-4 font-bold text-sm text-gray-900">{astro.name}</td>
+                  <td className="px-6 py-4 text-sm font-bold text-indigo-600">
                     ₹{astro.totalRevenue || astro.totalEarnings || 0}
                   </td>
-                  <td className="px-6 py-4 text-xs text-gray-500 font-bold">
+                  <td className="px-6 py-4 text-xs text-gray-500 font-medium">
                     {astro.averageLatency ? `${astro.averageLatency.toFixed(1)}s` : (astro.averageSessionDuration ? `${Math.round(astro.averageSessionDuration / 60)}m` : '0s')}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`text-xs font-bold ${astro.conversionRate > 20 ? 'text-green-600' : 'text-slate-600'}`}>
+                    <span className={`text-xs font-bold ${astro.conversionRate > 20 ? 'text-emerald-600' : 'text-gray-600'}`}>
                       {astro.conversionRate || 0}%
                     </span>
                   </td>
@@ -403,7 +423,7 @@ export default function AdminAnalytics() {
                     <div className="flex items-center gap-1">
                       <div className="h-1.5 w-16 bg-gray-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-green-500 rounded-full"
+                          className="h-full bg-emerald-500 rounded-full"
                           style={{ width: `${astro.averageAccuracy || (astro.satisfactionScore || 0) * 20}%` }}
                         ></div>
                       </div>
@@ -413,7 +433,7 @@ export default function AdminAnalytics() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <TrendingUp className="w-4 h-4 text-green-500" />
+                    <TrendingUp className="w-4 h-4 text-emerald-500" />
                   </td>
                 </tr>
               ))

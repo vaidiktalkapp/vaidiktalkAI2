@@ -376,7 +376,7 @@ export default function EditAIAstrologerPage() {
                 {formData.specializations.map((spec) => (
                   <div
                     key={spec}
-                    className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full flex items-center gap-2"
+                    className="bg-indigo-50 text-indigo-700 border border-indigo-100 px-3 py-1 rounded-full flex items-center gap-2 text-xs font-bold"
                   >
                     {spec}
                     <button
@@ -408,7 +408,7 @@ export default function EditAIAstrologerPage() {
                 {formData.languages.map((lang) => (
                   <div
                     key={lang}
-                    className="bg-green-100 text-green-800 px-3 py-1 rounded-full flex items-center gap-2"
+                    className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1 rounded-full flex items-center gap-2 text-xs font-bold"
                   >
                     {lang}
                     <button
@@ -492,12 +492,12 @@ export default function EditAIAstrologerPage() {
         </Card>
 
         {/* Actions */}
-        <div className="flex gap-4">
-          <Button type="submit" disabled={isPending}>
+        <div className="flex gap-4 pt-6 mt-6 border-t border-gray-100">
+          <Button type="submit" disabled={isPending} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-2.5 rounded-xl shadow-sm transition-all">
             {isPending ? 'Saving...' : 'Save Changes'}
           </Button>
           <Link href={`/ai-astrologers/${aiAstrologerId}`}>
-            <Button type="button" variant="outline">
+            <Button type="button" variant="outline" className="font-bold px-8 py-2.5 rounded-xl border-gray-200 hover:bg-gray-50 transition-all">
               Cancel
             </Button>
           </Link>

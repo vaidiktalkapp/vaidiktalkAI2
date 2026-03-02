@@ -22,18 +22,9 @@ export default function AdminWallet() {
   const { data: usersData, isLoading: isLoadingUsers } = useQuery({
     queryKey: ['all-users', searchTerm],
     queryFn: async () => {
-      console.log('🔍 Fetching users from API...');
       const { data } = await adminApi.getAllUsers({ search: searchTerm, limit: 100 });
-      console.log('📦 Raw API Response:', data);
-      console.log('📦 data.data:', data.data);
-      console.log('📦 data.data?.items:', data.data?.items);
-
       // Handle different response structures
-      // API returns: { success: true, data: { users: [...], pagination: {...} } }
       const items = data.data?.users || data.data?.items || data.users || [];
-      console.log('✅ Final parsed items:', items);
-      console.log('✅ Items count:', Array.isArray(items) ? items.length : 'NOT AN ARRAY');
-
       return Array.isArray(items) ? items : [];
     },
     refetchInterval: 5000, // Real-time updates every 5 seconds
@@ -126,22 +117,22 @@ export default function AdminWallet() {
       {/* Header */}
       <div className="flex justify-between items-end mb-2">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">
-            Wallet <span className="text-slate-900">&amp; Billing</span>
+          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
+            Wallet <span className="text-indigo-600">&amp; Billing</span>
           </h2>
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+          <p className="text-sm font-medium text-gray-500 uppercase tracking-widest mt-1">
             Manage user balances and platform transactions
           </p>
         </div>
         <div className="flex gap-3">
           <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-slate-100 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-slate-900"
+              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600"
             />
           </div>
         </div>
@@ -149,58 +140,58 @@ export default function AdminWallet() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* User Balances Table */}
-        <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-            <h3 className="font-bold flex items-center gap-2 text-sm">
-              <User className="w-4 h-4 text-slate-900" />
+        <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+            <h3 className="font-bold flex items-center gap-2 text-sm text-gray-900">
+              <User className="w-4 h-4 text-indigo-600" />
               User Wallet Balances
             </h3>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
               {users.length} Total Users
             </span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-50 text-[10px] text-slate-400 uppercase font-bold text-left">
+              <thead className="bg-gray-50 text-[10px] text-gray-500 uppercase font-bold text-left">
                 <tr>
                   <th className="px-6 py-4 tracking-widest">User</th>
                   <th className="px-6 py-4 tracking-widest">Balance</th>
                   <th className="px-6 py-4 tracking-widest text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-gray-100">
                 {isLoadingUsers ? (
                   <tr>
                     <td colSpan={3} className="px-6 py-8 text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 mx-auto"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
                     </td>
                   </tr>
                 ) : filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="px-6 py-8 text-center text-xs text-slate-400">
+                    <td colSpan={3} className="px-6 py-8 text-center text-xs text-gray-400">
                       No users found
                     </td>
                   </tr>
                 ) : (
                   filteredUsers.map((user: any) => (
-                    <tr key={user._id} className="hover:bg-slate-50/50 transition-colors group">
+                    <tr key={user._id} className="hover:bg-gray-50/50 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center font-bold text-slate-500 text-xs">
+                          <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center font-bold text-gray-500 text-xs">
                             {user.name?.charAt(0)?.toUpperCase() || 'U'}
                           </div>
                           <div className="overflow-hidden">
-                            <div className="text-sm font-bold text-slate-900 truncate">
+                            <div className="text-sm font-bold text-gray-900 truncate">
                               {user.name || `User ${user.phoneNumber?.slice(-4) || 'Unknown'}`}
                             </div>
-                            <div className="text-[10px] text-slate-400 truncate">
+                            <div className="text-[10px] text-gray-500 truncate">
                               {user.email || user.phoneNumber || 'No contact info'}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-1 text-slate-900 font-bold">
+                        <div className="flex items-center gap-1 text-gray-900 font-bold">
                           <IndianRupee className="w-3 h-3" />
                           {user.wallet?.balance || 0}
                         </div>
@@ -212,7 +203,7 @@ export default function AdminWallet() {
                               setSelectedUser(user);
                               setIsModalOpen(true);
                             }}
-                            className="bg-slate-900 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg hover:bg-black transition-colors"
+                            className="bg-indigo-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition-colors"
                           >
                             Grant Credit
                           </button>
@@ -235,13 +226,13 @@ export default function AdminWallet() {
 
         {/* Transaction Summary / Stats */}
         <div className="space-y-6">
-          <div className="bg-slate-700 p-8 rounded-3xl text-white shadow-xl">
+          <div className="bg-indigo-600 p-8 rounded-3xl text-white shadow-xl shadow-indigo-100">
             <div className="flex justify-between items-start mb-6">
               <div>
                 <p className="text-xs font-bold opacity-60 uppercase tracking-widest mb-1">
                   Total Platform Float
                 </p>
-                <h2 className="text-4xl font-black tracking-tighter flex items-center gap-2">
+                <h2 className="text-4xl font-bold tracking-tighter flex items-center gap-2">
                   <IndianRupee className="w-8 h-8" />
                   {totalPlatformFloat.toLocaleString()}
                 </h2>
@@ -255,16 +246,16 @@ export default function AdminWallet() {
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+          <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm">
             <h3 className="font-bold text-sm mb-4 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-slate-900" />
+              <div className="flex items-center gap-2 text-gray-900">
+                <CreditCard className="w-4 h-4 text-indigo-600" />
                 {showFullStatement ? 'Full Billing Statement' : 'Recent Billing Activity'}
               </div>
               {showFullStatement && (
                 <button
                   onClick={() => setShowFullStatement(false)}
-                  className="text-[10px] font-bold text-slate-900 hover:text-black bg-slate-50 px-2 py-1 rounded-lg"
+                  className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 bg-gray-50 px-2 py-1 rounded-lg"
                 >
                   Show Less
                 </button>
@@ -272,12 +263,12 @@ export default function AdminWallet() {
             </h3>
             <div className={`space-y-4 ${showFullStatement ? 'max-h-[400px] overflow-y-auto pr-2 custom-scrollbar' : ''}`}>
               {(showFullStatement ? transactions : transactions.slice(0, 5)).map((tx: any, idx: number) => (
-                <div key={tx._id || idx} className="flex justify-between items-center p-3 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors">
+                <div key={tx._id || idx} className="flex justify-between items-center p-3 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors">
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-8 h-8 rounded-xl flex items-center justify-center ${tx.type === 'credit'
-                        ? 'bg-green-100 text-green-600'
-                        : 'bg-slate-100 text-slate-900'
+                        ? 'bg-emerald-100 text-emerald-600'
+                        : 'bg-gray-100 text-gray-900'
                         }`}
                     >
                       {tx.type === 'credit' ? (
@@ -287,11 +278,11 @@ export default function AdminWallet() {
                       )}
                     </div>
                     <div>
-                      <div className="text-[10px] font-bold text-slate-900 capitalize">
+                      <div className="text-[10px] font-bold text-gray-900 capitalize">
                         {tx.userId?.name ? `${tx.userId.name}: ` : ''}
                         {tx.description || 'AI Session Payment'}
                       </div>
-                      <div className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">
+                      <div className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">
                         {tx.createdAt ? new Date(tx.createdAt).toLocaleDateString() : 'N/A'} ·{' '}
                         {tx.createdAt ? new Date(tx.createdAt).toLocaleTimeString([], {
                           hour: '2-digit',
@@ -301,7 +292,7 @@ export default function AdminWallet() {
                     </div>
                   </div>
                   <div
-                    className={`text-xs font-black ${tx.type === 'credit' ? 'text-green-600' : 'text-slate-900'
+                    className={`text-xs font-bold ${tx.type === 'credit' ? 'text-emerald-600' : 'text-gray-900'
                       }`}
                   >
                     {tx.type === 'credit' ? '+' : '-'}₹{tx.amount}
@@ -309,13 +300,13 @@ export default function AdminWallet() {
                 </div>
               ))}
               {transactions.length === 0 && (
-                <div className="text-center text-xs text-slate-400 py-4">No transactions yet</div>
+                <div className="text-center text-xs text-gray-400 py-4">No transactions yet</div>
               )}
             </div>
             {!showFullStatement && transactions.length > 5 && (
               <button
                 onClick={() => setShowFullStatement(true)}
-                className="w-full mt-4 py-2 text-[10px] font-bold text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest border-t border-slate-50 pt-4"
+                className="w-full mt-4 py-2 text-[10px] font-bold text-gray-400 hover:text-indigo-600 transition-colors uppercase tracking-widest border-t border-gray-50 pt-4"
               >
                 View Full Statement
               </button>
@@ -333,7 +324,7 @@ export default function AdminWallet() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsModalOpen(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
             ></motion.div>
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -341,25 +332,25 @@ export default function AdminWallet() {
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               className="relative bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden"
             >
-              <div className="bg-slate-900 p-6 text-white">
+              <div className="bg-indigo-600 p-6 text-white">
                 <h3 className="text-xl font-bold">Grant Wallet Credit</h3>
-                <p className="text-xs text-slate-300">
+                <p className="text-xs text-indigo-100">
                   Granting manual balance to {selectedUser?.name}
                 </p>
               </div>
               <form onSubmit={handleGrantCredit} className="p-8 space-y-6">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">
                     Amount to Credit (₹)
                   </label>
                   <div className="relative">
-                    <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                    <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
                       type="number"
                       required
                       value={creditAmount}
                       onChange={(e) => setCreditAmount(e.target.value)}
-                      className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-slate-900 font-bold text-lg focus:outline-none"
+                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-indigo-600 font-bold text-lg focus:outline-none"
                       placeholder="0.00"
                     />
                   </div>
@@ -368,14 +359,14 @@ export default function AdminWallet() {
                   <button
                     type="submit"
                     disabled={grantCreditMutation.isPending}
-                    className="flex-1 bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-black shadow-xl shadow-slate-100 transition-all disabled:opacity-50"
+                    className="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all disabled:opacity-50"
                   >
                     {grantCreditMutation.isPending ? 'Processing...' : 'Confirm Credit'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-8 border border-slate-200 text-slate-500 font-bold py-4 rounded-2xl hover:bg-slate-50 transition-all"
+                    className="px-8 border border-gray-200 text-gray-500 font-bold py-4 rounded-2xl hover:bg-gray-50 transition-all"
                   >
                     Cancel
                   </button>

@@ -280,12 +280,12 @@ const AdminAstrologers = () => {
       {/* Restored Premium Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-2">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">AI <span className="text-slate-900">Astrologers</span></h2>
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Configure AI personalities and expertise</p>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">AI Astrologers</h1>
+          <p className="text-gray-500 mt-1">Configure AI personalities and expertise</p>
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="bg-slate-900 hover:bg-black text-white px-6 py-2.5 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-slate-100 transition-all text-sm"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all text-sm"
         >
           <Plus className="w-4 h-4" />
           Create AI Profile
@@ -293,7 +293,7 @@ const AdminAstrologers = () => {
       </div>
 
       {/* Restored Premium Filters */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap items-center gap-4">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap items-center gap-4">
         <div className="relative flex-grow">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
@@ -301,13 +301,13 @@ const AdminAstrologers = () => {
             placeholder="Search profiles..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2 border border-gray-100 rounded-lg bg-gray-50 w-full focus:outline-none focus:ring-2 focus:ring-slate-900 text-sm"
+            className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg bg-gray-50 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
           />
         </div>
         <select
           value={filterPersonality}
           onChange={(e) => setFilterPersonality(e.target.value)}
-          className="border-gray-100 bg-gray-50 rounded-lg text-xs font-bold text-gray-600 p-2"
+          className="border-gray-200 bg-gray-50 rounded-lg text-sm font-bold text-gray-600 p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
         >
           <option>All Personalities</option>
           <option>Traditional</option><option>Modern</option><option>Analytical</option><option>Empathetic</option><option>Mystical</option><option>Humorous</option>
@@ -318,7 +318,7 @@ const AdminAstrologers = () => {
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 text-left text-[10px] uppercase tracking-widest text-gray-400 font-bold border-b border-gray-100">
+            <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500 font-bold border-b border-gray-100">
               <tr>
                 <th className="px-6 py-4">Profile</th>
                 <th className="px-6 py-4">Expertise</th>
@@ -345,34 +345,34 @@ const AdminAstrologers = () => {
                       />
                       <div>
                         <div className="text-sm font-bold text-gray-900">{astrologer.name}</div>
-                        <div className="text-[10px] text-gray-400 flex items-center">
-                          <Star className="w-2.5 h-2.5 mr-1 text-yellow-500 fill-yellow-500" />
+                        <div className="text-xs text-gray-500 flex items-center mt-0.5">
+                          <Star className="w-3 h-3 mr-1 text-yellow-500 fill-yellow-500" />
                           {astrologer.ratings?.average || 4.5} · {astrologer.stats?.totalSessions || 0} Sessions
                         </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-1 rounded-lg font-bold border border-slate-200 uppercase tracking-tight">
+                    <span className="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg font-bold border border-indigo-100 uppercase tracking-tight">
                       {getDisplayExpertise(astrologer)}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-xs font-semibold px-2 py-1 bg-blue-50 text-blue-600 rounded-lg">
+                    <span className="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg">
                       {astrologer.personalityType || astrologer.personality}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm font-bold text-gray-900">₹{astrologer.pricing?.chat ?? astrologer.ratePerMinute ?? 0}</span>
-                    <span className="text-[10px] text-gray-400">/min</span>
+                    <span className="text-xs text-gray-500 ml-1">/min</span>
                   </td>
                   <td className="px-6 py-4">
                     <button
                       onClick={() => toggleAvailability(astrologer._id)}
-                      className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all ${(astrologer.isAvailable || astrologer.availability?.isAvailable) ? 'bg-green-100 text-green-600 shadow-sm shadow-green-100' : 'bg-gray-100 text-gray-400'
+                      className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${(astrologer.isAvailable || astrologer.availability?.isAvailable) ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-gray-50 text-gray-500 border border-gray-200'
                         }`}
                     >
-                      <div className={`w-1.5 h-1.5 rounded-full ${(astrologer.isAvailable || astrologer.availability?.isAvailable) ? 'bg-green-600 animate-pulse' : 'bg-gray-400'}`}></div>
+                      <div className={`w-2 h-2 rounded-full ${(astrologer.isAvailable || astrologer.availability?.isAvailable) ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}></div>
                       {(astrologer.isAvailable || astrologer.availability?.isAvailable) ? 'Online' : 'Offline'}
                     </button>
                   </td>
@@ -398,104 +398,106 @@ const AdminAstrologers = () => {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"></div>
           <div className="relative bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden overflow-y-auto max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
-            <div className="bg-slate-900 p-6 text-white flex justify-between items-center">
+            <div className="bg-gray-900 p-6 text-white flex justify-between items-center">
               <div>
                 <h3 className="text-xl font-bold">{editingId ? 'Edit AI Profile' : 'New AI Astrologer Profile'}</h3>
-                <p className="text-xs text-slate-300">Define the personality and expertise of your AI</p>
+                <p className="text-xs text-gray-400">Define the personality and expertise of your AI</p>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="hover:bg-black p-2 rounded-xl transition-colors">
+              <button onClick={() => setIsModalOpen(false)} className="hover:bg-black/20 p-2 rounded-xl transition-colors">
                 <X className="w-6 h-6" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Column 1 */}
-              <div className="space-y-4">
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Profile Name</label>
-                  <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full mt-1 px-4 py-2 border border-gray-100 bg-gray-50 rounded-xl focus:ring-2 focus:ring-slate-900" placeholder="e.g. Swami Ajay" />
+            <form onSubmit={handleSubmit}>
+              <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Column 1 */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tight">Profile Name</label>
+                    <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full mt-1.5 px-4 py-2.5 border border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="e.g. Swami Ajay" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tight">Personality Type</label>
+                    <select value={formData.personalityType} onChange={(e) => setFormData({ ...formData, personalityType: e.target.value })} className="w-full mt-1.5 px-4 py-2.5 border border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                      <option>Traditional</option><option>Modern</option><option>Analytical</option><option>Empathetic</option><option>Mystical</option><option>Humorous</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tight">Tone / Voice</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.tone}
+                      onChange={(e) => setFormData({ ...formData, tone: e.target.value })}
+                      className="w-full mt-1.5 px-4 py-2.5 border border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                      placeholder="e.g. Calm, wise, and encouraging"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tight">Rate (₹ per min)</label>
+                    <input type="number" required value={formData.ratePerMinute} onChange={(e) => setFormData({ ...formData, ratePerMinute: Number(e.target.value) })} className="w-full mt-1.5 px-4 py-2.5 border border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Personality Type</label>
-                  <select value={formData.personalityType} onChange={(e) => setFormData({ ...formData, personalityType: e.target.value })} className="w-full mt-1 px-4 py-2 border border-gray-100 bg-gray-50 rounded-xl focus:ring-2 focus:ring-slate-900">
-                    <option>Traditional</option><option>Modern</option><option>Analytical</option><option>Empathetic</option><option>Mystical</option><option>Humorous</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Tone / Voice</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.tone}
-                    onChange={(e) => setFormData({ ...formData, tone: e.target.value })}
-                    className="w-full mt-1 px-4 py-2 border border-gray-100 bg-gray-50 rounded-xl focus:ring-2 focus:ring-slate-900"
-                    placeholder="e.g. Calm, wise, and encouraging"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Rate (₹ per min)</label>
-                  <input type="number" required value={formData.ratePerMinute} onChange={(e) => setFormData({ ...formData, ratePerMinute: Number(e.target.value) })} className="w-full mt-1 px-4 py-2 border border-gray-100 bg-gray-50 rounded-xl focus:ring-2 focus:ring-slate-900" />
-                </div>
-              </div>
 
-              {/* Column 2 */}
-              <div className="space-y-4">
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Expertises</label>
-                  <select value={formData.expertise} onChange={(e) => setFormData({ ...formData, expertise: e.target.value })} className="w-full mt-1 px-4 py-2 border border-gray-100 bg-gray-50 rounded-xl focus:ring-2 focus:ring-slate-900 font-bold text-gray-700">
-                    <option value="Vedic">Vedic</option><option value="Tarot">Tarot</option><option value="Numerology">Numerology</option>
-                  </select>
+                {/* Column 2 */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tight">Expertises</label>
+                    <select value={formData.expertise} onChange={(e) => setFormData({ ...formData, expertise: e.target.value })} className="w-full mt-1.5 px-4 py-2.5 border border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-gray-700">
+                      <option value="Vedic">Vedic</option><option value="Tarot">Tarot</option><option value="Numerology">Numerology</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tight">Languages (comma separated)</label>
+                    <input type="text" required value={formData.languages} onChange={(e) => setFormData({ ...formData, languages: e.target.value })} className="w-full mt-1.5 px-4 py-2.5 border border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="English, Hindi" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tight">Style Guide / Rules</label>
+                    <textarea
+                      rows={2}
+                      value={formData.styleGuide}
+                      onChange={(e) => setFormData({ ...formData, styleGuide: e.target.value })}
+                      className="w-full mt-1.5 px-4 py-2.5 border border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                      placeholder="e.g. Avoid jargon, use metaphors, always end with a blessing"
+                    ></textarea>
+                  </div>
+                  <div className="flex items-center gap-2.5 pt-2">
+                    <input type="checkbox" id="isAvailable" checked={formData.isAvailable} onChange={(e) => setFormData({ ...formData, isAvailable: e.target.checked })} className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                    <label htmlFor="isAvailable" className="text-sm font-bold text-gray-700">Set Profile Online</label>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Languages (comma separated)</label>
-                  <input type="text" required value={formData.languages} onChange={(e) => setFormData({ ...formData, languages: e.target.value })} className="w-full mt-1 px-4 py-2 border border-gray-100 bg-gray-50 rounded-xl focus:ring-2 focus:ring-slate-900" placeholder="English, Hindi" />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Style Guide / Rules</label>
-                  <textarea
-                    rows={2}
-                    value={formData.styleGuide}
-                    onChange={(e) => setFormData({ ...formData, styleGuide: e.target.value })}
-                    className="w-full mt-1 px-4 py-2 border border-gray-100 bg-gray-50 rounded-xl focus:ring-2 focus:ring-slate-900 text-xs"
-                    placeholder="e.g. Avoid jargon, use metaphors, always end with a blessing"
-                  ></textarea>
-                </div>
-                <div className="flex items-center gap-2 pt-2">
-                  <input type="checkbox" id="isAvailable" checked={formData.isAvailable} onChange={(e) => setFormData({ ...formData, isAvailable: e.target.checked })} className="w-5 h-5 rounded border-gray-300 text-slate-900 focus:ring-slate-900" />
-                  <label htmlFor="isAvailable" className="text-sm font-bold text-gray-700">Set Profile Online</label>
-                </div>
-              </div>
 
-              {/* Full Width Section */}
-              <div className="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Exp (Yrs)</label>
-                  <input type="number" value={formData.experience} onChange={(e) => setFormData({ ...formData, experience: Number(e.target.value) })} className="w-full mt-1 px-4 py-2 border border-gray-100 bg-gray-50 rounded-xl focus:ring-2 focus:ring-slate-900" />
+                {/* Full Width Section */}
+                <div className="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tight">Exp (Yrs)</label>
+                    <input type="number" value={formData.experience} onChange={(e) => setFormData({ ...formData, experience: Number(e.target.value) })} className="w-full mt-1.5 px-4 py-2.5 border border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tight">Education</label>
+                    <input type="text" value={formData.education} onChange={(e) => setFormData({ ...formData, education: e.target.value })} className="w-full mt-1.5 px-4 py-2.5 border border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="e.g. PhD" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tight">Focus Area</label>
+                    <input type="text" value={formData.focusArea} onChange={(e) => setFormData({ ...formData, focusArea: e.target.value })} className="w-full mt-1.5 px-4 py-2.5 border border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="Love, Career" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tight">Image</label>
+                    <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} className="w-full mt-1.5 text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all cursor-pointer" />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Education</label>
-                  <input type="text" value={formData.education} onChange={(e) => setFormData({ ...formData, education: e.target.value })} className="w-full mt-1 px-4 py-2 border border-gray-100 bg-gray-50 rounded-xl focus:ring-2 focus:ring-slate-900" placeholder="e.g. PhD" />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Focus Area</label>
-                  <input type="text" value={formData.focusArea} onChange={(e) => setFormData({ ...formData, focusArea: e.target.value })} className="w-full mt-1 px-4 py-2 border border-gray-100 bg-gray-50 rounded-xl focus:ring-2 focus:ring-slate-900" placeholder="Love, Career" />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Image</label>
-                  <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} className="w-full mt-1 text-[8px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[8px] file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200" />
-                </div>
-              </div>
 
-              <div className="col-span-full">
-                <label className="text-[10px] font-bold text-gray-400 uppercase">AI Bio / Description</label>
-                <textarea rows={2} value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} className="w-full mt-1 px-4 py-2 border border-gray-100 bg-gray-50 rounded-xl focus:ring-2 focus:ring-slate-900" placeholder="Describe the expertise and style of this AI..."></textarea>
-              </div>
+                <div className="col-span-full">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-tight">AI Bio / Description</label>
+                  <textarea rows={3} value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} className="w-full mt-1.5 px-4 py-2.5 border border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm" placeholder="Describe the expertise and style of this AI..."></textarea>
+                </div>
 
-              <div className="col-span-full pt-4 flex gap-3">
-                <button type="submit" className="flex-grow bg-slate-900 text-white font-bold py-3 rounded-2xl hover:bg-black shadow-xl shadow-slate-100 transition-all">
-                  {editingId ? 'Update AI Profile' : 'Save New Profile'}
-                </button>
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-8 border border-gray-200 text-gray-600 font-bold py-3 rounded-2xl hover:bg-gray-50 transition-all">Cancel</button>
+                <div className="col-span-full pt-4 flex gap-3">
+                  <button type="submit" className="flex-grow bg-indigo-600 text-white font-bold py-3 rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all">
+                    {editingId ? 'Update AI Profile' : 'Save New Profile'}
+                  </button>
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-8 border border-gray-200 text-gray-600 font-bold py-3 rounded-2xl hover:bg-gray-50 transition-all">Cancel</button>
+                </div>
               </div>
             </form>
           </div>

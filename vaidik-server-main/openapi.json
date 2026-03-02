@@ -9852,6 +9852,20 @@
         ]
       }
     },
+    "/api/v1/ai-orders/fix-identity-migration": {
+      "post": {
+        "operationId": "AiOrdersController_fixIdentityMigration",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiOrders"
+        ]
+      }
+    },
     "/api/v1/ai-orders/ai/{orderId}": {
       "get": {
         "operationId": "AiOrdersController_getAiOrderDetails",
