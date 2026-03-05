@@ -30,7 +30,7 @@ import { ProcessWalletRefundDto } from '../dto/process-wallet-refund.dto';
 @Controller('admin/payments')
 @UseGuards(AdminAuthGuard, PermissionsGuard)
 export class AdminPaymentsController {
-  constructor(private adminPaymentsService: AdminPaymentsService) {}
+  constructor(private adminPaymentsService: AdminPaymentsService) { }
 
   // ===== TRANSACTIONS =====
 
@@ -103,6 +103,16 @@ export class AdminPaymentsController {
   @RequirePermissions(Permissions.PAYOUTS_VIEW)
   async getPayoutDetails(@Param('payoutId') payoutId: string) {
     return this.adminPaymentsService.getPayoutDetails(payoutId);
+  }
+
+  /**
+   * GET /admin/payments/payouts/:payoutId/financial-audit
+   * Get exhaustive audit of how a payout was earned (orders, refunds, penalties)
+   */
+  @Get('payouts/:payoutId/financial-audit')
+  @RequirePermissions(Permissions.PAYOUTS_VIEW)
+  async getFinancialAudit(@Param('payoutId') payoutId: string) {
+    return this.adminPaymentsService.getFinancialAudit(payoutId);
   }
 
   /**
@@ -235,21 +245,21 @@ export class AdminPaymentsController {
    * Create new gift card
    */
   @Post('gift-cards')
-@RequirePermissions(Permissions.PAYMENTS_PROCESS)
-async createGiftCard(
-  @CurrentAdmin() admin: any,
-  @Body(ValidationPipe) createDto: CreateGiftCardDto,
-) {
-  return this.adminPaymentsService.createGiftCard({
-    code: createDto.code,
-    amount: createDto.amount,
-    currency: createDto.currency,
-    maxRedemptions: createDto.maxRedemptions,
-    expiresAt: createDto.expiresAt ? new Date(createDto.expiresAt) : undefined, // ✅ Convert to Date
-    metadata: createDto.metadata,
-    createdBy: admin._id,
-  });
-}
+  @RequirePermissions(Permissions.PAYMENTS_PROCESS)
+  async createGiftCard(
+    @CurrentAdmin() admin: any,
+    @Body(ValidationPipe) createDto: CreateGiftCardDto,
+  ) {
+    return this.adminPaymentsService.createGiftCard({
+      code: createDto.code,
+      amount: createDto.amount,
+      currency: createDto.currency,
+      maxRedemptions: createDto.maxRedemptions,
+      expiresAt: createDto.expiresAt ? new Date(createDto.expiresAt) : undefined, // ✅ Convert to Date
+      metadata: createDto.metadata,
+      createdBy: admin._id,
+    });
+  }
 
   /**
    * PATCH /admin/payments/gift-cards/:code/status
@@ -282,11 +292,11 @@ async createGiftCard(
     @Body() body: { userId: string; amount: number; action: 'add' | 'deduct'; reason: string },
   ) {
     return this.adminPaymentsService.manageUserBonus(
-        body.userId, 
-        body.amount, 
-        body.action, 
-        body.reason, 
-        admin._id
+      body.userId,
+      body.amount,
+      body.action,
+      body.reason,
+      admin._id
     );
   }
 }

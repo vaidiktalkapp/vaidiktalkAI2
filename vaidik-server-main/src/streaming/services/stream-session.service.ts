@@ -34,6 +34,50 @@ export class StreamSessionService {
     @Inject(forwardRef(() => StreamGateway)) private streamGateway: StreamGateway,
   ) { }
 
+  private activeTimers: Map<string, NodeJS.Timeout> = new Map();
+
+  // ==================== INTERVAL TIMERS ====================
+
+  private startTimer(streamId: string, maxDuration: number, userId: string) {
+    if (this.activeTimers.has(streamId)) {
+      clearInterval(this.activeTimers.get(streamId));
+    }
+
+    let remainingSeconds = maxDuration;
+    this.logger.log(`⏳ Starting server timer for stream call ${streamId} (${remainingSeconds}s)`);
+
+    const interval = setInterval(() => {
+      remainingSeconds--;
+
+      if (remainingSeconds % 5 === 0 || remainingSeconds <= 10) {
+        // Emit tick every 5 seconds or every second when under 10 seconds
+        this.streamGateway.server.to(streamId).emit('timer_tick', {
+          streamId,
+          remainingSeconds
+        });
+      }
+
+      if (remainingSeconds <= 0) {
+        this.logger.warn(`⏱️ Time's up for stream call ${streamId}. Ending automatically.`);
+        this.stopTimer(streamId);
+        // We use an internal end function call to safely wrap it up
+        this.endCurrentCall(streamId, '').catch(err =>
+          this.logger.error(`Error auto-ending livestream call ${streamId}: ${err.message}`)
+        );
+      }
+    }, 1000);
+
+    this.activeTimers.set(streamId, interval);
+  }
+
+  private stopTimer(streamId: string) {
+    if (this.activeTimers.has(streamId)) {
+      this.logger.log(`🛑 Stopping server timer for stream call ${streamId}`);
+      clearInterval(this.activeTimers.get(streamId));
+      this.activeTimers.delete(streamId);
+    }
+  }
+
   // ==================== INSTANT GO LIVE ====================
 
   async goLive(hostId: string, settings: CreateStreamDto): Promise<any> {
@@ -90,7 +134,7 @@ export class StreamSessionService {
         videoCallPrice: settings.videoCallPrice ?? 100,
         allowPublicCalls: settings.allowPublicCalls ?? true,
         allowPrivateCalls: settings.allowPrivateCalls ?? true,
-        maxCallDuration: settings.maxCallDuration ?? 600,
+        maxCallDuration: settings.maxCallDuration ?? 3600,
       },
       callWaitlist: [],
       createdAt: new Date(),
@@ -114,7 +158,7 @@ export class StreamSessionService {
       await stream.save();
       this.logger.log(`🎥 Auto-recording started for stream ${streamId}`);
     } catch (e) {
-      this.logger.error(`⚠️ Failed to auto-start recording for ${streamId}: ${e.message}`);
+      this.logger.error(`⚠️ Failed to auto-start recording for ${streamId}: ${(e as Error).message}`);
       // Don't fail the stream start just because recording failed, but log it.
     }
 
@@ -157,6 +201,9 @@ export class StreamSessionService {
     if (stream.isRecording && stream.recordingResourceId && stream.recordingSid) {
       this.handleBackgroundStreamStop(stream);
     }
+
+    // ✅ Clean up any active timers
+    this.stopTimer(streamId);
 
     stream.status = 'ended';
     stream.endedAt = new Date();
@@ -362,6 +409,9 @@ export class StreamSessionService {
 
     await stream.save();
 
+    // ✅ START SERVER TIMER LAUNCH
+    this.startTimer(streamId, finalMaxDuration, userId);
+
     return {
       success: true,
       data: {
@@ -481,7 +531,7 @@ export class StreamSessionService {
 
         } catch (error: any) {
           this.logger.error(`❌ Payment Failed: ${error.message}`);
-          transaction.status = 'payment_failed';
+          transaction.status = 'failed';
           transaction.totalCharge = 0;
         }
 
@@ -494,6 +544,8 @@ export class StreamSessionService {
     } else {
       this.logger.error(`❌ No ongoing transaction found for stream ${streamId} during endCurrentCall`);
     }
+
+    this.stopTimer(streamId);
 
     stream.currentCall = undefined as any;
     stream.currentState = 'streaming';
@@ -916,7 +968,7 @@ export class StreamSessionService {
     };
   }
 
-  async startRecording(streamId: string): Promise<any> {
+  async startRecording(streamId: string) {
     const stream = await this.streamModel.findOne({ streamId });
     if (!stream || stream.status !== 'live') throw new BadRequestException('Stream not live');
     if (stream.isRecording) throw new BadRequestException('Already recording');
@@ -939,7 +991,7 @@ export class StreamSessionService {
     return { success: true, message: 'Recording started', data: { sid: result.sid } };
   }
 
-  async stopRecording(streamId: string): Promise<any> {
+  async stopRecording(streamId: string) {
     const stream = await this.streamModel.findOne({ streamId });
     if (!stream || !stream.isRecording) throw new BadRequestException('Not recording');
 
@@ -961,7 +1013,7 @@ export class StreamSessionService {
     return { success: true, message: 'Recording stopped', data: result };
   }
 
-  async getStreamById(streamId: string): Promise<any> {
+  async getStreamById(streamId: string) {
     return this.streamModel.findOne({ streamId }).lean();
   }
 

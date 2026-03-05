@@ -5,6 +5,8 @@ import { JwtModule } from '@nestjs/jwt'; // ✅ ADD
 // Schemas
 import { Astrologer, AstrologerSchema } from './schemas/astrologer.schema';
 import { ProfileChangeRequest, ProfileChangeRequestSchema } from './schemas/profile-change-request.schema';
+import { CallSession, CallSessionSchema } from '../calls/schemas/call-session.schema';
+import { ChatSession, ChatSessionSchema } from '../chat/schemas/chat-session.schema';
 
 // Services
 import { AstrologersService } from './services/astrologers.service';
@@ -36,6 +38,8 @@ import { Order, OrderSchema } from 'src/orders/schemas/orders.schema';
       { name: ProfileChangeRequest.name, schema: ProfileChangeRequestSchema },
       { name: Order.name, schema: OrderSchema },
       { name: Review.name, schema: ReviewSchema },
+      { name: CallSession.name, schema: CallSessionSchema },
+      { name: ChatSession.name, schema: ChatSessionSchema },
     ]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
@@ -71,4 +75,4 @@ import { Order, OrderSchema } from 'src/orders/schemas/orders.schema';
     AstrologerBlockingService, // ✅ ADD
   ],
 })
-export class AstrologersModule {}
+export class AstrologersModule { }

@@ -60,6 +60,11 @@ export class UpdateProfileDto {
 
   @IsOptional()
   @IsString()
+  @Matches(/^\+?[1-9]\d{6,14}$/, { message: 'Invalid phone number format' })
+  phoneNumber?: string;
+
+  @IsOptional()
+  @IsString()
   profileImage?: string;
 
   @IsOptional()

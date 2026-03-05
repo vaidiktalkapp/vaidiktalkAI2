@@ -36,7 +36,7 @@ export class CallTransaction {
   totalCharge: number;
 
   @Prop({ 
-    enum: ['ongoing', 'completed', 'cancelled', 'failed'],
+    enum: ['ongoing', 'completed', 'cancelled', 'failed','payment_failed'],
     default: 'ongoing'
   })
   status: string;

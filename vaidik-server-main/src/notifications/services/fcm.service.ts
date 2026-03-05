@@ -100,7 +100,7 @@ export class FcmService {
 
       const message: admin.messaging.Message = {
         token: fcmToken,
-        notification: notificationPayload,
+        ...(config?.isFullScreen ? {} : { notification: notificationPayload }),
         data: fcmData,
         android: {
           priority: 'high',
@@ -135,8 +135,7 @@ export class FcmService {
 
       const response = await admin.messaging().send(message);
       this.logger.log(
-        `✅ Push sent: ${response} | Type: ${config?.priority || 'default'} | FullScreen: ${
-          config?.isFullScreen || false
+        `✅ Push sent: ${response} | Type: ${config?.priority || 'default'} | FullScreen: ${config?.isFullScreen || false
         }`
       );
 
@@ -164,19 +163,25 @@ export class FcmService {
       priority?: 'low' | 'medium' | 'high' | 'urgent';
       sound?: string;
       channelId?: string;
+      category?: string;
       badge?: number;
+      voipTokens?: string[];
     }
   ): Promise<{ successCount: number; failureCount: number; failedTokens?: string[] }> {
     try {
-      if (!fcmTokens || fcmTokens.length === 0) {
+      const fcmTokensToUse = [...(fcmTokens || [])];
+      const voipTokensToUse = config?.voipTokens || [];
+
+      if (fcmTokensToUse.length === 0 && voipTokensToUse.length === 0) {
         return { successCount: 0, failureCount: 0, failedTokens: [] };
       }
 
-      const validTokens = fcmTokens.filter((t) => t && typeof t === 'string' && t.length > 0);
+      const validTokens = fcmTokensToUse.filter((t) => t && typeof t === 'string' && t.length > 0);
+      const validVoipTokens = voipTokensToUse.filter((t) => t && typeof t === 'string' && t.length > 0);
 
-      if (validTokens.length === 0) {
-        this.logger.warn('⚠️ No valid FCM tokens');
-        return { successCount: 0, failureCount: fcmTokens.length, failedTokens: fcmTokens };
+      if (validTokens.length === 0 && validVoipTokens.length === 0) {
+        this.logger.warn('⚠️ No valid FCM or VoIP tokens');
+        return { successCount: 0, failureCount: 0, failedTokens: [] };
       }
 
       const notificationPayload: any = { title, body };
@@ -184,68 +189,85 @@ export class FcmService {
         notificationPayload.imageUrl = imageUrl;
       }
 
-      const message: admin.messaging.MulticastMessage = {
-        notification: notificationPayload,
-        data: data || {},
-        tokens: validTokens,
-        android: {
-          priority: 'high',
-          notification: {
-            sound: config?.sound || 'default',
-            channelId: config?.channelId || 'vaidik_talk_notifications',
-            priority: config?.priority === 'urgent' ? 'max' : 'high',
-            defaultVibrateTimings: true,
-            ...(config?.isFullScreen && {
-              visibility: 'public',
-              tag: 'full_screen_call',
-            }),
-          },
-        },
-        apns: {
-          payload: {
-            aps: {
-              sound: config?.sound?.replace('.mp3', '.wav') || 'default',
-              badge: config?.badge || 1,
-              'content-available': 1,
+      // 1. Send to standard FCM tokens
+      let successCount = 0;
+      let failureCount = 0;
+
+      if (validTokens.length > 0) {
+        const message: admin.messaging.MulticastMessage = {
+          ...(config?.isFullScreen ? {} : { notification: notificationPayload }),
+          data: data || {},
+          tokens: validTokens,
+          android: {
+            priority: 'high',
+            notification: {
+              sound: config?.sound || 'default',
+              channelId: config?.channelId || 'vaidik_talk_notifications',
+              priority: config?.priority === 'urgent' ? 'max' : 'high',
+              defaultVibrateTimings: true,
               ...(config?.isFullScreen && {
-                'interruption-level': 'critical',
+                visibility: 'public',
+                tag: 'full_screen_call',
               }),
             },
           },
-        },
-      };
+          apns: {
+            payload: {
+              aps: {
+                sound: config?.sound?.replace('.mp3', '.wav') || 'default',
+                badge: config?.badge || 1,
+                'content-available': 1,
+                ...(config?.isFullScreen && {
+                  'interruption-level': 'critical',
+                }),
+                ...(config?.category && {
+                  category: config.category,
+                }),
+              },
+            },
+          },
+        };
 
-      this.logger.log(
-        `📤 Sending to ${validTokens.length} FCM tokens (fullScreen: ${config?.isFullScreen})`
-      );
+        const response = await admin.messaging().sendEachForMulticast(message);
+        successCount += response.successCount;
+        failureCount += response.failureCount;
+      }
 
-      const response = await admin.messaging().sendEachForMulticast(message);
+      // 2. Send to specialized VoIP tokens (iOS specific headers)
+      if (validVoipTokens.length > 0) {
+        const voipMessage: admin.messaging.MulticastMessage = {
+          data: data || {}, // VoIP often uses data-only payloads
+          tokens: validVoipTokens,
+          apns: {
+            headers: {
+              'apns-priority': '10',
+              'apns-push-type': 'voip',
+            },
+            payload: {
+              aps: {
+                sound: config?.sound?.replace('.mp3', '.wav') || 'default',
+                'content-available': 1,
+                ...(config?.category && {
+                  category: config.category,
+                }),
+              },
+            },
+          },
+        };
 
-      // ✅ ENHANCED LOGGING: Log specific errors for failures
-      if (response.failureCount > 0) {
-        const failedTokensList: string[] = [];
-        response.responses.forEach((res, idx) => {
-          if (!res.success) {
-            const tokenPreview = validTokens[idx]
-              ? validTokens[idx].substring(0, 15) + '...'
-              : 'Unknown';
-            failedTokensList.push(validTokens[idx]);
-
-            this.logger.error(
-              `❌ FCM Failure for token [${tokenPreview}]: ` +
-                `Code: ${res.error?.code} | Message: ${res.error?.message}`
-            );
-          }
-        });
+        const voipResponse = await admin.messaging().sendEachForMulticast(voipMessage);
+        this.logger.log(`📞 VoIP Push: ${voipResponse.successCount} success, ${voipResponse.failureCount} failed`);
+        successCount += voipResponse.successCount;
+        failureCount += voipResponse.failureCount;
       }
 
       this.logger.log(
-        `📊 FCM Summary: ${response.successCount} success, ${response.failureCount} failed`
+        `📊 Combined Summary: ${successCount} success, ${failureCount} failed`
       );
 
       return {
-        successCount: response.successCount,
-        failureCount: response.failureCount,
+        successCount,
+        failureCount,
         failedTokens: [],
       };
     } catch (error: any) {

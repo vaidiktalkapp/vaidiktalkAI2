@@ -34,7 +34,7 @@ export class CallController {
     private callSessionService: CallSessionService,
     private callBillingService: CallBillingService,
     private callGateway: CallGateway,
-  ) {}
+  ) { }
 
   // ===== GET STATISTICS =====
   @Get('stats/summary')
@@ -105,28 +105,27 @@ export class CallController {
   }
 
   // ===== ASTROLOGER: ACCEPT CALL =====
-@Post('astrologer/accept')
-async acceptCallAsAstrologer(
-  @Req() req: AuthenticatedRequest,
-  @Body('sessionId', new ValidationPipe({ transform: true })) sessionId: string,
-) {
-  if (!sessionId) {
-    throw new BadRequestException('sessionId is required');
+  @Post('astrologer/accept')
+  async acceptCallAsAstrologer(
+    @Req() req: AuthenticatedRequest,
+    @Body('sessionId', new ValidationPipe({ transform: true })) sessionId: string,
+  ) {
+    if (!sessionId) {
+      throw new BadRequestException('sessionId is required');
+    }
+
+    const astrologerId = req.user._id;
+    const result = await this.callSessionService.acceptCall(sessionId, astrologerId);
+
+    return {
+      success: true,
+      message: 'Call accepted',
+      data: result,
+    };
   }
 
-  const astrologerId = req.user._id;
-  const result = await this.callSessionService.acceptCall(sessionId, astrologerId);
-  await this.callGateway.notifyUserOfAcceptance(sessionId, astrologerId, result.data);
-
-  return {
-    success: true,
-    message: 'Call accepted',
-    data: result,
-  };
-}
-
-// ===== ASTROLOGER: REJECT CALL =====
-@Post('astrologer/reject')
+  // ===== ASTROLOGER: REJECT CALL =====
+  @Post('astrologer/reject')
   async rejectCallAsAstrologer(
     @Req() req: AuthenticatedRequest,
     @Body('sessionId') sessionId: string, // ✅ Removed inline ValidationPipe to prevent 400s on simple strings
@@ -140,68 +139,60 @@ async acceptCallAsAstrologer(
     const rejectReason = reason || 'astrologer_rejected';
 
     try {
-        // ✅ FIX: Call Service FIRST to update DB/Order status correctly
-        const result = await this.callSessionService.rejectCall(
-          sessionId,
-          astrologerId,
-          rejectReason
-        );
+      // ✅ FIX: Call Service FIRST to update DB/Order status correctly
+      const result = await this.callSessionService.rejectCall(
+        sessionId,
+        astrologerId,
+        rejectReason
+      );
 
-        // ✅ FIX: THEN Call Gateway to notify User via Socket (Real-time UI update)
-        // Check if gateway exists before calling to avoid crashes
-        if (this.callGateway && this.callGateway.rejectCall) {
-             this.callGateway.rejectCall(sessionId, astrologerId, rejectReason).catch(e => {
-                 this.logger.error(`Failed to emit reject socket: ${e.message}`);
-             });
-        }
-
-        return {
-          success: true,
-          message: 'Call rejected',
-          data: result,
-        };
+      return {
+        success: true,
+        message: 'Call rejected',
+        data: result,
+      };
     } catch (error) {
-        // If 400 (e.g. already cancelled), just return success to client so UI clears
-        if (error instanceof BadRequestException) {
-            this.logger.warn(`Reject failed gracefully: ${error.message}`);
-            return { success: true, message: 'Call already cancelled or invalid' };
-        }
-        throw error;
+      // If 400 (e.g. already cancelled), just return success to client so UI clears
+      if (error instanceof BadRequestException) {
+        this.logger.warn(`Reject failed gracefully: ${error.message}`);
+        return { success: true, message: 'Call already cancelled or invalid' };
+      }
+      throw error;
     }
   }
 
-/**
- * Get astrologer's call sessions
- * GET /calls/astrologer/sessions
- */
-@Get('astrologer/sessions')
-async getAstrologerCallSessions(
-  @Req() req: AuthenticatedRequest,
-  @Query('page') page: string = '1',
-  @Query('limit') limit: string = '20',
-  @Query('status') status?: string
-) {
-  return this.callSessionService.getAstrologerCallSessions(
-    req.user._id,
-    {
-      page: parseInt(page),
-      limit: parseInt(limit),
-      status
-    }
-  );
-}
+  /**
+   * Get astrologer's call sessions
+   * GET /calls/astrologer/sessions
+   */
+  @Get('astrologer/sessions')
+  async getAstrologerCallSessions(
+    @Req() req: AuthenticatedRequest,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '20',
+    @Query('status') status?: string
+  ) {
+    return this.callSessionService.getAstrologerCallSessions(
+      req.user._id,
+      {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        status
+      }
+    );
+  }
 
-/**
- * Get astrologer call session details
- * GET /calls/astrologer/sessions/:sessionId
- */
-@Get('astrologer/sessions/:sessionId')
-async getAstrologerCallSessionDetails(
-  @Param('sessionId') sessionId: string,
-  @Req() req: AuthenticatedRequest
-) {
-  return this.callSessionService.getAstrologerCallSessionDetails(sessionId, req.user._id);
-}
+  /**
+   * Get astrologer call session details
+   * GET /calls/astrologer/sessions/:sessionId
+   */
+  @Get('astrologer/sessions/:sessionId')
+  async getAstrologerCallSessionDetails(
+    @Param('sessionId') sessionId: string,
+    @Req() req: AuthenticatedRequest
+  ) {
+    return this.callSessionService.getAstrologerCallSessionDetails(sessionId, req.user._id);
+  }
 
 
   // ===== CONTINUE CALL =====
@@ -224,7 +215,7 @@ async getAstrologerCallSessionDetails(
       throw new BadRequestException('Cancellation reason must be at least 5 characters');
     }
 
-   const result = await this.callGateway.cancelCallRequest(
+    const result = await this.callGateway.cancelCallRequest(
       sessionId,
       req.user._id,
       reason || 'user_cancelled'
@@ -243,7 +234,7 @@ async getAstrologerCallSessionDetails(
     @Req() req: AuthenticatedRequest
   ) {
     const session = await this.callSessionService.getSession(sessionId);
-    
+
     if (!session) {
       throw new NotFoundException('Session not found');
     }
@@ -284,7 +275,7 @@ async getAstrologerCallSessionDetails(
     @Param('sessionId') sessionId: string
   ) {
     const session = await this.callSessionService.getSession(sessionId);
-    
+
     if (!session) {
       throw new NotFoundException('Session not found');
     }
@@ -310,7 +301,7 @@ async getAstrologerCallSessionDetails(
     @Req() req: AuthenticatedRequest
   ) {
     const session = await this.callSessionService.getSession(sessionId);
-    
+
     if (!session) {
       throw new NotFoundException('Session not found');
     }
@@ -355,7 +346,7 @@ async getAstrologerCallSessionDetails(
     }
 
     const session = await this.callSessionService.getSession(sessionId);
-    
+
     if (!session) {
       throw new NotFoundException('Session not found');
     }
@@ -393,7 +384,7 @@ async getAstrologerCallSessionDetails(
     }
 
     const session = await this.callSessionService.getSession(sessionId);
-    
+
     if (!session) {
       throw new NotFoundException('Session not found');
     }
@@ -440,7 +431,7 @@ async getAstrologerCallSessionDetails(
     @Req() req: AuthenticatedRequest
   ) {
     const session = await this.callSessionService.getSession(sessionId);
-    
+
     if (!session) {
       throw new NotFoundException('Session not found');
     }
@@ -472,7 +463,7 @@ async getAstrologerCallSessionDetails(
     @Req() req: AuthenticatedRequest
   ) {
     const session = await this.callSessionService.getSession(sessionId);
-    
+
     if (!session) {
       throw new NotFoundException('Session not found');
     }
@@ -498,38 +489,38 @@ async getAstrologerCallSessionDetails(
   }
 
   // ===== GET REAL-TIME BILLING =====
-@Get('sessions/:sessionId/billing/realtime')
-async getRealTimeBilling(
-  @Param('sessionId') sessionId: string,
-  @Req() req: AuthenticatedRequest
-) {
-  const session = await this.callSessionService.getSession(sessionId);
-  if (!session) {
-    throw new NotFoundException('Session not found');
+  @Get('sessions/:sessionId/billing/realtime')
+  async getRealTimeBilling(
+    @Param('sessionId') sessionId: string,
+    @Req() req: AuthenticatedRequest
+  ) {
+    const session = await this.callSessionService.getSession(sessionId);
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+
+    if (session.userId.toString() !== req.user._id) {
+      throw new BadRequestException('You do not have access to this information');
+    }
+
+    return this.callBillingService.calculateRealTimeBilling(sessionId);
   }
 
-  if (session.userId.toString() !== req.user._id) {
-    throw new BadRequestException('You do not have access to this information');
+  // ===== GET BILLING SUMMARY =====
+  @Get('sessions/:sessionId/billing/summary')
+  async getBillingSummary(
+    @Param('sessionId') sessionId: string,
+    @Req() req: AuthenticatedRequest
+  ) {
+    const session = await this.callSessionService.getSession(sessionId);
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+
+    if (session.userId.toString() !== req.user._id && session.astrologerId.toString() !== req.user._id) {
+      throw new BadRequestException('You do not have access to this information');
+    }
+
+    return this.callBillingService.getBillingSummary(sessionId);
   }
-
-  return this.callBillingService.calculateRealTimeBilling(sessionId);
-}
-
-// ===== GET BILLING SUMMARY =====
-@Get('sessions/:sessionId/billing/summary')
-async getBillingSummary(
-  @Param('sessionId') sessionId: string,
-  @Req() req: AuthenticatedRequest
-) {
-  const session = await this.callSessionService.getSession(sessionId);
-  if (!session) {
-    throw new NotFoundException('Session not found');
-  }
-
-  if (session.userId.toString() !== req.user._id && session.astrologerId.toString() !== req.user._id) {
-    throw new BadRequestException('You do not have access to this information');
-  }
-
-  return this.callBillingService.getBillingSummary(sessionId);
-}
 }

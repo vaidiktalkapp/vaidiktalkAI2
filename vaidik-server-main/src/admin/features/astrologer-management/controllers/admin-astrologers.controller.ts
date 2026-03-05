@@ -11,6 +11,7 @@ import {
   ParseIntPipe,
   ValidationPipe,
   Delete,
+  Post,
 } from '@nestjs/common';
 
 import { AdminAuthGuard } from '../../../core/guards/admin-auth.guard';
@@ -21,12 +22,17 @@ import { Permissions } from '../../../core/config/permissions.config';
 
 import { AdminAstrologersService } from '../services/admin-astrologers.service';
 import { UpdatePricingDto } from '../dto/update-pricing.dto';
+
 import { AstrologerQueryDto } from '../dto/astrologer-query.dto';
+import { PenaltyService } from '../../../../astrologers/services/penalty.service';
 
 @Controller('admin/astrologers')
 @UseGuards(AdminAuthGuard, PermissionsGuard)
 export class AdminAstrologersController {
-  constructor(private adminAstrologersService: AdminAstrologersService) {}
+  constructor(
+    private adminAstrologersService: AdminAstrologersService,
+    private penaltyService: PenaltyService
+  ) { }
 
   /**
    * GET /admin/astrologers
@@ -187,4 +193,25 @@ export class AdminAstrologersController {
   ) {
     return this.adminAstrologersService.deleteAstrologer(astrologerId, admin._id, reason);
   }
+
+  /**
+   * POST /admin/astrologers/penalties/:penaltyId/waive
+   * Waive a penalty
+   */
+  @Post('penalties/:penaltyId/waive')
+  @RequirePermissions(Permissions.ASTROLOGERS_EDIT)
+  async waivePenalty(
+    @Param('penaltyId') penaltyId: string,
+    @CurrentAdmin() admin: any,
+    @Body('astrologerId') astrologerId: string,
+    @Body('reason') reason: string,
+  ) {
+    return this.penaltyService.waivePenalty(
+      astrologerId,
+      penaltyId,
+      admin._id,
+      reason
+    );
+  }
+
 }

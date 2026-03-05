@@ -20,10 +20,10 @@ import {
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { ChatSessionService } from '../services/chat-session.service';
 import { ChatMessageService } from '../services/chat-message.service';
-import { EndChatDto, InitiateChatDto } from '../dto';
-import { AstrologerAcceptChatDto, AstrologerRejectChatDto } from '../dto';
+import { EndChatDto, InitiateChatDto, AstrologerAcceptChatDto, AstrologerRejectChatDto } from '../dto';
 import { OrdersService } from '../../orders/services/orders.service';
 import { UploadService } from '../../upload/services/upload.service';
+import { ChatGateway } from '../gateways/chat.gateway';
 import { UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -39,7 +39,8 @@ export class ChatController {
     private chatMessageService: ChatMessageService,
     private ordersService: OrdersService,
     private uploadService: UploadService,
-  ) {}
+    private chatGateway: ChatGateway,
+  ) { }
 
   @Get('history')
   async getChatHistory(
@@ -76,7 +77,7 @@ export class ChatController {
     });
   }
 
-    // ===== ASTROLOGER ACCEPT CHAT =====
+  // ===== FREE CHAT ELIGIBILITY =====
   @Post('astrologer/accept')
   async astrologerAcceptChat(
     @Req() req: AuthenticatedRequest,
@@ -90,6 +91,8 @@ export class ChatController {
       body.sessionId,
       req.user._id, // astrologerId from JWT
     );
+
+    // ChatSessionService.acceptChat already returns { success, message, status }
 
     // ChatSessionService.acceptChat already returns { success, message, status }
     return {
@@ -126,93 +129,93 @@ export class ChatController {
   }
 
   @Post('continue')
-async continueChat(
-  @Req() req: AuthenticatedRequest,
-  @Body() body: {
-    astrologerId: string;
-    previousSessionId: string;
-    ratePerMinute: number;
-  }
-) {
-  return this.chatSessionService.continueChat({
-    userId: req.user._id,
-    astrologerId: body.astrologerId,
-    previousSessionId: body.previousSessionId,
-    ratePerMinute: body.ratePerMinute,
-  });
-}
-
-@Post('upload/media')
-@UseInterceptors(FileInterceptor('file'))
-async uploadChatMedia(
-  @UploadedFile() file: Express.Multer.File,
-  @Body('type') type: 'image' | 'video' | 'audio',
-  @Req() req: AuthenticatedRequest
-) {
-  if (!file) {
-    throw new BadRequestException('No file uploaded');
-  }
-
-  let result;
-  
-  if (type === 'image') {
-    result = await this.uploadService.uploadImage(file);
-  } else if (type === 'video') {
-    result = await this.uploadService.uploadVideo(file);
-  } else if (type === 'audio') {
-    result = await this.uploadService.uploadAudio(file);
-  } else {
-    throw new BadRequestException('Invalid media type. Use: image, video, or audio');
-  }
-
-  return {
-    success: true,
-    message: 'Media uploaded successfully',
-    data: {
-      url: result.url,
-      s3Key: result.key,
-      filename: result.filename,
-      size: result.size,
-      mimeType: result.mimeType,
-      type
+  async continueChat(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: {
+      astrologerId: string;
+      previousSessionId: string;
+      ratePerMinute: number;
     }
-  };
-}
+  ) {
+    return this.chatSessionService.continueChat({
+      userId: req.user._id,
+      astrologerId: body.astrologerId,
+      previousSessionId: body.previousSessionId,
+      ratePerMinute: body.ratePerMinute,
+    });
+  }
 
-/**
- * Get astrologer's chat sessions
- * GET /chat/astrologer/sessions
- */
-@Get('astrologer/sessions')
-async getAstrologerChatSessions(
-  @Req() req: AuthenticatedRequest,
-  @Query('page') page: string = '1',
-  @Query('limit') limit: string = '20',
-  @Query('status') status?: string
-) {
-  return this.chatSessionService.getAstrologerChatSessions(
-    req.user._id,
-    {
-      page: parseInt(page),
-      limit: parseInt(limit),
-      status
+  @Post('upload/media')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadChatMedia(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('type') type: 'image' | 'video' | 'audio',
+    @Req() req: AuthenticatedRequest
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
     }
-  );
-}
 
-/**
- * Get astrologer chat session details
- * GET /chat/astrologer/sessions/:sessionId
- */
-@Get('astrologer/sessions/:sessionId')
-async getAstrologerChatSessionDetails(
-  @Param('sessionId') sessionId: string,
-  @Req() req: AuthenticatedRequest
-) {
-  return this.chatSessionService.getAstrologerChatSessionDetails(sessionId, req.user._id);
-}
+    let result;
 
-@Get('astrologer/conversations/:orderId/messages')
+    if (type === 'image') {
+      result = await this.uploadService.uploadImage(file);
+    } else if (type === 'video') {
+      result = await this.uploadService.uploadVideo(file);
+    } else if (type === 'audio') {
+      result = await this.uploadService.uploadAudio(file);
+    } else {
+      throw new BadRequestException('Invalid media type. Use: image, video, or audio');
+    }
+
+    return {
+      success: true,
+      message: 'Media uploaded successfully',
+      data: {
+        url: result.url,
+        s3Key: result.key,
+        filename: result.filename,
+        size: result.size,
+        mimeType: result.mimeType,
+        type
+      }
+    };
+  }
+
+  /**
+   * Get astrologer's chat sessions
+   * GET /chat/astrologer/sessions
+   */
+  @Get('astrologer/sessions')
+  async getAstrologerChatSessions(
+    @Req() req: AuthenticatedRequest,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '20',
+    @Query('status') status?: string
+  ) {
+    return this.chatSessionService.getAstrologerChatSessions(
+      req.user._id,
+      {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        status
+      }
+    );
+  }
+
+  /**
+   * Get astrologer chat session details
+   * GET /chat/astrologer/sessions/:sessionId
+   */
+  @Get('astrologer/sessions/:sessionId')
+  async getAstrologerChatSessionDetails(
+    @Param('sessionId') sessionId: string,
+    @Req() req: AuthenticatedRequest
+  ) {
+    return this.chatSessionService.getAstrologerChatSessionDetails(sessionId, req.user._id);
+  }
+
+  @Get('astrologer/conversations/:orderId/messages')
   async getAstrologerConversationMessages(
     @Param('orderId') orderId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
@@ -222,7 +225,7 @@ async getAstrologerChatSessionDetails(
     // 1. Validate Order Ownership for Astrologer
     // We call a specific service method (defined below) or you can use your generic findOne
     const orderDetails = await this.ordersService.getAstrologerOrderDetails(
-      orderId, 
+      orderId,
       req.user._id
     );
 
@@ -247,8 +250,8 @@ async getAstrologerChatSessionDetails(
     const astrologer: any = order.astrologerId;
     const user: any = order.userId;
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       data: {
         ...messagesResult,
         meta: {
@@ -263,24 +266,25 @@ async getAstrologerChatSessionDetails(
           user: {
             _id: user?._id,
             name: user?.name,
-            profilePicture: user?.profileImage, 
-            kundli: {name: user?.name,
-                    gender: user?.gender,
-                    dateOfBirth: user?.dateOfBirth,
-                    timeOfBirth: user?.timeOfBirth,
-                    placeOfBirth: user?.placeOfBirth
-                  },
+            profilePicture: user?.profileImage,
+            kundli: {
+              name: user?.name,
+              gender: user?.gender,
+              dateOfBirth: user?.dateOfBirth,
+              timeOfBirth: user?.timeOfBirth,
+              placeOfBirth: user?.placeOfBirth
+            },
             // Include privacy settings so frontend can block media downloads etc.
-            privacy: user?.privacy || {} 
+            privacy: user?.privacy || {}
           }
         }
-      } 
+      }
     };
   }
 
 
-// ===== GET ALL CONVERSATION MESSAGES (across all sessions) =====
-@Get('conversations/:orderId/messages')
+  // ===== GET ALL CONVERSATION MESSAGES (across all sessions) =====
+  @Get('conversations/:orderId/messages')
   async getConversationMessages(
     @Param('orderId') orderId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
@@ -291,7 +295,7 @@ async getAstrologerChatSessionDetails(
     // We assume getOrderDetails checks if req.user._id is a participant (User OR Astrologer)
     const orderDetails = await this.ordersService.getOrderDetails(orderId, req.user._id);
     const order = orderDetails.data;
-    
+
     // 2. Determine the Role (User or Astrologer)
     // We compare strings to ensure ObjectId matching works
     const isAstrologer = order.astrologerId?._id?.toString() === req.user._id.toString();
@@ -313,10 +317,10 @@ async getAstrologerChatSessionDetails(
 
     // 4. Extract Populated Fields for Meta Response
     const astrologer: any = order.astrologerId;
-    const user: any = order.userId; 
+    const user: any = order.userId;
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       data: {
         ...messagesResult, // Spread pagination & messages
         meta: {
@@ -331,22 +335,22 @@ async getAstrologerChatSessionDetails(
             _id: user?._id,
             name: user?.name,
             profilePicture: user?.profilePicture,
-            privacy: user?.privacy || {} 
+            privacy: user?.privacy || {}
           }
         }
-      } 
+      }
     };
   }
 
-// ===== GET CONVERSATION SUMMARY =====
-@Get('conversations/:orderId/summary')
-async getConversationSummary(
-  @Param('orderId') orderId: string,
-  @Req() req: AuthenticatedRequest
-) {
-  const order = await this.ordersService.getOrderDetails(orderId, req.user._id);
-  
-  const astrologerData = order.data.astrologerId; 
+  // ===== GET CONVERSATION SUMMARY =====
+  @Get('conversations/:orderId/summary')
+  async getConversationSummary(
+    @Param('orderId') orderId: string,
+    @Req() req: AuthenticatedRequest
+  ) {
+    const order = await this.ordersService.getOrderDetails(orderId, req.user._id);
+
+    const astrologerData = order.data.astrologerId;
 
     return {
       success: true,
@@ -367,7 +371,7 @@ async getConversationSummary(
         },
         // Also pass rate from order if needed for display
         ratePerMinute: order.data.ratePerMinute,
-        
+
         currentSessionId: order.data.currentSessionId,
         currentSessionType: order.data.currentSessionType,
         totalSessions: order.data.totalSessions,
@@ -445,16 +449,16 @@ async getConversationSummary(
   }
 
   @Get('sessions/:sessionId/starred')
-async getStarredMessages(
-  @Param('sessionId') sessionId: string,
-  @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-  @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number
-) {
-  const result = await this.chatMessageService.getStarredMessages(sessionId, page, limit);
-  return { success: true, data: result };
-}
+  async getStarredMessages(
+    @Param('sessionId') sessionId: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number
+  ) {
+    const result = await this.chatMessageService.getStarredMessages(sessionId, page, limit);
+    return { success: true, data: result };
+  }
 
-@Get('sessions/:sessionId/search')
+  @Get('sessions/:sessionId/search')
   async searchMessages(
     @Param('sessionId') sessionId: string,
     @Query('q') query: string,
@@ -464,35 +468,35 @@ async getStarredMessages(
     return this.chatMessageService.searchMessages(sessionId, query, page);
   }
 
-@Post('messages/:messageId/star')
+  @Post('messages/:messageId/star')
   async starMessage(@Param('messageId') messageId: string, @Req() req) {
     return this.chatMessageService.starMessage(messageId, req.user._id);
   }
 
-@Delete('messages/:messageId/star')
-async unstarMessage(
-  @Param('messageId') messageId: string,
-  @Body('sessionId') sessionId: string,
-  @Req() req: AuthenticatedRequest
-) {
-  const message = await this.chatMessageService.unstarMessage(messageId, req.user._id);
-  
-  if (!message) {
-    throw new BadRequestException('Failed to unstar message');
+  @Delete('messages/:messageId/star')
+  async unstarMessage(
+    @Param('messageId') messageId: string,
+    @Body('sessionId') sessionId: string,
+    @Req() req: AuthenticatedRequest
+  ) {
+    const message = await this.chatMessageService.unstarMessage(messageId, req.user._id);
+
+    if (!message) {
+      throw new BadRequestException('Failed to unstar message');
+    }
+
+    return {
+      success: true,
+      message: 'Star removed',
+      data: {
+        messageId,
+        isStarred: message.isStarred || false,
+        starredBy: message.starredBy || [],
+      }
+    };
   }
 
-  return { 
-    success: true, 
-    message: 'Star removed',
-    data: {
-      messageId,
-      isStarred: message.isStarred || false,
-      starredBy: message.starredBy || [],
-    }
-  };
-}
-
-@Post('messages/:messageId/delete')
+  @Post('messages/:messageId/delete')
   async deleteMessage(
     @Param('messageId') messageId: string,
     @Body('deleteFor') deleteFor: 'sender' | 'everyone',
@@ -501,7 +505,7 @@ async unstarMessage(
     return this.chatMessageService.deleteMessage(messageId, req.user._id, deleteFor);
   }
 
-@Get('conversations/:orderId/starred')
+  @Get('conversations/:orderId/starred')
   async getConversationStarredMessages(@Param('orderId') orderId: string, @Req() req) {
     return this.chatMessageService.getConversationStarredMessages(orderId, req.user._id);
   }

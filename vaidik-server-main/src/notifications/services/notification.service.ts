@@ -18,7 +18,7 @@ export class NotificationService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Astrologer.name) private astrologerModel: Model<AstrologerDocument>,
     private deliveryService: NotificationDeliveryService,
-  ) {}
+  ) { }
 
   /**
    * ✅ Main method: Create and send notification (hybrid delivery)
@@ -309,9 +309,9 @@ export class NotificationService {
     }
   }
 
-/**
-   * ✅ GET NOTIFICATIONS (Fixed Query Logic)
-   */
+  /**
+     * ✅ GET NOTIFICATIONS (Fixed Query Logic)
+     */
   async getUserNotifications(
     userId: string,
     page: number = 1,
@@ -319,7 +319,7 @@ export class NotificationService {
     unreadOnly: boolean = false
   ): Promise<any> {
     const skip = (page - 1) * limit;
-    
+
     // ✅ Robust Query: Matches either String OR ObjectId
     const query: any = {
       $or: [
@@ -342,7 +342,7 @@ export class NotificationService {
           .lean()
           .exec(),
         this.notificationModel.countDocuments(query),
-        this.notificationModel.countDocuments({ 
+        this.notificationModel.countDocuments({
           $or: [
             { recipientId: userId, isRead: false },
             { recipientId: new Types.ObjectId(userId), isRead: false }
@@ -398,10 +398,10 @@ export class NotificationService {
     };
 
     await this.notificationModel.updateMany(query, {
-        $set: {
-          isRead: true,
-          readAt: new Date(),
-        },
+      $set: {
+        isRead: true,
+        readAt: new Date(),
+      },
     });
   }
 
@@ -482,223 +482,279 @@ export class NotificationService {
   }
 
   // ========================================
-// 🆕 REFINED NOTIFICATION TYPE METHODS
-// ========================================
+  // 🆕 REFINED NOTIFICATION TYPE METHODS
+  // ========================================
 
-/**
- * Send Call Notification (Video/Audio)
- */
-async sendCallNotification(data: {
-  recipientId: string;
-  recipientModel: 'User' | 'Astrologer';
-  callerId: string;
-  callerName: string;
-  callerAvatar?: string;
-  isVideo: boolean;
-  callId: string;
-  roomId?: string;
-}): Promise<NotificationDocument> {
-  const type = data.isVideo ? RefinedNotificationType.CALL_VIDEO : RefinedNotificationType.CALL_AUDIO;
-  const config = getNotificationConfig(type);
+  /**
+   * Send Call Notification (Video/Audio)
+   */
+  async sendCallNotification(data: {
+    recipientId: string;
+    recipientModel: 'User' | 'Astrologer';
+    callerId: string;
+    callerName: string;
+    callerAvatar?: string;
+    isVideo: boolean;
+    callId: string;
+    roomId?: string;
+  }): Promise<NotificationDocument> {
+    const type = data.isVideo ? RefinedNotificationType.CALL_VIDEO : RefinedNotificationType.CALL_AUDIO;
+    const config = getNotificationConfig(type);
 
-  return this.sendNotification({
-    recipientId: data.recipientId,
-    recipientModel: data.recipientModel,
-    type,
-    title: data.callerName,
-    message: data.isVideo ? 'Incoming video call...' : 'Incoming voice call...',
-    data: {
-      callId: data.callId,
-      callerId: data.callerId,
-      callerName: data.callerName,
-      callerAvatar: data.callerAvatar,
-      isVideo: data.isVideo,
-      roomId: data.roomId,
-      fullScreen: true,
-    },
-    imageUrl: data.callerAvatar,
-    priority: config.priority,
-  });
-}
+    return this.sendNotification({
+      recipientId: data.recipientId,
+      recipientModel: data.recipientModel,
+      type,
+      title: data.callerName,
+      message: data.isVideo ? 'Incoming video call...' : 'Incoming voice call...',
+      data: {
+        callId: data.callId,
+        callerId: data.callerId,
+        callerName: data.callerName,
+        callerAvatar: data.callerAvatar,
+        isVideo: data.isVideo,
+        roomId: data.roomId,
+        fullScreen: true,
+      },
+      imageUrl: data.callerAvatar,
+      priority: config.priority,
+    });
+  }
 
-/**
- * Send Message Notification
- */
-async sendMessageNotification(data: {
-  recipientId: string;
-  recipientModel: 'User' | 'Astrologer';
-  senderId: string;
-  senderName: string;
-  senderAvatar?: string;
-  messageText: string;
-  chatId: string;
-  messageId: string;
-}): Promise<NotificationDocument> {
-  const config = getNotificationConfig(RefinedNotificationType.MESSAGE_DIRECT);
+  /**
+   * Send Message Notification
+   */
+  async sendMessageNotification(data: {
+    recipientId: string;
+    recipientModel: 'User' | 'Astrologer';
+    senderId: string;
+    senderName: string;
+    senderAvatar?: string;
+    messageText: string;
+    chatId: string;
+    messageId: string;
+  }): Promise<NotificationDocument> {
+    const config = getNotificationConfig(RefinedNotificationType.MESSAGE_DIRECT);
 
-  return this.sendNotification({
-    recipientId: data.recipientId,
-    recipientModel: data.recipientModel,
-    type: RefinedNotificationType.MESSAGE_DIRECT,
-    title: data.senderName,
-    message: data.messageText,
-    data: {
-      senderId: data.senderId,
-      senderName: data.senderName,
-      senderAvatar: data.senderAvatar,
-      chatId: data.chatId,
-      messageId: data.messageId,
-    },
-    imageUrl: data.senderAvatar,
-    actionUrl: `vaidiktalk://chat/${data.chatId}`,
-    priority: config.priority,
-  });
-}
+    return this.sendNotification({
+      recipientId: data.recipientId,
+      recipientModel: data.recipientModel,
+      type: RefinedNotificationType.MESSAGE_DIRECT,
+      title: data.senderName,
+      message: data.messageText,
+      data: {
+        senderId: data.senderId,
+        senderName: data.senderName,
+        senderAvatar: data.senderAvatar,
+        chatId: data.chatId,
+        messageId: data.messageId,
+      },
+      imageUrl: data.senderAvatar,
+      actionUrl: `vaidiktalk://chat/${data.chatId}`,
+      priority: config.priority,
+    });
+  }
 
-/**
- * Send Chat Notification (Group)
- */
-async sendChatNotification(data: {
-  recipientId: string;
-  recipientModel: 'User' | 'Astrologer';
-  senderId: string;
-  senderName: string;
-  senderAvatar?: string;
-  messageText: string;
-  chatId: string;
-  groupName?: string;
-}): Promise<NotificationDocument> {
-  const config = getNotificationConfig(RefinedNotificationType.CHAT_GROUP);
+  /**
+   * Send Chat Notification (Group)
+   */
+  async sendChatNotification(data: {
+    recipientId: string;
+    recipientModel: 'User' | 'Astrologer';
+    senderId: string;
+    senderName: string;
+    senderAvatar?: string;
+    messageText: string;
+    chatId: string;
+    groupName?: string;
+  }): Promise<NotificationDocument> {
+    const config = getNotificationConfig(RefinedNotificationType.CHAT_GROUP);
 
-  return this.sendNotification({
-    recipientId: data.recipientId,
-    recipientModel: data.recipientModel,
-    type: RefinedNotificationType.CHAT_GROUP,
-    title: data.groupName || data.senderName,
-    message: `${data.senderName}: ${data.messageText}`,
-    data: {
-      senderId: data.senderId,
-      senderName: data.senderName,
-      chatId: data.chatId,
-      groupName: data.groupName,
-    },
-    imageUrl: data.senderAvatar,
-    actionUrl: `vaidiktalk://chat/${data.chatId}`,
-    priority: config.priority,
-  });
-}
+    return this.sendNotification({
+      recipientId: data.recipientId,
+      recipientModel: data.recipientModel,
+      type: RefinedNotificationType.CHAT_GROUP,
+      title: data.groupName || data.senderName,
+      message: `${data.senderName}: ${data.messageText}`,
+      data: {
+        senderId: data.senderId,
+        senderName: data.senderName,
+        chatId: data.chatId,
+        groupName: data.groupName,
+      },
+      imageUrl: data.senderAvatar,
+      actionUrl: `vaidiktalk://chat/${data.chatId}`,
+      priority: config.priority,
+    });
+  }
 
-/**
- * Send Live Event Notification
- */
-async sendLiveEventNotification(data: {
-  recipientId: string;
-  recipientModel: 'User' | 'Astrologer';
-  eventId: string;
-  eventName: string;
-  eventType: 'started' | 'reminder';
-  eventStartTime?: Date;
-  astrologerId?: string;
-  astrologerName?: string;
-  astrologerAvatar?: string;
-}): Promise<NotificationDocument> {
-  const type = data.eventType === 'started' 
-    ? RefinedNotificationType.LIVE_EVENT_STARTED 
-    : RefinedNotificationType.LIVE_EVENT_REMINDER;
-  
-  const config = getNotificationConfig(type);
+  /**
+   * Send Missed Call Notification
+   */
+  async sendMissedCallNotification(data: {
+    recipientId: string;
+    recipientModel: 'User' | 'Astrologer';
+    callerName: string;
+    callType: 'audio' | 'video';
+    callId: string;
+  }): Promise<NotificationDocument> {
+    const config = getNotificationConfig(RefinedNotificationType.MISSED_CALL);
 
-  return this.sendNotification({
-    recipientId: data.recipientId,
-    recipientModel: data.recipientModel,
-    type,
-    title: data.eventType === 'started' ? '🔴 Live Now!' : '⏰ Event Starting Soon',
-    message: data.eventType === 'started'
-      ? `${data.astrologerName || 'Astrologer'} is now live: ${data.eventName}`
-      : `${data.eventName} starts in 15 minutes`,
-    data: {
-      eventId: data.eventId,
-      eventName: data.eventName,
-      eventType: data.eventType,
-      astrologerId: data.astrologerId,
-      astrologerName: data.astrologerName,
-      eventStartTime: data.eventStartTime?.toISOString(),
-    },
-    imageUrl: data.astrologerAvatar,
-    actionUrl: `vaidiktalk://event/${data.eventId}`,
-    priority: config.priority,
-  });
-}
+    return this.sendNotification({
+      recipientId: data.recipientId,
+      recipientModel: data.recipientModel,
+      type: RefinedNotificationType.MISSED_CALL,
+      title: 'Missed Call',
+      message: data.recipientModel === 'Astrologer'
+        ? `You missed a ${data.callType} call from ${data.callerName}.`
+        : `${data.callerName} was unable to take your ${data.callType} call at this time.`,
+      data: {
+        callId: data.callId,
+        callerName: data.callerName,
+        callType: data.callType,
+      },
+      priority: config.priority,
+    });
+  }
 
-/**
- * Send System/Promotional Notification
- */
-async sendSystemNotification(data: {
-  recipientId: string;
-  recipientModel: 'User' | 'Astrologer';
-  title: string;
-  message: string;
-  imageUrl?: string;
-  actionUrl?: string;
-  data?: Record<string, any>;
-}): Promise<NotificationDocument> {
-  const config = getNotificationConfig(RefinedNotificationType.SYSTEM_PROMOTIONAL);
+  /**
+   * Send Missed Chat Notification
+   */
+  async sendMissedChatNotification(data: {
+    recipientId: string;
+    recipientModel: 'User' | 'Astrologer';
+    senderName: string;
+    chatId: string;
+  }): Promise<NotificationDocument> {
+    const config = getNotificationConfig(RefinedNotificationType.MISSED_CHAT);
 
-  return this.sendNotification({
-    recipientId: data.recipientId,
-    recipientModel: data.recipientModel,
-    type: RefinedNotificationType.SYSTEM_PROMOTIONAL,
-    title: data.title,
-    message: data.message,
-    data: data.data,
-    imageUrl: data.imageUrl,
-    actionUrl: data.actionUrl,
-    priority: config.priority,
-  });
-}
+    return this.sendNotification({
+      recipientId: data.recipientId,
+      recipientModel: data.recipientModel,
+      type: RefinedNotificationType.MISSED_CHAT,
+      title: 'Missed Chat',
+      message: data.recipientModel === 'Astrologer'
+        ? `You missed a chat request from ${data.senderName}.`
+        : `${data.senderName} was unable to take your chat request at this time.`,
+      data: {
+        chatId: data.chatId,
+        senderName: data.senderName,
+      },
+      priority: config.priority,
+    });
+  }
 
-/**
- * Force Logout User
- */
-async forceLogoutUser(data: {
-  recipientId: string;
-  recipientModel: 'User' | 'Astrologer';
-  reason: string;
-  adminId?: string;
-}): Promise<NotificationDocument> {
-  const config = getNotificationConfig(RefinedNotificationType.FORCE_LOGOUT);
+  /**
+   * Send Live Event Notification
+   */
+  async sendLiveEventNotification(data: {
+    recipientId: string;
+    recipientModel: 'User' | 'Astrologer';
+    eventId: string;
+    eventName: string;
+    eventType: 'started' | 'reminder';
+    eventStartTime?: Date;
+    astrologerId?: string;
+    astrologerName?: string;
+    astrologerAvatar?: string;
+  }): Promise<NotificationDocument> {
+    const type = data.eventType === 'started'
+      ? RefinedNotificationType.LIVE_EVENT_STARTED
+      : RefinedNotificationType.LIVE_EVENT_REMINDER;
 
-  // 1. Send notification
-  const notification = await this.sendNotification({
-    recipientId: data.recipientId,
-    recipientModel: data.recipientModel,
-    type: RefinedNotificationType.FORCE_LOGOUT,
-    title: 'Session Ended',
-    message: data.reason,
-    data: {
-      reason: data.reason,
-      forceLogout: true,
-      timestamp: new Date().toISOString(),
-      adminId: data.adminId,
-    },
-    priority: config.priority,
-  });
+    const config = getNotificationConfig(type);
 
-  // 2. Deactivate all user devices
-  const model = (
-    data.recipientModel === 'User' ? this.userModel : this.astrologerModel
-  ) as Model<UserDocument | AstrologerDocument>;
+    return this.sendNotification({
+      recipientId: data.recipientId,
+      recipientModel: data.recipientModel,
+      type,
+      title: data.eventType === 'started' ? '🔴 Live Now!' : '⏰ Event Starting Soon',
+      message: data.eventType === 'started'
+        ? `${data.astrologerName || 'Astrologer'} is now live: ${data.eventName}`
+        : `${data.eventName} starts in 15 minutes`,
+      data: {
+        eventId: data.eventId,
+        eventName: data.eventName,
+        eventType: data.eventType,
+        astrologerId: data.astrologerId,
+        astrologerName: data.astrologerName,
+        eventStartTime: data.eventStartTime?.toISOString(),
+      },
+      imageUrl: data.astrologerAvatar,
+      actionUrl: `vaidiktalk://event/${data.eventId}`,
+      priority: config.priority,
+    });
+  }
 
-  await model.findByIdAndUpdate(data.recipientId, {
-    $set: { 'devices.$[].isActive': false },
-  });
+  /**
+   * Send System/Promotional Notification
+   */
+  async sendSystemNotification(data: {
+    recipientId: string;
+    recipientModel: 'User' | 'Astrologer';
+    title: string;
+    message: string;
+    imageUrl?: string;
+    actionUrl?: string;
+    data?: Record<string, any>;
+  }): Promise<NotificationDocument> {
+    const config = getNotificationConfig(RefinedNotificationType.SYSTEM_PROMOTIONAL);
 
-  this.logger.log(
-    `🔒 Force logout: ${data.recipientModel} ${data.recipientId} | ` +
-    `Reason: ${data.reason} | Admin: ${data.adminId || 'System'}`
-  );
+    return this.sendNotification({
+      recipientId: data.recipientId,
+      recipientModel: data.recipientModel,
+      type: RefinedNotificationType.SYSTEM_PROMOTIONAL,
+      title: data.title,
+      message: data.message,
+      data: data.data,
+      imageUrl: data.imageUrl,
+      actionUrl: data.actionUrl,
+      priority: config.priority,
+    });
+  }
 
-  return notification;
-}
+  /**
+   * Force Logout User
+   */
+  async forceLogoutUser(data: {
+    recipientId: string;
+    recipientModel: 'User' | 'Astrologer';
+    reason: string;
+    adminId?: string;
+  }): Promise<NotificationDocument> {
+    const config = getNotificationConfig(RefinedNotificationType.FORCE_LOGOUT);
+
+    // 1. Send notification
+    const notification = await this.sendNotification({
+      recipientId: data.recipientId,
+      recipientModel: data.recipientModel,
+      type: RefinedNotificationType.FORCE_LOGOUT,
+      title: 'Session Ended',
+      message: data.reason,
+      data: {
+        reason: data.reason,
+        forceLogout: true,
+        timestamp: new Date().toISOString(),
+        adminId: data.adminId,
+      },
+      priority: config.priority,
+    });
+
+    // 2. Deactivate all user devices
+    const model = (
+      data.recipientModel === 'User' ? this.userModel : this.astrologerModel
+    ) as Model<UserDocument | AstrologerDocument>;
+
+    await model.findByIdAndUpdate(data.recipientId, {
+      $set: { 'devices.$[].isActive': false },
+    });
+
+    this.logger.log(
+      `🔒 Force logout: ${data.recipientModel} ${data.recipientId} | ` +
+      `Reason: ${data.reason} | Admin: ${data.adminId || 'System'}`
+    );
+
+    return notification;
+  }
 
 }

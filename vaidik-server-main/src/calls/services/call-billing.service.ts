@@ -65,7 +65,7 @@ export class CallBillingService {
     const billing = this.calculateBilling(
       session.duration,
       session.ratePerMinute,
-      20
+      50
     );
 
     // Update session
@@ -108,7 +108,7 @@ export class CallBillingService {
 
     const now = new Date();
     const durationSeconds = Math.floor((now.getTime() - session.startTime.getTime()) / 1000);
-    const billing = this.calculateBilling(durationSeconds, session.ratePerMinute, 20);
+    const billing = this.calculateBilling(durationSeconds, session.ratePerMinute, 50);
 
     return {
       success: true,

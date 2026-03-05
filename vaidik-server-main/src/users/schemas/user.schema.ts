@@ -9,11 +9,11 @@ export type UserDocument = User & Document;
 })
 export class User {
   // === AUTHENTICATION (Phone Only) ===
-  @Prop({ 
-    required: true, 
-    unique: true, 
+  @Prop({
+    required: true,
+    unique: true,
     validate: {
-      validator: function(v: string) {
+      validator: function (v: string) {
         return /^(\+\d{10,15}|\d{10,15})$/.test(v);
       },
       message: 'Invalid phone number format'
@@ -47,10 +47,10 @@ export class User {
   @Prop({ required: false })
   dateOfBirth?: Date;
 
-  @Prop({ 
+  @Prop({
     required: false,
     validate: {
-      validator: function(v: string) {
+      validator: function (v: string) {
         return !v || /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v);
       },
       message: 'Time should be in HH:MM format'
@@ -73,10 +73,10 @@ export class User {
   @Prop({ required: false, trim: true, maxlength: 100 })
   country?: string;
 
-  @Prop({ 
+  @Prop({
     required: false,
     validate: {
-      validator: function(v: string) {
+      validator: function (v: string) {
         return !v || /^[1-9][0-9]{5}$/.test(v);
       },
       message: 'Invalid pincode format'
@@ -97,7 +97,7 @@ export class User {
   profileImageStorageType?: string;
 
   // === APP LANGUAGE ===
-  @Prop({ 
+  @Prop({
     required: false,
     enum: ['en', 'hi', 'ta', 'te', 'bn', 'mr', 'gu', 'kn', 'ml', 'pa', 'ur'],
     default: 'en'
@@ -105,7 +105,7 @@ export class User {
   appLanguage: string;
 
   // === NOTIFICATION SETTINGS ===
-  @Prop({ 
+  @Prop({
     type: {
       liveEvents: { type: Boolean, default: true },
       normal: { type: Boolean, default: true }
@@ -118,7 +118,7 @@ export class User {
   };
 
   // === PRIVACY SETTINGS ===
-  @Prop({ 
+  @Prop({
     type: {
       nameVisibleInReviews: { type: Boolean, default: true },
       restrictions: {
@@ -149,7 +149,7 @@ export class User {
   };
 
   // === WALLET SYSTEM (Aggregated Stats Only) ===
-  @Prop({ 
+  @Prop({
     type: {
       // Aggregate total (cash + bonus)
       balance: { type: Number, default: 0, min: 0 },
@@ -188,29 +188,29 @@ export class User {
   };
 
   // === FAVORITES (Small array - acceptable) ===
-  @Prop({ 
+  @Prop({
     type: [{ type: Types.ObjectId, ref: 'Astrologer' }],
     default: []
   })
   favoriteAstrologers: Types.ObjectId[];
 
   @Prop({
-  type: [{
-    astrologerId: { type: String, required: true },
-    reason: { type: String, required: true },
-    blockedAt: { type: Date, default: Date.now },
-    _id: false,
-  }],
-  default: [],
-})
-blockedAstrologers: Array<{
-  astrologerId: string;
-  reason: string;
-  blockedAt: Date;
-}>;
+    type: [{
+      astrologerId: { type: String, required: true },
+      reason: { type: String, required: true },
+      blockedAt: { type: Date, default: Date.now },
+      _id: false,
+    }],
+    default: [],
+  })
+  blockedAstrologers: Array<{
+    astrologerId: string;
+    reason: string;
+    blockedAt: Date;
+  }>;
 
   // === BASIC STATS (Aggregated only) ===
-  @Prop({ 
+  @Prop({
     type: {
       totalSessions: { type: Number, default: 0 },
       totalMinutesSpent: { type: Number, default: 0 },
@@ -232,9 +232,9 @@ blockedAstrologers: Array<{
   };
 
   // === ACCOUNT STATUS ===
-  @Prop({ 
+  @Prop({
     required: true,
-    enum: ['active', 'suspended','blocked', 'deleted'],
+    enum: ['active', 'suspended', 'blocked', 'deleted'],
     default: 'active',
   })
   status: string;
@@ -256,7 +256,7 @@ blockedAstrologers: Array<{
   @Prop({ required: false })
   lastIPAddress?: string;
 
-@Prop({
+  @Prop({
     type: [
       {
         fcmToken: { type: String, required: true },
@@ -271,6 +271,7 @@ blockedAstrologers: Array<{
   })
   devices: {
     fcmToken: string;
+    voipToken?: string;
     deviceId?: string;
     deviceType?: 'android' | 'ios' | 'web' | 'phone' | 'tablet';
     deviceName?: string;
@@ -279,8 +280,9 @@ blockedAstrologers: Array<{
   }[];
 
   @Prop({ default: true })
-singleDeviceMode: boolean;
+  singleDeviceMode: boolean;
 
+  // === FREE CHAT TRACKING ===
   createdAt: Date;
   updatedAt: Date;
 }
@@ -321,6 +323,6 @@ UserSchema.virtual('reports', {
 });
 
 // === VIRTUAL COMPUTED FIELD ===
-UserSchema.virtual('totalWalletBalance').get(function() {
+UserSchema.virtual('totalWalletBalance').get(function () {
   return this.wallet.balance;
 });

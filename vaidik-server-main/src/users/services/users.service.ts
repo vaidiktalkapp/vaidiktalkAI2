@@ -1,10 +1,13 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { User, UserDocument } from '../schemas/user.schema';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { UpdatePreferencesDto } from '../dto/update-preferences.dto';
+import { OtpService } from '../../auth/services/otp/otp.service';
+import { JwtAuthService } from '../../auth/services/jwt-auth/jwt-auth.service';
+import { SimpleCacheService } from '../../auth/services/cache/cache.service';
 
 @Injectable()
 export class UsersService {
@@ -12,7 +15,10 @@ export class UsersService {
 
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-  ) {}
+    private otpService: OtpService,
+    private jwtAuthService: JwtAuthService,
+    private cacheService: SimpleCacheService,
+  ) { }
 
   // ===== PROFILE MANAGEMENT =====
 
@@ -115,6 +121,76 @@ export class UsersService {
     };
   }
 
+  async sendPhoneChangeOtp(userId: string, phoneNumber: string, countryCode: string): Promise<any> {
+    const cleanPhone = this.otpService.normalizePhoneNumber(phoneNumber, countryCode);
+    const fullPhoneNumber = `+${countryCode}${cleanPhone}`;
+    const phoneHash = this.otpService.hashPhoneNumber(cleanPhone, countryCode);
+
+    // 1. Check if another user already has this phone number
+    const existingUser = await this.userModel.findOne({
+      $or: [
+        { phoneNumber: fullPhoneNumber },
+        { phoneNumber: cleanPhone },
+        { phoneHash: phoneHash }
+      ],
+      _id: { $ne: userId }
+    });
+
+    if (existingUser) {
+      throw new BadRequestException('This phone number is already associated with another account');
+    }
+
+    // 2. Send OTP
+    return this.otpService.sendOTP(cleanPhone, countryCode);
+  }
+
+  async verifyPhoneChangeOtp(userId: string, phoneNumber: string, countryCode: string, otp: string): Promise<any> {
+    // 1. Verify OTP
+    const isOtpValid = await this.otpService.verifyOTP(phoneNumber, countryCode, otp);
+    if (!isOtpValid) {
+      throw new BadRequestException('Invalid or expired OTP');
+    }
+
+    // Ensure we use the clean phone number for storage and hashing
+    const cleanPhone = this.otpService.normalizePhoneNumber(phoneNumber, countryCode);
+    const fullPhoneNumber = `+${countryCode}${cleanPhone}`;
+    const phoneHash = this.otpService.hashPhoneNumber(cleanPhone, countryCode);
+
+    // 2. Update user's phone number
+    const updatedUser = await this.userModel.findByIdAndUpdate(userId, {
+      $set: {
+        phoneNumber: fullPhoneNumber,
+        phoneHash: phoneHash,
+        countryCode: countryCode,
+        updatedAt: new Date()
+      }
+    }, { new: true });
+
+    if (!updatedUser) {
+      throw new BadRequestException('User not found');
+    }
+
+    const tokens = this.jwtAuthService.generateTokenPair(
+      updatedUser._id as Types.ObjectId,
+      updatedUser.phoneNumber,
+      updatedUser.phoneHash
+    );
+
+    await this.cacheService.set(
+      `refresh_token_${(updatedUser._id).toString()}`,
+      tokens.refreshToken,
+      7 * 24 * 60 * 60
+    );
+
+    return {
+      success: true,
+      message: 'Phone number updated successfully',
+      data: {
+        tokens
+      }
+    };
+  }
+
   // ===== PREFERENCES MANAGEMENT =====
 
   // Get user preferences
@@ -139,69 +215,69 @@ export class UsersService {
   }
 
   // Update user preferences
-async updatePreferences(userId: string, updateDto: UpdatePreferencesDto): Promise<any> {
-  const user = await this.userModel.findById(userId);
+  async updatePreferences(userId: string, updateDto: UpdatePreferencesDto): Promise<any> {
+    const user = await this.userModel.findById(userId);
 
-  if (!user) {
-    throw new NotFoundException('User not found');
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const updateFields: any = {};
+
+    if (updateDto.appLanguage !== undefined) {
+      updateFields.appLanguage = updateDto.appLanguage;
+    }
+
+    if (updateDto.liveEventsNotification !== undefined) {
+      updateFields['notifications.liveEvents'] = updateDto.liveEventsNotification;
+    }
+
+    if (updateDto.normalNotification !== undefined) {
+      updateFields['notifications.normal'] = updateDto.normalNotification;
+    }
+
+    if (updateDto.nameVisibleInReviews !== undefined) {
+      updateFields['privacy.nameVisibleInReviews'] = updateDto.nameVisibleInReviews;
+    }
+
+    if (updateDto.astrologerChatAccessAfterEnd !== undefined) {
+      updateFields['privacy.restrictions.astrologerChatAccessAfterEnd'] = updateDto.astrologerChatAccessAfterEnd;
+    }
+
+    if (updateDto.downloadSharedImages !== undefined) {
+      updateFields['privacy.restrictions.downloadSharedImages'] = updateDto.downloadSharedImages;
+    }
+
+    if (updateDto.restrictChatScreenshots !== undefined) {
+      updateFields['privacy.restrictions.restrictChatScreenshots'] = updateDto.restrictChatScreenshots;
+    }
+
+    if (updateDto.accessCallRecording !== undefined) {
+      updateFields['privacy.restrictions.accessCallRecording'] = updateDto.accessCallRecording;
+    }
+
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      userId,
+      { $set: { ...updateFields, updatedAt: new Date() } },
+      { new: true }
+    ).select('appLanguage notifications privacy');
+
+    // ✅ FIX: Add null check BEFORE accessing properties
+    if (!updatedUser) {
+      throw new NotFoundException('User not found after update');
+    }
+
+    // ✅ NOW it's safe to access properties
+    return {
+      success: true,
+      message: 'Preferences updated successfully',
+      data: {
+        appLanguage: updatedUser.appLanguage,
+        notifications: updatedUser.notifications,
+        privacy: updatedUser.privacy,
+      },
+    };
   }
-
-  const updateFields: any = {};
-
-  if (updateDto.appLanguage !== undefined) {
-    updateFields.appLanguage = updateDto.appLanguage;
-  }
-
-  if (updateDto.liveEventsNotification !== undefined) {
-    updateFields['notifications.liveEvents'] = updateDto.liveEventsNotification;
-  }
-
-  if (updateDto.normalNotification !== undefined) {
-    updateFields['notifications.normal'] = updateDto.normalNotification;
-  }
-
-  if (updateDto.nameVisibleInReviews !== undefined) {
-    updateFields['privacy.nameVisibleInReviews'] = updateDto.nameVisibleInReviews;
-  }
-
-  if (updateDto.astrologerChatAccessAfterEnd !== undefined) {
-    updateFields['privacy.restrictions.astrologerChatAccessAfterEnd'] = updateDto.astrologerChatAccessAfterEnd;
-  }
-
-  if (updateDto.downloadSharedImages !== undefined) {
-    updateFields['privacy.restrictions.downloadSharedImages'] = updateDto.downloadSharedImages;
-  }
-
-  if (updateDto.restrictChatScreenshots !== undefined) {
-    updateFields['privacy.restrictions.restrictChatScreenshots'] = updateDto.restrictChatScreenshots;
-  }
-
-  if (updateDto.accessCallRecording !== undefined) {
-    updateFields['privacy.restrictions.accessCallRecording'] = updateDto.accessCallRecording;
-  }
-
-  const updatedUser = await this.userModel.findByIdAndUpdate(
-    userId,
-    { $set: { ...updateFields, updatedAt: new Date() } },
-    { new: true }
-  ).select('appLanguage notifications privacy');
-
-  // ✅ FIX: Add null check BEFORE accessing properties
-  if (!updatedUser) {
-    throw new NotFoundException('User not found after update');
-  }
-
-  // ✅ NOW it's safe to access properties
-  return {
-    success: true,
-    message: 'Preferences updated successfully',
-    data: {
-      appLanguage: updatedUser.appLanguage,
-      notifications: updatedUser.notifications,
-      privacy: updatedUser.privacy,
-    },
-  };
-}
 
 
   // ===== WALLET MANAGEMENT =====
@@ -382,9 +458,9 @@ async updatePreferences(userId: string, updateDto: UpdatePreferencesDto): Promis
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleScheduledDeletions() {
     this.logger.log('Starting scheduled user account deletion cleanup...');
-    
+
     const now = new Date();
-    
+
     // Find users marked for deletion whose time has passed
     const usersToDelete = await this.userModel.find({
       status: 'deleted',
@@ -394,7 +470,7 @@ async updatePreferences(userId: string, updateDto: UpdatePreferencesDto): Promis
     if (usersToDelete.length === 0) return;
 
     let deletedCount = 0;
-    
+
     for (const user of usersToDelete) {
       try {
         // ✅ CHANGED: Use anonymizeUser instead of deleteOne
@@ -473,13 +549,13 @@ async updatePreferences(userId: string, updateDto: UpdatePreferencesDto): Promis
     // 1. Generate random anonymous ID
     // Format: +91000... to ensure it passes the regex validator ^(\+\d{10,15}|\d{10,15})$
     const randomSuffix = Math.floor(1000000000 + Math.random() * 9000000000).toString(); // 10 digits
-    const dummyPhone = `+00${randomSuffix}`; 
+    const dummyPhone = `+00${randomSuffix}`;
 
     // 2. Overwrite PII fields
     user.name = "Deleted User";
-    user.phoneNumber = dummyPhone; 
+    user.phoneNumber = dummyPhone;
     user.phoneHash = `deleted_${user._id}`; // Ensure uniqueness for index
-    
+
     // 3. Clear location/profile data
     user.currentAddress = undefined;
     user.city = undefined;
@@ -487,22 +563,22 @@ async updatePreferences(userId: string, updateDto: UpdatePreferencesDto): Promis
     user.placeOfBirth = undefined;
     user.dateOfBirth = undefined;
     user.timeOfBirth = undefined;
-    
+
     // ✅ FIX 1: Don't set to null if schema has a default string. 
     // Set to empty string to clear the image while maintaining type safety.
-    user.profileImage = ''; 
+    user.profileImage = '';
     user.profileImageS3Key = '';
-    
+
     // 4. Clear technical data
     user.devices = []; // Remove FCM tokens
     user.favoriteAstrologers = [];
     user.blockedAstrologers = [];
-    
+
 
     // 6. Set Status & Clear Timer
-    user.status = 'deleted'; 
+    user.status = 'deleted';
     // ✅ CRITICAL: Unset this date so the Cron Job doesn't pick it up again tomorrow
-    user.permanentDeletionAt = undefined; 
+    user.permanentDeletionAt = undefined;
     user.deletionReason = undefined;
 
     await user.save();

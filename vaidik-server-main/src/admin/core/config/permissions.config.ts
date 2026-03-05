@@ -72,6 +72,10 @@ export const Permissions = {
   REPORTS_VIEW: 'reports.view',
   REPORTS_EXPORT: 'reports.export',
 
+  // Review Moderation
+  REVIEWS_VIEW: 'reviews.view',
+  REVIEWS_MANAGE: 'reviews.manage',
+
   SUPPORT_TICKETS_VIEW: 'support:tickets:view',
   SUPPORT_TICKETS_EDIT: 'support:tickets:edit',
   SUPPORT_REFUND_PROCESS: 'support:refund:process',
@@ -90,24 +94,33 @@ export const RolePermissions = {
     Permissions.ASTROLOGERS_EDIT,
     Permissions.ASTROLOGERS_APPROVE,
     Permissions.ASTROLOGERS_REJECT,
+    Permissions.ASTROLOGERS_BLOCK,
+    Permissions.ASTROLOGERS_PRICING,
     Permissions.ORDERS_VIEW,
     Permissions.ORDERS_REFUND,
     Permissions.PAYMENTS_VIEW,
     Permissions.PAYOUTS_VIEW,
     Permissions.PAYOUTS_APPROVE,
+    Permissions.PAYOUTS_REJECT,
     Permissions.ANALYTICS_VIEW,
     Permissions.SUPPORT_VIEW,
     Permissions.SUPPORT_RESPOND,
+    Permissions.NOTIFICATIONS_SEND,
+    Permissions.NOTIFICATIONS_BROADCAST,
     Permissions.MONITORING_VIEW,
     Permissions.MONITORING_SHOPIFY,
     Permissions.REPORTS_VIEW,
     Permissions.REPORTS_EXPORT,
+    Permissions.REVIEWS_VIEW,
+    Permissions.REVIEWS_MANAGE,
   ],
 
   moderator: [
     Permissions.USERS_VIEW,
     Permissions.USERS_BLOCK,
     Permissions.ASTROLOGERS_VIEW,
+    Permissions.ASTROLOGERS_BLOCK,
+    Permissions.REVIEWS_VIEW,
     Permissions.CONTENT_VIEW,
     Permissions.CONTENT_EDIT,
     Permissions.SUPPORT_VIEW,
@@ -161,9 +174,9 @@ export function hasPermission(
   requiredPermission: PermissionKey
 ): boolean {
   if (userRole === 'super_admin') return true;
-  
+
   const rolePermissions = getRolePermissions(userRole);
   if (rolePermissions.includes(requiredPermission)) return true;
-  
+
   return userPermissions.includes(requiredPermission);
 }

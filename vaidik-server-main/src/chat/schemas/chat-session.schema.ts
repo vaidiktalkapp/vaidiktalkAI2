@@ -13,10 +13,7 @@ export class ChatSession {
   @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
   userId: Types.ObjectId;
 
-  @Prop({ default: 'Astrologer', enum: ['Astrologer', 'AiAstrologerProfile'] })
-  astrologerModel: string;
-
-  @Prop({ required: true, type: Types.ObjectId, refPath: 'astrologerModel' })
+  @Prop({ required: true, type: Types.ObjectId, ref: 'Astrologer' })
   astrologerId: Types.ObjectId;
 
   @Prop({ required: true })
@@ -88,6 +85,7 @@ export class ChatSession {
   @Prop()
   paidAt?: Date;
 
+  // ===== FREE CHAT =====
   // ===== TIMER STATE =====
   @Prop({
     enum: ['not_started', 'running', 'paused', 'ended'],
@@ -182,36 +180,6 @@ export class ChatSession {
   // ===== METADATA =====
   @Prop({ default: Date.now })
   createdAt: Date;
-
-  @Prop()
-  updatedAt?: Date;
-
-  // ===== AI ASTROLOGER SPECIFIC =====
-  @Prop({ type: Object })
-  userBirthChart?: {
-    name: string;
-    dateOfBirth: string;
-    timeOfBirth: string;
-    placeOfBirth: string;
-    gender?: string;
-    maritalStatus?: string;
-    occupation?: string;
-  };
-
-  @Prop()
-  language?: string;
-
-  @Prop()
-  avgLatency?: number;
-
-  @Prop()
-  avgAccuracy?: number;
-
-  @Prop()
-  userSatisfactionRating?: number;
-
-  @Prop()
-  totalCost?: number;
 }
 
 export const ChatSessionSchema = SchemaFactory.createForClass(ChatSession);

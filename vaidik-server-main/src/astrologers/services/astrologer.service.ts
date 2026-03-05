@@ -1,8 +1,8 @@
 // src/astrologers/core/services/astrologer.service.ts
 
-import { 
-  Injectable, 
-  NotFoundException, 
+import {
+  Injectable,
+  NotFoundException,
   BadRequestException,
   ForbiddenException,
   Logger
@@ -18,7 +18,7 @@ export class AstrologerService {
 
   constructor(
     @InjectModel(Astrologer.name) private astrologerModel: Model<AstrologerDocument>,
-  ) {}
+  ) { }
 
   /**
    * ✅ NEW: Get complete profile with ALL details
@@ -164,11 +164,11 @@ export class AstrologerService {
 
     // ✅ NEW: Force complete profile after pricing update
     const allStepsComplete = Object.values(astrologer.profileCompletion.steps).every(step => step === true);
-    
+
     if (allStepsComplete) {
       astrologer.profileCompletion.isComplete = true;
       astrologer.profileCompletion.completedAt = new Date();
-      
+
       // ✅ Enable all services
       astrologer.isChatEnabled = true;
       astrologer.isCallEnabled = true;
@@ -186,8 +186,8 @@ export class AstrologerService {
 
     return {
       success: true,
-      message: allStepsComplete 
-        ? 'Pricing updated & profile completed! You are now available for orders.' 
+      message: allStepsComplete
+        ? 'Pricing updated & profile completed! You are now available for orders.'
         : 'Pricing updated successfully',
       data: {
         pricing: astrologer.pricing,
@@ -251,14 +251,6 @@ export class AstrologerService {
 
     astrologer.availability.isOnline = isOnline;
     astrologer.availability.lastActive = new Date();
-
-    // If going offline, also set isAvailable to false
-    if (!isOnline) {
-      astrologer.availability.isAvailable = false;
-    }else{
-      // If going online, set isAvailable to true
-      astrologer.availability.isAvailable = true;
-    }
 
     await astrologer.save();
 
@@ -403,7 +395,7 @@ export class AstrologerService {
     if (allStepsComplete && !astrologer.profileCompletion.isComplete) {
       astrologer.profileCompletion.isComplete = true;
       astrologer.profileCompletion.completedAt = new Date();
-      
+
       // Enable services once profile is complete
       astrologer.isChatEnabled = true;
       astrologer.isCallEnabled = true;
@@ -450,7 +442,7 @@ export class AstrologerService {
     astrologer.accountStatus = 'deleted';
     astrologer.permanentDeletionAt = deletionDate;
     astrologer.deletionReason = reason;
-    
+
     // Immediately go offline
     astrologer.availability.isOnline = false;
     astrologer.availability.isAvailable = false;
@@ -472,9 +464,9 @@ export class AstrologerService {
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleScheduledDeletions() {
     this.logger.log('Starting scheduled astrologer account deletion cleanup...');
-    
+
     const now = new Date();
-    
+
     const accountsToDelete = await this.astrologerModel.find({
       accountStatus: 'deleted',
       permanentDeletionAt: { $lte: now }

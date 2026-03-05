@@ -25,11 +25,11 @@ export class AdminNotificationGateway implements OnGatewayConnection, OnGatewayD
 
   handleConnection(client: Socket) {
     const adminId = client.handshake.query.adminId as string;
-
+    
     if (adminId) {
       this.connectedAdmins.set(adminId, client);
       this.logger.log(`Admin connected: ${adminId} | Total: ${this.connectedAdmins.size}`);
-
+      
       client.emit('connected', {
         message: 'Connected to admin notification server',
         adminId,
@@ -39,7 +39,7 @@ export class AdminNotificationGateway implements OnGatewayConnection, OnGatewayD
 
   handleDisconnect(client: Socket) {
     const adminId = client.handshake.query.adminId as string;
-
+    
     if (adminId) {
       this.connectedAdmins.delete(adminId);
       this.logger.log(`Admin disconnected: ${adminId} | Total: ${this.connectedAdmins.size}`);
@@ -94,17 +94,6 @@ export class AdminNotificationGateway implements OnGatewayConnection, OnGatewayD
     this.broadcastToAllAdmins('new_payout_request', {
       type: 'new_payout_request',
       data: payoutData,
-      timestamp: new Date(),
-    });
-  }
-
-  /**
-   * Send real-time activity notification (AI Chat, etc)
-   */
-  notifyRealtimeActivity(activityData: any) {
-    this.broadcastToAllAdmins('realtime_activity', {
-      type: 'realtime_activity',
-      data: activityData,
       timestamp: new Date(),
     });
   }

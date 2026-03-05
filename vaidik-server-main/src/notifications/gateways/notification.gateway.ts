@@ -33,7 +33,7 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     { socketId: string; userId: string; userType: WebUserType }
   > = new Map();
 
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(private readonly jwtService: JwtService) { }
 
   async handleConnection(client: Socket) {
     try {
@@ -186,8 +186,16 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
   }
 
   isUserOnline(userId: string): boolean {
-    const sockets = this.connectedUsers.get(userId);
-    return !!sockets && sockets.size > 0;
+    // Check mobile connections
+    const mobileSockets = this.connectedUsers.get(userId);
+    if (mobileSockets && mobileSockets.size > 0) {
+      return true;
+    }
+
+    // Check web connections
+    return Array.from(this.connectedClients.values()).some(
+      (client) => client.userId === userId,
+    );
   }
 
   getConnectedUsersCount(): number {
@@ -199,11 +207,11 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
   }
 
   isUserConnected(userId: string, userType: WebUserType): boolean {
-  // checks ONLY web connections (deviceId-less connections)
-  return Array.from(this.connectedClients.values()).some(
-    (client) => client.userId === userId && client.userType === userType,
-  );
-}
+    // checks ONLY web connections (deviceId-less connections)
+    return Array.from(this.connectedClients.values()).some(
+      (client) => client.userId === userId && client.userType === userType,
+    );
+  }
 
   // -----------------------
   // Existing listeners

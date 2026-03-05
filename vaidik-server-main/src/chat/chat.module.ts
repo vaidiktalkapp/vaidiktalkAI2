@@ -15,10 +15,9 @@ import { AstrologersModule } from '../astrologers/astrologers.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { Astrologer, AstrologerSchema } from '../astrologers/schemas/astrologer.schema';
-import { EarningsService } from '../astrologers/services/earnings.service'; 
+import { EarningsService } from '../astrologers/services/earnings.service';
 import { UploadModule } from '../upload/upload.module';
 import { UsersModule } from '../users/users.module';
-
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -34,9 +33,9 @@ import { UsersModule } from '../users/users.module';
     forwardRef(() => NotificationsModule),
     UploadModule,
     UsersModule,
-  ],
+    ],
   controllers: [ChatController],
   providers: [ChatGateway, ChatSessionService, ChatMessageService, EarningsService],
   exports: [ChatSessionService, ChatMessageService, ChatGateway],
 })
-export class ChatModule {}
+export class ChatModule { }

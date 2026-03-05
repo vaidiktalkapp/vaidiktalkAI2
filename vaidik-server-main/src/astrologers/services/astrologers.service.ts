@@ -3,14 +3,17 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Astrologer, AstrologerDocument } from '../schemas/astrologer.schema';
 import { UpdateAstrologerProfileDto } from '../dto/update-astrologer-profile.dto';
-import { 
-  SearchAstrologersDto, 
-  SortByOption, 
+import {
+  SearchAstrologersDto,
+  SortByOption,
   TopAstrologerTier,
-  CountryOption 
+  CountryOption
 } from '../dto/search-astrologers.dto';
 import { User, UserDocument } from '../../users/schemas/user.schema';
 import { AvailabilityService } from './availability.service';
+import { OtpService } from '../../auth/services/otp/otp.service';
+import { JwtAuthService } from '../../auth/services/jwt-auth/jwt-auth.service';
+import { SimpleCacheService } from '../../auth/services/cache/cache.service';
 
 export interface SearchResult {
   success: boolean;
@@ -31,12 +34,15 @@ export interface SearchResult {
 @Injectable()
 export class AstrologersService {
   constructor(
-    @InjectModel(Astrologer.name) 
+    @InjectModel(Astrologer.name)
     public readonly astrologerModel: Model<AstrologerDocument>,
     @InjectModel(User.name)
     private readonly userModel: Model<UserDocument>,
     private readonly availabilityService: AvailabilityService,
-  ) {}
+    private readonly otpService: OtpService,
+    private readonly jwtAuthService: JwtAuthService,
+    private readonly cacheService: SimpleCacheService,
+  ) { }
 
   // ✅ Helper: Get blocked astrologer IDs for a user
   private async getBlockedAstrologerIds(userId: string): Promise<Types.ObjectId[]> {
@@ -56,18 +62,18 @@ export class AstrologersService {
    */
   private serializeAstrologers(astrologers: any[]): any[] {
     return astrologers.map(astro => {
-        const doc = astro.toObject ? astro.toObject() : astro;
-        if(doc._id) doc._id = doc._id.toString();
-        
-        // ✅ Calculate Real-Time Status (Robust Logic)
-        doc.realStatus = this.availabilityService.getRealTimeStatus(doc);
-        
-        return doc;
+      const doc = astro.toObject ? astro.toObject() : astro;
+      if (doc._id) doc._id = doc._id.toString();
+
+      // ✅ Calculate Real-Time Status (Robust Logic)
+      doc.realStatus = this.availabilityService.getRealTimeStatus(doc);
+
+      return doc;
     });
   }
 
   async searchAstrologers(
-    searchDto: SearchAstrologersDto, 
+    searchDto: SearchAstrologersDto,
     userId?: string
   ): Promise<SearchResult> {
     const {
@@ -150,25 +156,25 @@ export class AstrologersService {
     }
 
     // 8. Tiers
-    const tierList = Array.isArray(topAstrologers) 
-      ? topAstrologers 
+    const tierList = Array.isArray(topAstrologers)
+      ? topAstrologers
       : (topAstrologers ? [topAstrologers] : []);
     const tiers = tierList as unknown as string[];
 
-    if (tiers.length > 0 && !tiers.includes('all')) { 
-       const tierOrConditions: any[] = [];
-       if (tiers.includes('celebrity')) {
-         tierOrConditions.push({ $or: [{ tier: 'celebrity' }, { 'ratings.average': { $gte: 4.8 } }] });
-       }
-       if (tiers.includes('top-choice')) {
-         tierOrConditions.push({ $or: [{ tier: 'top-choice' }, { 'ratings.average': { $gte: 4.5 } }] });
-       }
-       if (tiers.includes('rising-star')) {
-         tierOrConditions.push({ $or: [{ tier: 'rising-star' }, { 'stats.totalOrders': { $gte: 50 } }] });
-       }
-       if (tierOrConditions.length > 0) {
-         andConditions.push({ $or: tierOrConditions });
-       }
+    if (tiers.length > 0 && !tiers.includes('all')) {
+      const tierOrConditions: any[] = [];
+      if (tiers.includes('celebrity')) {
+        tierOrConditions.push({ $or: [{ tier: 'celebrity' }, { 'ratings.average': { $gte: 4.8 } }] });
+      }
+      if (tiers.includes('top-choice')) {
+        tierOrConditions.push({ $or: [{ tier: 'top-choice' }, { 'ratings.average': { $gte: 4.5 } }] });
+      }
+      if (tiers.includes('rising-star')) {
+        tierOrConditions.push({ $or: [{ tier: 'rising-star' }, { 'stats.totalOrders': { $gte: 50 } }] });
+      }
+      if (tierOrConditions.length > 0) {
+        andConditions.push({ $or: tierOrConditions });
+      }
     }
 
     // 9. Numeric Ranges
@@ -190,33 +196,40 @@ export class AstrologersService {
 
     // 10. Status Filter (DB Level) 
     if (String(isOnline) === 'true') {
-        const now = new Date();
-        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const currentDay = days[now.getDay()];
-        const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      const now = new Date();
+      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const currentDay = days[now.getDay()];
+      const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-        andConditions.push({
-            $or: [
-                // 1. Manually Online
-                { 'availability.isOnline': true },
-                
-                // 2. OR Scheduled for Today & Current Time
-                {
-                    'availability.workingHours': {
-                        $elemMatch: {
-                            day: currentDay,
-                            slots: {
-                                $elemMatch: {
-                                    isActive: true,
-                                    start: { $lte: currentTime },
-                                    end: { $gt: currentTime }
-                                }
-                            }
-                        }
-                    }
+      // ✅ IMPORTANT: Busy status overrides availability
+      andConditions.push({
+        'availability.isAvailable': { $ne: false },
+        'availability.isLive': { $ne: true },
+        'availability.busyUntil': { $not: { $gt: now } }
+      });
+
+      andConditions.push({
+        $or: [
+          // 1. Manually Online (Toggle ON)
+          { 'availability.isOnline': true },
+
+          // 2. OR Scheduled for Today & Current Time (Fallback if toggle is OFF)
+          {
+            'availability.workingHours': {
+              $elemMatch: {
+                day: currentDay,
+                slots: {
+                  $elemMatch: {
+                    isActive: true,
+                    start: { $lte: currentTime },
+                    end: { $gt: currentTime }
+                  }
                 }
-            ]
-        });
+              }
+            }
+          }
+        ]
+      });
     }
 
     const finalQuery = andConditions.length > 0 ? { $and: andConditions } : {};
@@ -232,13 +245,13 @@ export class AstrologersService {
       case 'orders-high-low': sortCriteria = { 'stats.totalOrders': -1 }; break;
       case 'popularity':
       default:
-        sortCriteria = { 
+        sortCriteria = {
           'availability.isOnline': -1,
           'ratings.average': -1,
-          'stats.totalOrders': -1 
+          'stats.totalOrders': -1
         };
     }
-    sortCriteria._id = 1; 
+    sortCriteria._id = 1;
 
     const skip = (page - 1) * limit;
 
@@ -309,34 +322,40 @@ export class AstrologersService {
       ]),
       this.astrologerModel.aggregate([
         { $match: baseMatch },
-        { $group: { 
-          _id: null, 
-          minPrice: { $min: '$pricing.chat' },
-          maxPrice: { $max: '$pricing.chat' },
-          avgPrice: { $avg: '$pricing.chat' }
-        } }
-      ]),
-      this.astrologerModel.aggregate([
-        { $match: baseMatch },
-        { $group: { 
-          _id: null, 
-          minExperience: { $min: '$experienceYears' },
-          maxExperience: { $max: '$experienceYears' },
-          avgExperience: { $avg: '$experienceYears' }
-        } }
-      ]),
-      this.astrologerModel.aggregate([
-        { $match: baseMatch },
-        { $group: {
-          _id: null,
-          totalActive: { $sum: 1 },
-          onlineCount: { 
-            $sum: { $cond: [{ $eq: ['$availability.isOnline', true] }, 1, 0] } 
-          },
-          liveCount: { 
-            $sum: { $cond: [{ $eq: ['$availability.isLive', true] }, 1, 0] } 
+        {
+          $group: {
+            _id: null,
+            minPrice: { $min: '$pricing.chat' },
+            maxPrice: { $max: '$pricing.chat' },
+            avgPrice: { $avg: '$pricing.chat' }
           }
-        }}
+        }
+      ]),
+      this.astrologerModel.aggregate([
+        { $match: baseMatch },
+        {
+          $group: {
+            _id: null,
+            minExperience: { $min: '$experienceYears' },
+            maxExperience: { $max: '$experienceYears' },
+            avgExperience: { $avg: '$experienceYears' }
+          }
+        }
+      ]),
+      this.astrologerModel.aggregate([
+        { $match: baseMatch },
+        {
+          $group: {
+            _id: null,
+            totalActive: { $sum: 1 },
+            onlineCount: {
+              $sum: { $cond: [{ $eq: ['$availability.isOnline', true] }, 1, 0] }
+            },
+            liveCount: {
+              $sum: { $cond: [{ $eq: ['$availability.isLive', true] }, 1, 0] }
+            }
+          }
+        }
       ]),
       this.astrologerModel.aggregate([
         { $match: baseMatch },
@@ -346,7 +365,7 @@ export class AstrologersService {
             celebrity: {
               $sum: {
                 $cond: [
-                  { 
+                  {
                     $and: [
                       { $gte: ['$ratings.average', 4.8] },
                       { $gte: ['$stats.totalOrders', 1000] }
@@ -360,7 +379,7 @@ export class AstrologersService {
             topChoice: {
               $sum: {
                 $cond: [
-                  { 
+                  {
                     $and: [
                       { $gte: ['$ratings.average', 4.5] },
                       { $gte: ['$stats.repeatCustomers', 50] }
@@ -374,7 +393,7 @@ export class AstrologersService {
             risingStar: {
               $sum: {
                 $cond: [
-                  { 
+                  {
                     $and: [
                       { $gte: ['$ratings.average', 4.3] },
                       { $gte: ['$stats.totalOrders', 100] }
@@ -393,20 +412,20 @@ export class AstrologersService {
     return {
       success: true,
       data: {
-        specializations: specializationsCount.map(s => ({ 
-          value: s._id, 
+        specializations: specializationsCount.map(s => ({
+          value: s._id,
           label: this.capitalizeFirstLetter(s._id),
-          count: s.count 
+          count: s.count
         })),
-        languages: languagesCount.map(l => ({ 
-          value: l._id, 
+        languages: languagesCount.map(l => ({
+          value: l._id,
           label: this.capitalizeFirstLetter(l._id),
-          count: l.count 
+          count: l.count
         })),
-        genders: genderCount.map(g => ({ 
-          value: g._id, 
+        genders: genderCount.map(g => ({
+          value: g._id,
           label: this.capitalizeFirstLetter(g._id),
-          count: g.count 
+          count: g.count
         })),
         priceRange: priceStats[0] || { minPrice: 0, maxPrice: 0, avgPrice: 0 },
         experienceRange: experienceStats[0] || { minExperience: 0, maxExperience: 0, avgExperience: 0 },
@@ -618,13 +637,13 @@ export class AstrologersService {
       languages: filters?.languages,
       minRating: filters?.minRating,
       isOnline: filters?.isOnline,
-      sortBy: filters?.sortBy === 'rating' 
-        ? SortByOption.RATING_HIGH_LOW 
+      sortBy: filters?.sortBy === 'rating'
+        ? SortByOption.RATING_HIGH_LOW
         : filters?.sortBy === 'experience'
-        ? SortByOption.EXP_HIGH_LOW
-        : filters?.sortBy === 'price'
-        ? SortByOption.PRICE_LOW_HIGH
-        : SortByOption.POPULARITY
+          ? SortByOption.EXP_HIGH_LOW
+          : filters?.sortBy === 'price'
+            ? SortByOption.PRICE_LOW_HIGH
+            : SortByOption.POPULARITY
     };
 
     return this.searchAstrologers(searchDto as SearchAstrologersDto, userId);
@@ -632,7 +651,7 @@ export class AstrologersService {
 
   async getAstrologerDetails(astrologerId: string): Promise<any> {
     let validatedId: string;
-    
+
     if (typeof astrologerId === 'object' && astrologerId !== null) {
       validatedId = this.convertObjectIdToString(astrologerId);
     } else {
@@ -720,119 +739,197 @@ export class AstrologersService {
   }
 
   async updateProfile(astrologerId: string, updateDto: UpdateAstrologerProfileDto) {
-  try {
-    console.log('📝 [AstrologersService] Updating profile:', {
-      astrologerId,
-      updateData: updateDto,
+    try {
+      console.log('📝 [AstrologersService] Updating profile:', {
+        astrologerId,
+        updateData: updateDto,
+      });
+
+      const astrologer = await this.astrologerModel.findById(astrologerId);
+
+      if (!astrologer) {
+        throw new NotFoundException('Astrologer not found');
+      }
+
+      // Update fields
+      if (updateDto.name !== undefined) {
+        astrologer.name = updateDto.name;
+      }
+
+      if (updateDto.bio !== undefined) {
+        astrologer.bio = updateDto.bio;
+      }
+
+      if (updateDto.experienceYears !== undefined) {
+        astrologer.experienceYears = updateDto.experienceYears;
+      }
+
+      if (updateDto.specializations !== undefined) {
+        astrologer.specializations = updateDto.specializations;
+        astrologer.profileCompletion.steps.expertise =
+          updateDto.specializations.length > 0 &&
+          astrologer.languages &&
+          astrologer.languages.length > 0;
+      }
+
+      if (updateDto.languages !== undefined) {
+        astrologer.languages = updateDto.languages;
+        astrologer.profileCompletion.steps.expertise =
+          updateDto.languages.length > 0 &&
+          astrologer.specializations &&
+          astrologer.specializations.length > 0;
+      }
+
+      if (updateDto.profilePicture !== undefined) {
+        astrologer.profilePicture = updateDto.profilePicture;
+      }
+
+      if (updateDto.isChatEnabled !== undefined) {
+        astrologer.isChatEnabled = updateDto.isChatEnabled;
+      }
+
+      if (updateDto.isCallEnabled !== undefined) {
+        astrologer.isCallEnabled = updateDto.isCallEnabled;
+      }
+
+      if (updateDto.email !== undefined) {
+        astrologer.email = updateDto.email;
+      }
+
+      if (updateDto.gender !== undefined) {
+        astrologer.gender = updateDto.gender;
+      }
+
+      if (updateDto.dateOfBirth !== undefined) {
+        astrologer.dateOfBirth = new Date(updateDto.dateOfBirth);
+      }
+
+      // Check and update profile completion
+      await this.checkAndUpdateProfileCompletion(astrologer);
+
+      await astrologer.save();
+
+
+      return {
+        success: true,
+        message: 'Profile updated successfully',
+        data: {
+          _id: astrologer._id,
+          name: astrologer.name,
+          bio: astrologer.bio,
+          experienceYears: astrologer.experienceYears,
+          specializations: astrologer.specializations,
+          languages: astrologer.languages,
+          profilePicture: astrologer.profilePicture,
+          profileCompletion: astrologer.profileCompletion,
+        },
+      };
+    } catch (error) {
+      console.error('❌ [AstrologersService] Update error:', error);
+      throw error;
+    }
+  }
+
+  async sendPhoneChangeOtp(astrologerId: string, phoneNumber: string, countryCode: string): Promise<any> {
+    const cleanPhone = this.otpService.normalizePhoneNumber(phoneNumber, countryCode);
+    const fullPhoneNumber = `+${countryCode}${cleanPhone}`;
+
+    // 1. Check if another astrologer already has this phone number
+    const existingAstrologer = await this.astrologerModel.findOne({
+      $or: [
+        { phoneNumber: fullPhoneNumber },
+        { phoneNumber: cleanPhone }
+      ],
+      _id: { $ne: astrologerId }
     });
 
-    const astrologer = await this.astrologerModel.findById(astrologerId);
-
-    if (!astrologer) {
-      throw new NotFoundException('Astrologer not found');
+    if (existingAstrologer) {
+      throw new BadRequestException('This phone number is already associated with another account');
     }
 
-    // Update fields
-    if (updateDto.name !== undefined) {
-      astrologer.name = updateDto.name;
+    // 2. Send OTP
+    return this.otpService.sendOTP(cleanPhone, countryCode);
+  }
+
+  async verifyPhoneChangeOtp(astrologerId: string, phoneNumber: string, countryCode: string, otp: string): Promise<any> {
+    // 1. Verify OTP
+    const isOtpValid = await this.otpService.verifyOTP(phoneNumber, countryCode, otp);
+    if (!isOtpValid) {
+      throw new BadRequestException('Invalid or expired OTP');
     }
 
-    if (updateDto.bio !== undefined) {
-      astrologer.bio = updateDto.bio;
+    // Ensure we use the clean phone number for storage
+    const cleanPhone = this.otpService.normalizePhoneNumber(phoneNumber, countryCode);
+    const fullPhoneNumber = `+${countryCode}${cleanPhone}`;
+
+    // 2. Update astrologer's phone number
+    const updatedAstrologer = await this.astrologerModel.findByIdAndUpdate(astrologerId, {
+      $set: {
+        phoneNumber: fullPhoneNumber,
+        countryCode: countryCode,
+        updatedAt: new Date()
+      }
+    }, { new: true });
+
+    if (!updatedAstrologer) {
+      throw new BadRequestException('Astrologer not found');
     }
 
-    if (updateDto.experienceYears !== undefined) {
-      astrologer.experienceYears = updateDto.experienceYears;
-    }
+    const tokens = this.jwtAuthService.generateAstrologerTokens(
+      updatedAstrologer._id as Types.ObjectId,
+      updatedAstrologer.phoneNumber,
+      'astrologer'
+    );
 
-    if (updateDto.specializations !== undefined) {
-      astrologer.specializations = updateDto.specializations;
-      astrologer.profileCompletion.steps.expertise = 
-        updateDto.specializations.length > 0 && 
-        astrologer.languages && 
-        astrologer.languages.length > 0;
-    }
-
-    if (updateDto.languages !== undefined) {
-      astrologer.languages = updateDto.languages;
-      astrologer.profileCompletion.steps.expertise = 
-        updateDto.languages.length > 0 && 
-        astrologer.specializations && 
-        astrologer.specializations.length > 0;
-    }
-
-    if (updateDto.profilePicture !== undefined) {
-      astrologer.profilePicture = updateDto.profilePicture;
-    }
-
-    if (updateDto.isChatEnabled !== undefined) {
-      astrologer.isChatEnabled = updateDto.isChatEnabled;
-    }
-
-    if (updateDto.isCallEnabled !== undefined) {
-      astrologer.isCallEnabled = updateDto.isCallEnabled;
-    }
-
-    // Check and update profile completion
-    await this.checkAndUpdateProfileCompletion(astrologer);
-
-    await astrologer.save();
-
+    await this.cacheService.set(
+      `refresh_token_${(updatedAstrologer._id).toString()}`,
+      tokens.refreshToken,
+      30 * 24 * 60 * 60
+    );
 
     return {
       success: true,
-      message: 'Profile updated successfully',
+      message: 'Phone number updated successfully',
       data: {
-        _id: astrologer._id,
-        name: astrologer.name,
-        bio: astrologer.bio,
-        experienceYears: astrologer.experienceYears,
-        specializations: astrologer.specializations,
-        languages: astrologer.languages,
-        profilePicture: astrologer.profilePicture,
-        profileCompletion: astrologer.profileCompletion,
-      },
+        tokens
+      }
     };
-  } catch (error) {
-    console.error('❌ [AstrologersService] Update error:', error);
-    throw error;
   }
-}
 
-/**
- * Helper: Check and update profile completion
- */
-private async checkAndUpdateProfileCompletion(astrologer: any): Promise<void> {
-  const steps = astrologer.profileCompletion.steps;
-  
-  // Update basic info step
-  steps.basicInfo = !!(
-    astrologer.name && 
-    astrologer.email && 
-    astrologer.phoneNumber &&
-    astrologer.gender &&
-    astrologer.dateOfBirth
-  );
+  /**
+   * Helper: Check and update profile completion
+   */
+  private async checkAndUpdateProfileCompletion(astrologer: any): Promise<void> {
+    const steps = astrologer.profileCompletion.steps;
 
-  // Update expertise step
-  steps.expertise = !!(
-    astrologer.specializations?.length > 0 && 
-    astrologer.languages?.length > 0
-  );
+    // Update basic info step
+    steps.basicInfo = !!(
+      astrologer.name &&
+      astrologer.email &&
+      astrologer.phoneNumber &&
+      astrologer.gender &&
+      astrologer.dateOfBirth
+    );
 
-  // Check if all steps are complete
-  const allStepsComplete = Object.values(steps).every(step => step === true);
+    // Update expertise step
+    steps.expertise = !!(
+      astrologer.specializations?.length > 0 &&
+      astrologer.languages?.length > 0
+    );
 
-  if (allStepsComplete && !astrologer.profileCompletion.isComplete) {
-    astrologer.profileCompletion.isComplete = true;
-    astrologer.profileCompletion.completedAt = new Date();
-    
-    // Enable services once profile is complete
-    astrologer.isChatEnabled = true;
-    astrologer.isCallEnabled = true;
-    astrologer.isLiveStreamEnabled = true;
+    // Check if all steps are complete
+    const allStepsComplete = Object.values(steps).every(step => step === true);
+
+    if (allStepsComplete && !astrologer.profileCompletion.isComplete) {
+      astrologer.profileCompletion.isComplete = true;
+      astrologer.profileCompletion.completedAt = new Date();
+
+      // Enable services once profile is complete
+      astrologer.isChatEnabled = true;
+      astrologer.isCallEnabled = true;
+      astrologer.isLiveStreamEnabled = true;
+    }
   }
-}
 
   async canLogin(astrologerId: string): Promise<boolean> {
     if (!Types.ObjectId.isValid(astrologerId)) {

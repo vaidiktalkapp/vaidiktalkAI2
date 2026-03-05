@@ -34,8 +34,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { SupportModule } from './support/support.module';
 import { AdminModule } from './admin/admin.module';
 import { ModerationModule } from './moderation/moderation.module';
-import { AiAstrologersModule } from './ai-astrologers/ai-astrologers.module';
-
 @Module({
   imports: [
     // Global configuration
@@ -120,7 +118,6 @@ import { AiAstrologersModule } from './ai-astrologers/ai-astrologers.module';
     TransactionsModule,
     RemediesModule,
     ModerationModule,
-    AiAstrologersModule,
   ],
   controllers: [AppController],
   providers: [

@@ -10,6 +10,7 @@ import { AdminActivityLogService } from '../../activity-logs/services/admin-acti
 import { AstrologerFilter } from '../interfaces/astrologer-filter.interface';
 import { UpdatePricingDto } from '../dto/update-pricing.dto';
 
+
 @Injectable()
 export class AdminAstrologersService {
   private readonly logger = new Logger(AdminAstrologersService.name);
@@ -19,7 +20,7 @@ export class AdminAstrologersService {
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
     private notificationService: NotificationService,
     private activityLogService: AdminActivityLogService,
-  ) {}
+  ) { }
 
   /**
    * Get all astrologers with filters
@@ -477,4 +478,9 @@ export class AdminAstrologersService {
       message: 'Astrologer deleted successfully',
     };
   }
+
+  /**
+   * Apply manual penalty to astrologer
+   */
+
 }

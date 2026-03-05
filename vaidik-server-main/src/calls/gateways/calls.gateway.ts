@@ -29,7 +29,7 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private userSockets = new Map<string, string>();
   private astrologerSockets = new Map<string, string>();
   private activeRecordings = new Map<string, string>();
-  
+
   // ✅ LOCK: Prevent double processing of end call
   private processingEndCall = new Set<string>();
 
@@ -39,14 +39,14 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private callRecordingService: CallRecordingService,
     private agoraService: AgoraService,
     private callBillingService: CallBillingService
-  ) {}
+  ) { }
 
   async handleConnection(client: Socket) {
     this.logger.log(`Call client connected: ${client.id}`);
-    
+
     // Extract User ID from handshake (support both auth and query)
     const userId = client.handshake.auth?.userId || client.handshake.query?.userId;
-    
+
     if (userId) {
       this.userSockets.set(userId.toString(), client.id);
       this.logger.log(`✅ [CallGateway] Registered User Socket globally: ${userId}`);
@@ -67,7 +67,7 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
           this.callSessionService.updateParticipantStatus(
             userData.sessionId, userId, userData.role as 'user' | 'astrologer',
             { isOnline: false, connectionQuality: 'offline' }
-          ).catch(e => {});
+          ).catch(e => { });
           client.to(userData.sessionId).emit('participant_disconnected', { userId, role: userData.role });
         }
         this.activeUsers.delete(userId);
@@ -80,6 +80,15 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('register_astrologer')
   handleRegisterAstrologer(@ConnectedSocket() client: Socket, @MessageBody() data: { astrologerId: string }) {
     this.astrologerSockets.set(data.astrologerId, client.id);
+    return { success: true };
+  }
+
+  @SubscribeMessage('register_user')
+  handleRegisterUser(@ConnectedSocket() client: Socket, @MessageBody() data: { userId: string }) {
+    if (data.userId) {
+      this.userSockets.set(data.userId, client.id);
+      this.logger.log(`✅ [CallGateway] User registered: ${data.userId} | Socket: ${client.id}`);
+    }
     return { success: true };
   }
 
@@ -109,25 +118,25 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (error: any) { return { success: false, message: error.message }; }
   }
 
-@SubscribeMessage('accept_call')
+  @SubscribeMessage('accept_call')
   async handleAcceptCall(@ConnectedSocket() client: Socket, @MessageBody() data: any) {
     try {
       const result = await this.callSessionService.acceptCall(data.sessionId, data.astrologerId);
-      
-      const eventPayload = { 
-        ...(result.data || {}), 
-        sessionId: data.sessionId, 
+
+      const eventPayload = {
+        ...(result.data || {}),
+        sessionId: data.sessionId,
         astrologerId: data.astrologerId,
         timestamp: new Date().toISOString(),
       };
 
       // Broadcast to Room (in case they ARE joined)
       this.server.to(data.sessionId).emit('call_accepted', eventPayload);
-      
+
       // 🟢 GUARANTEED DELIVERY: Send directly to User's socket via Global Map
       // Ensure we have the userId from the service result or the incoming data
-      const targetUserId = result.data?.userId || data.userId; 
-      
+      const targetUserId = result.data?.userId || data.userId;
+
       if (targetUserId) {
         const userSocketId = this.userSockets.get(targetUserId.toString());
         if (userSocketId) {
@@ -137,24 +146,24 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
           this.logger.warn(`⚠️ [CallGateway] User ${targetUserId} socket not found in global map`);
         }
       }
-      
+
       return result;
-    } catch (error: any) { 
+    } catch (error: any) {
       this.logger.error(`❌ [CallGateway] Accept error: ${error.message}`);
-      return { success: false, message: error.message }; 
+      return { success: false, message: error.message };
     }
   }
 
-@SubscribeMessage('user_joined_agora')
+  @SubscribeMessage('user_joined_agora')
   async handleUserJoinedAgora(@ConnectedSocket() client: Socket, @MessageBody() data: { sessionId: string; role: string }) {
     this.logger.log(`✅ ${data.role} joined Agora for ${data.sessionId}`);
-    
+
     const session = await this.callSessionService.getSession(data.sessionId);
     if (!session) return;
 
     if (data.role === 'user') session.userJoinedAgora = true;
     else if (data.role === 'astrologer') session.astrologerJoinedAgora = true;
-    
+
     await session.save();
 
     // STRICT CHECK: Both must be in Agora to start timer
@@ -169,66 +178,84 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('reject_call')
   async handleRejectCall(@ConnectedSocket() client: Socket, @MessageBody() data: any) {
     try {
-      const result = await this.callSessionService.rejectCall(data.sessionId, data.astrologerId, data.reason || 'rejected');
-      const userData = Array.from(this.activeUsers.values()).find(u => u.sessionId === data.sessionId);
-      if (userData) this.server.to(userData.socketId).emit('call_rejected', { sessionId: data.sessionId, reason: data.reason });
+      const session = await this.callSessionService.getSession(data.sessionId);
+      if (!session) return { success: false, message: 'Session not found' };
+
+      const astrologerId = data.astrologerId || session.astrologerId.toString();
+
+      const result = await this.callSessionService.rejectCall(data.sessionId, astrologerId, data.reason || 'rejected');
+
+      const targetUserId = session.userId?.toString();
+
+      if (targetUserId) {
+        const userSocketId = this.userSockets.get(targetUserId);
+        if (userSocketId) {
+          this.server.to(userSocketId).emit('call_rejected', {
+            sessionId: data.sessionId,
+            reason: data.reason || 'rejected'
+          });
+          this.logger.log(`✅ [CallGateway] DIRECT send 'call_rejected' to user: ${targetUserId}`);
+        } else {
+          this.logger.warn(`⚠️ [CallGateway] User ${targetUserId} socket not found in global map for rejection`);
+        }
+      }
       return result;
     } catch (error: any) { return { success: false, message: error.message }; }
   }
 
- @SubscribeMessage('join_session')
-async handleJoinSession(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
-  const data = Array.isArray(payload) ? payload[0] : payload;
-  if (!data?.sessionId) return { success: false, message: 'Missing data' };
+  @SubscribeMessage('join_session')
+  async handleJoinSession(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
+    const data = Array.isArray(payload) ? payload[0] : payload;
+    if (!data?.sessionId) return { success: false, message: 'Missing data' };
 
-  client.join(data.sessionId);
-  
-  this.activeUsers.set(data.userId, { 
-    socketId: client.id, 
-    userId: data.userId, 
-    role: data.role, 
-    sessionId: data.sessionId 
-  });
-  
-  this.logger.log(`👥 ${data.role} (${data.userId}) joined call room: ${data.sessionId} via socket ${client.id}`);
-  
-  client.to(data.sessionId).emit('participant_joined', { 
-    userId: data.userId, 
-    role: data.role, 
-    isOnline: true 
-  });
+    client.join(data.sessionId);
 
-  const session = await this.callSessionService.getSession(data.sessionId);
-  if (session && session.status === 'accepted' && data.role === 'user') {
-    this.logger.log(`🔄 [CallGateway] Resending call_accepted to late-joining user`);
-    
-    // Fetch astrologer details again to be safe
-    const astrologer = await this.callSessionService['astrologerModel'].findById(session.astrologerId).select('name profilePicture').lean();
-    
-    client.emit('call_accepted', {  
-      sessionId: data.sessionId,
-      orderId: session.orderId,
-      callType: session.callType,
-      ratePerMinute: session.ratePerMinute,
-      astrologerId: session.astrologerId.toString(),
-      astrologerName: astrologer?.name || 'Astrologer',
-      astrologerImage: astrologer?.profilePicture,
-      timestamp: session.acceptedAt?.toISOString(),
+    this.activeUsers.set(data.userId, {
+      socketId: client.id,
+      userId: data.userId,
+      role: data.role,
+      sessionId: data.sessionId
     });
+
+    this.logger.log(`👥 ${data.role} (${data.userId}) joined call room: ${data.sessionId} via socket ${client.id}`);
+
+    client.to(data.sessionId).emit('participant_joined', {
+      userId: data.userId,
+      role: data.role,
+      isOnline: true
+    });
+
+    const session = await this.callSessionService.getSession(data.sessionId);
+    if (session && session.status === 'accepted' && data.role === 'user') {
+      this.logger.log(`🔄 [CallGateway] Resending call_accepted to late-joining user`);
+
+      // Fetch astrologer details again to be safe
+      const astrologer = await this.callSessionService['astrologerModel'].findById(session.astrologerId).select('name profilePicture').lean();
+
+      client.emit('call_accepted', {
+        sessionId: data.sessionId,
+        orderId: session.orderId,
+        callType: session.callType,
+        ratePerMinute: session.ratePerMinute,
+        astrologerId: session.astrologerId.toString(),
+        astrologerName: astrologer?.name || 'Astrologer',
+        astrologerImage: astrologer?.profilePicture,
+        timestamp: session.acceptedAt?.toISOString(),
+      });
+    }
+
+    await this.checkAndPrepareCredentials(data.sessionId);
+    return { success: true };
   }
 
-  await this.checkAndPrepareCredentials(data.sessionId);
-  return { success: true };
-}
-
- private async checkAndPrepareCredentials(sessionId: string) {
+  private async checkAndPrepareCredentials(sessionId: string) {
     const participants = Array.from(this.activeUsers.values()).filter(u => u.sessionId === sessionId);
     const hasUser = participants.some(u => u.role === 'user');
     const hasAstrologer = participants.some(u => u.role === 'astrologer');
 
     if (hasUser && hasAstrologer) {
-       this.logger.log(`🔔 Both parties connected to socket in ${sessionId}. Sending Agora credentials...`);
-       await this.prepareCallCredentials(sessionId);
+      this.logger.log(`🔔 Both parties connected to socket in ${sessionId}. Sending Agora credentials...`);
+      await this.prepareCallCredentials(sessionId);
     }
   }
 
@@ -270,22 +297,22 @@ async handleJoinSession(@ConnectedSocket() client: Socket, @MessageBody() payloa
       // Send to User
       const userSocket = Array.from(this.activeUsers.values()).find(u => u.role === 'user' && u.sessionId === sessionId);
       if (userSocket) {
-        this.server.to(userSocket.socketId).emit('call_credentials', { 
-          ...basePayload, 
-          agoraToken: userToken, 
+        this.server.to(userSocket.socketId).emit('call_credentials', {
+          ...basePayload,
+          agoraToken: userToken,
           agoraUid: userUid,
-          agoraAstrologerUid: astrologerUid 
+          agoraAstrologerUid: astrologerUid
         });
       }
 
       // Send to Astrologer
       const astroSocket = Array.from(this.activeUsers.values()).find(u => u.role === 'astrologer' && u.sessionId === sessionId);
       if (astroSocket) {
-        this.server.to(astroSocket.socketId).emit('call_credentials', { 
-          ...basePayload, 
-          agoraToken: astrologerToken, 
+        this.server.to(astroSocket.socketId).emit('call_credentials', {
+          ...basePayload,
+          agoraToken: astrologerToken,
           agoraUid: astrologerUid,
-          agoraUserUid: userUid 
+          agoraUserUid: userUid
         });
       }
 
@@ -305,11 +332,11 @@ async handleJoinSession(@ConnectedSocket() client: Socket, @MessageBody() payloa
       }
 
       if (session.status === 'active') {
-         this.logger.log(`Call ${sessionId} already active, resuming ticker...`);
-         if (!this.sessionTimers.has(sessionId)) {
-            this.startTimerTicker(sessionId, session.maxDurationSeconds);
-         }
-         return;
+        this.logger.log(`Call ${sessionId} already active, resuming ticker...`);
+        if (!this.sessionTimers.has(sessionId)) {
+          this.startTimerTicker(sessionId, session.maxDurationSeconds);
+        }
+        return;
       }
 
       const result = await this.callSessionService.startSession(sessionId);
@@ -390,7 +417,7 @@ async handleJoinSession(@ConnectedSocket() client: Socket, @MessageBody() payloa
       }
 
       this.server.to(sessionId).emit('timer_tick', { elapsedSeconds: secondsElapsed, remainingSeconds, maxDuration: maxDurationSeconds });
-      
+
       if (remainingSeconds === 60) {
         this.server.to(sessionId).emit('timer_warning', { message: '1 minute remaining', remainingSeconds: 60 });
       }
@@ -410,11 +437,11 @@ async handleJoinSession(@ConnectedSocket() client: Socket, @MessageBody() payloa
 
     try {
       this.stopSessionTimer(sessionId);
-      
+
       // 1. Trigger Recording Stop in BACKGROUND (Fire-and-Forget)
       if (this.activeRecordings.has(sessionId)) {
-         this.handleBackgroundRecordingStop(sessionId);
-         this.activeRecordings.delete(sessionId);
+        this.handleBackgroundRecordingStop(sessionId);
+        this.activeRecordings.delete(sessionId);
       }
 
       // 2. End Session IMMEDIATELY (Don't wait for recording)
@@ -422,8 +449,8 @@ async handleJoinSession(@ConnectedSocket() client: Socket, @MessageBody() payloa
         sessionId,
         endedBy,
         reason,
-        undefined, 
-        undefined, 
+        undefined,
+        undefined,
         0
       );
 
@@ -453,26 +480,26 @@ async handleJoinSession(@ConnectedSocket() client: Socket, @MessageBody() payloa
 
   // ✅ BACKGROUND TASK
   private async handleBackgroundRecordingStop(sessionId: string) {
-      try {
-          const session = await this.callSessionService.getSession(sessionId);
-          if (!session) return;
+    try {
+      const session = await this.callSessionService.getSession(sessionId);
+      if (!session) return;
 
-          const recResult = await this.callRecordingService.stopRecording(
-              sessionId, 
-              session.agoraChannelName || ''
-          );
+      const recResult = await this.callRecordingService.stopRecording(
+        sessionId,
+        session.agoraChannelName || ''
+      );
 
-          if (recResult.recordingUrl) {
-              await this.callSessionService.updateRecordingAfterEnd(
-                  sessionId,
-                  recResult.recordingUrl,
-                  recResult.recordingS3Key,
-                  recResult.recordingDuration
-              );
-          }
-      } catch (e) {
-          this.logger.error(`Background recording stop failed for ${sessionId}: ${e.message}`);
+      if (recResult.recordingUrl) {
+        await this.callSessionService.updateRecordingAfterEnd(
+          sessionId,
+          recResult.recordingUrl,
+          recResult.recordingS3Key,
+          recResult.recordingDuration
+        );
       }
+    } catch (e) {
+      this.logger.error(`Background recording stop failed for ${sessionId}: ${e.message}`);
+    }
   }
 
   public async terminateCall(sessionId: string, endedBy: string, reason: string) {
@@ -485,27 +512,39 @@ async handleJoinSession(@ConnectedSocket() client: Socket, @MessageBody() payloa
     return result;
   }
 
-public async notifyUserOfAcceptance(sessionId: string, astrologerId: string, data?: any) {
+  public async notifyUserOfAcceptance(sessionId: string, astrologerId: string, data?: any) {
     const userData = Array.from(this.activeUsers.values()).find(u => u.sessionId === sessionId && u.role === 'user');
-    
+
     if (userData) {
       // Use provided rich data, or fallback to basic IDs if missing
       const payload = data ? { ...data, sessionId, astrologerId } : { sessionId, astrologerId };
-      
+
       this.server.to(userData.socketId).emit('call_accepted', payload);
       this.logger.log(`Notify User: Call accepted for ${sessionId} with rich data`);
     } else {
-        this.logger.warn(`Notify User: User not found for session ${sessionId}`);
+      this.logger.warn(`Notify User: User not found for session ${sessionId}`);
     }
   }
 
-  public async rejectCall(sessionId: string, astrologerId: string, reason: string) {
-    const result = await this.callSessionService.rejectCall(sessionId, astrologerId, reason);
-    const userData = Array.from(this.activeUsers.values()).find(u => u.sessionId === sessionId && u.role === 'user');
-    if (userData) {
-      this.server.to(userData.socketId).emit('call_rejected', { sessionId, reason });
+  public async notifyUserOfRejection(sessionId: string, astrologerId: string, reason: string) {
+    const session = await this.callSessionService.getSession(sessionId);
+    if (!session) return { success: false, message: 'Session not found' };
+
+    const targetUserId = session.userId?.toString();
+
+    this.logger.log(`🔍 [CallGateway] Notifying call rejected. Looking for user socket for targetUserId: ${targetUserId}`);
+    this.logger.log(`🔍 [CallGateway] Current userSockets map keys: ${Array.from(this.userSockets.keys()).join(', ')}`);
+
+    if (targetUserId) {
+      const userSocketId = this.userSockets.get(targetUserId);
+      if (userSocketId) {
+        this.server.to(userSocketId).emit('call_rejected', { sessionId, reason });
+        this.logger.log(`✅ [CallGateway] DIRECT send 'call_rejected' to user: ${targetUserId} at socket: ${userSocketId}`);
+      } else {
+        this.logger.warn(`⚠️ [CallGateway] User ${targetUserId} socket not found in global map for rejection`);
+      }
     }
-    return result;
+    return { success: true };
   }
-  
+
 }

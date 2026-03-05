@@ -25,14 +25,14 @@ export class NotificationDeliveryService {
     @Inject(forwardRef(() => NotificationGateway))
     private readonly notificationGateway: NotificationGateway,
 
-    @Inject(forwardRef(() => ChatGateway)) 
+    @Inject(forwardRef(() => ChatGateway))
     private readonly chatGateway: ChatGateway,
 
     @Inject(forwardRef(() => AdminNotificationGateway))
     private readonly adminGateway: AdminNotificationGateway | undefined,
 
     private readonly fcmService: FcmService,
-  ) {}
+  ) { }
 
   private isValidUrl(urlString?: string): boolean {
     try {
@@ -76,6 +76,7 @@ export class NotificationDeliveryService {
       const userType = notification.recipientModel === 'User' ? 'user' : 'astrologer';
 
       const isWebConnected = this.notificationGateway.isUserConnected(recipientId, userType);
+      let isSocketSent = false;
 
       if (isWebConnected) {
         this.notificationGateway.sendToWebUser(recipientId, userType, 'notification', {
@@ -89,6 +90,7 @@ export class NotificationDeliveryService {
           priority: notification.priority || typeConfig.priority,
           timestamp: notification.createdAt,
         });
+        isSocketSent = true;
         this.logger.log(`🌐 [Web] Sent to ${userType} ${recipientId}`);
       }
 
@@ -110,39 +112,51 @@ export class NotificationDeliveryService {
         }
 
         if (isMobileSocketSent) {
+          isSocketSent = true;
           this.logger.log(`⚡ [Mobile Socket] Delivered: ${notification.type} to ${recipientId}`);
         }
       }
 
-      // If any socket channel worked, mark socket sent and stop (your existing behavior)
-      if (isWebConnected || isMobileSocketSent) {
+      if (isSocketSent) {
         await this.notificationModel.updateOne(
           { _id: notification._id },
           { $set: { isSocketSent: true, socketSentAt: new Date() } },
         );
+      }
+
+      // ✅ DUAL CHANNEL RULE: For critical notifications, ALWAYS proceed to FCM
+      const isUrgent = notification.priority === 'urgent' || typeConfig.priority === 'urgent';
+
+      // If socket sent AND not urgent, we can exit early (standard efficiency)
+      if (isSocketSent && !isUrgent) {
         return;
       }
 
       // ============================================================
-      // 📤 CHANNEL 3: FCM (fallback)
+      // 📤 CHANNEL 3: FCM (Fallback or Parallel for Urgent)
       // ============================================================
       if (!recipient.devices || recipient.devices.length === 0) return;
 
       let fcmTokens: string[] = [];
+      let voipTokens: string[] = [];
 
       if (targetDeviceId) {
         const device = recipient.devices.find((d: any) => d.deviceId === targetDeviceId && d.isActive);
         if (device?.fcmToken) fcmTokens.push(device.fcmToken);
+        if (device?.voipToken) voipTokens.push(device.voipToken);
       } else if (targetFcmToken) {
         fcmTokens = [targetFcmToken];
       } else {
-        fcmTokens = recipient.devices
-          .filter((d: any) => d.isActive && d.fcmToken)
-          .map((d: any) => d.fcmToken);
+        recipient.devices.forEach((d: any) => {
+          if (d.isActive) {
+            if (d.fcmToken) fcmTokens.push(d.fcmToken);
+            if (d.voipToken) voipTokens.push(d.voipToken);
+          }
+        });
       }
 
-      if (fcmTokens.length === 0) {
-        this.logger.debug(`⏭️ No valid FCM tokens for ${recipientId}, skipping Push.`);
+      if (fcmTokens.length === 0 && voipTokens.length === 0) {
+        this.logger.debug(`⏭️ No valid tokens for ${recipientId}, skipping Push.`);
         return;
       }
 
@@ -166,7 +180,9 @@ export class NotificationDeliveryService {
           priority: typeConfig.priority,
           sound: typeConfig.sound,
           channelId: typeConfig.androidChannelId,
+          category: typeConfig.iosCategory, // Pass category for iOS CallKit
           badge: 1,
+          voipTokens: voipTokens, // ✅ NEW: Support specialized VoIP tokens
         },
       );
 
@@ -235,13 +251,13 @@ export class NotificationDeliveryService {
 
   isUserOnline(userId: string): boolean {
     // Check Notification Gateway (Mobile/Web)
-    const isNotifConnected = 
-      this.notificationGateway.isUserOnline(userId) || 
+    const isNotifConnected =
+      this.notificationGateway.isUserOnline(userId) ||
       this.notificationGateway.isUserConnected(userId, 'user');
 
     // 👇 ADD Check for Chat Gateway
     // (Assuming your ChatGateway has a method like isUserOnline or you can check its connectedUsers map)
-    const isChatConnected = this.chatGateway.isUserOnline(userId); 
+    const isChatConnected = this.chatGateway.isUserOnline(userId);
 
     return isNotifConnected || isChatConnected;
   }

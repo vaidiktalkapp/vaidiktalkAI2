@@ -56,7 +56,6 @@
     "moment": "^2.30.1",
     "mongoose": "^8.18.1",
     "multer": "^2.0.2",
-    "openai": "^6.21.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
@@ -68,7 +67,6 @@
     "shopify-buy": "^3.0.7",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
-    "streamifier": "^0.1.1",
     "twilio": "^5.10.0",
     "uuid": "^13.0.0"
   },
@@ -89,7 +87,6 @@
     "@types/passport-local": "^1.0.38",
     "@types/sharp": "^0.32.0",
     "@types/socket.io": "^3.0.2",
-    "@types/streamifier": "^0.1.2",
     "@types/supertest": "^6.0.2",
     "@types/uuid": "^11.0.0",
     "cors": "^2.8.5",

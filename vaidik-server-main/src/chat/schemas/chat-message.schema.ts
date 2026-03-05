@@ -7,31 +7,31 @@ export type ChatMessageDocument = ChatMessage & Document;
 
 @Schema({ timestamps: true, collection: 'chat_messages' })
 export class ChatMessage {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true})
   messageId: string;
 
   @Prop({ required: true })
-  sessionId: string;
+sessionId: string; 
 
   @Prop({ required: true })
   orderId: string;
 
-  @Prop({ required: true, type: Types.ObjectId, refPath: 'senderModel' })
+  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
   senderId: Types.ObjectId;
 
-  @Prop({ required: true, enum: ['User', 'Astrologer', 'System', 'AiAstrologerProfile'] })
+  @Prop({ required: true, enum: ['User', 'Astrologer', 'System'] })
   senderModel: string;
 
-  @Prop({ required: true, type: Types.ObjectId, refPath: 'receiverModel' })
+  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
   receiverId: Types.ObjectId;
 
-  @Prop({ required: true, enum: ['User', 'Astrologer', 'AiAstrologerProfile'] })
+  @Prop({ required: true, enum: ['User', 'Astrologer'] })
   receiverModel: string;
 
   // ===== MESSAGE TYPE =====
-  @Prop({
-    required: true,
-    enum: ['text', 'image', 'audio', 'video', 'file', 'voice_note', 'kundli_details']
+  @Prop({ 
+    required: true, 
+    enum: ['text', 'image', 'audio', 'video', 'file', 'voice_note', 'kundli_details'] 
   })
   type: string;
 
@@ -76,13 +76,13 @@ export class ChatMessage {
   };
 
   @Prop({ default: false })
-  isCallRecording: boolean; // ✅ Flag for call recordings
+isCallRecording: boolean; // ✅ Flag for call recordings
 
-  @Prop()
-  linkedSessionId?: string; // ✅ Link to call/chat session
+@Prop()
+linkedSessionId?: string; // ✅ Link to call/chat session
 
-  @Prop()
-  thumbnailUrl?: string; // ✅ For video recordings
+@Prop()
+thumbnailUrl?: string; // ✅ For video recordings
 
   // ===== REPLY =====
   @Prop()
@@ -153,16 +153,16 @@ export class ChatMessage {
   @Prop()
   deletedAt?: Date;
 
-  @Prop({
+  @Prop({ 
     enum: ['visible', 'deleted_for_sender', 'deleted_for_receiver', 'deleted_for_everyone'],
     default: 'visible'
   })
   deleteStatus: string;
 
   // ===== DELIVERY STATUS (Double/Blue Tick) =====
-  @Prop({
-    default: 'sending',
-    enum: ['sending', 'sent', 'delivered', 'read', 'failed']
+  @Prop({ 
+    default: 'sending', 
+    enum: ['sending', 'sent', 'delivered', 'read', 'failed'] 
   })
   deliveryStatus: string; // sending (grey), sent (grey), delivered (grey), read (blue)
 

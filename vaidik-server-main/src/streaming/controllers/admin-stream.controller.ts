@@ -66,7 +66,7 @@ export class AdminStreamController {
   async forceEndStream(
     @Param('streamId') streamId: string,
     @Body() body: { reason: string }
-  ): Promise<any> {
+  ) {
     return this.streamSessionService.forceEndStreamAdmin(streamId, body.reason);
   }
 
@@ -99,7 +99,7 @@ export class AdminStreamController {
   }
 
   @Get(':streamId/viewer-token')
-  async getViewerToken(@Param('streamId') streamId: string): Promise<any> {
+  async getViewerToken(@Param('streamId') streamId: string) {
     return this.streamAgoraService.generateViewerTokenByStreamId(streamId); // ✅ USE NEW METHOD
   }
 
@@ -109,7 +109,7 @@ export class AdminStreamController {
    * Ends the current call on the stream without stopping the stream itself
    */
   @Post(':streamId/call/force-end')
-  async forceEndCall(@Param('streamId') streamId: string): Promise<any> {
+  async forceEndCall(@Param('streamId') streamId: string) {
     // Fetch stream to get the hostId required by the service
     const stream = await this.streamSessionService.getStreamById(streamId);
     if (!stream) throw new NotFoundException('Stream not found');
@@ -118,14 +118,13 @@ export class AdminStreamController {
     // for billing/logic, using hostId ensures the host side logic triggers correctly.
     return this.streamSessionService.endCurrentCall(streamId, stream.hostId.toString());
   }
-
   @Post(':streamId/recording/start')
-  async startRecording(@Param('streamId') streamId: string): Promise<any> {
+  async startRecording(@Param('streamId') streamId: string) {
     return this.streamSessionService.startRecording(streamId);
   }
 
   @Post(':streamId/recording/stop')
-  async stopRecording(@Param('streamId') streamId: string): Promise<any> {
+  async stopRecording(@Param('streamId') streamId: string) {
     return this.streamSessionService.stopRecording(streamId);
   }
 

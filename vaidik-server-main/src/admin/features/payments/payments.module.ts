@@ -6,6 +6,8 @@ import { WalletTransaction, WalletTransactionSchema } from '../../../payments/sc
 import { PayoutRequest, PayoutRequestSchema } from '../../../payments/schemas/payout-request.schema';
 import { WalletRefundRequest, WalletRefundRequestSchema } from '../../../payments/schemas/wallet-refund-request.schema';
 import { GiftCard, GiftCardSchema } from '../../../payments/schemas/gift-card.schema';
+import { Order, OrderSchema } from '../../../orders/schemas/orders.schema';
+import { Astrologer, AstrologerSchema } from '../../../astrologers/schemas/astrologer.schema';
 
 import { AdminPaymentsController } from './controllers/admin-payments.controller';
 import { AdminPaymentsService } from './services/admin-payments.service';
@@ -35,6 +37,8 @@ import { AdminRechargePacksController } from './controllers/admin-recharge-packs
       { name: WalletRefundRequest.name, schema: WalletRefundRequestSchema },
       { name: GiftCard.name, schema: GiftCardSchema },
       { name: Admin.name, schema: AdminSchema },
+      { name: Order.name, schema: OrderSchema },
+      { name: Astrologer.name, schema: AstrologerSchema },
     ]),
     MainPaymentsModule,
     ActivityLogsModule,
@@ -44,4 +48,4 @@ import { AdminRechargePacksController } from './controllers/admin-recharge-packs
   providers: [AdminPaymentsService],
   exports: [AdminPaymentsService],
 })
-export class AdminPaymentsFeatureModule {}
+export class AdminPaymentsFeatureModule { }

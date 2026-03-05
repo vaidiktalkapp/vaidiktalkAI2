@@ -23,7 +23,7 @@ import { AdminNotificationsModule } from './features/notifications/notifications
 import { MonitoringModule } from './features/monitoring/monitoring.module';
 import { AdminReportsModule } from './features/reports/admin-reports.module';
 import { ReviewModerationModule } from './features/review-moderation/review-moderation.module';
-import { AdminAiAstrologersModule } from './features/ai-astrologers/admin-ai-astrologers.module';
+
 
 // Admin Management Controller (for managing admins)
 import { AdminManagementController } from './features/admin-management/controllers/admin-management.controller';
@@ -51,7 +51,6 @@ import { AdminManagementService } from './features/admin-management/services/adm
     MonitoringModule,
     AdminReportsModule,
     ReviewModerationModule,
-    AdminAiAstrologersModule,
   ],
   controllers: [
     AdminManagementController,

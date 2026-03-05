@@ -31,6 +31,8 @@ export interface IncomingChatRequestPayload {
   sessionId: string;
   orderId: string;
   userId: string;
+  userName?: string;
+  userProfilePic?: string;
   ratePerMinute: number;
   requestExpiresIn: number; // e.g. 3 * 60 * 1000
   sound?: string;
@@ -63,13 +65,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private chatMessageService: ChatMessageService,
     @Inject(forwardRef(() => NotificationService))
     private notificationService: NotificationService,
-  ) {}
+  ) { }
 
-handleConnection(client: AuthSocket) {
+  handleConnection(client: AuthSocket) {
     this.logger.log(`Chat client connected: ${client.id}`);
-    
+
     const { userId, role } = client.handshake.auth || {};
-    
+
     if (userId) {
       if (role === 'Astrologer') {
         this.astrologerSockets.set(userId, client.id);
@@ -81,7 +83,7 @@ handleConnection(client: AuthSocket) {
     }
   }
 
-isUserOnline(userId: string): boolean {
+  isUserOnline(userId: string): boolean {
     return this.activeUsers.has(userId);
   }
 
@@ -90,8 +92,8 @@ isUserOnline(userId: string): boolean {
     this.logger.log(`Chat client disconnected: ${client.id}`);
     for (const [uid, sid] of this.userSockets.entries()) {
       if (sid === client.id) {
-         this.userSockets.delete(uid);
-         break;
+        this.userSockets.delete(uid);
+        break;
       }
     }
 
@@ -114,7 +116,7 @@ isUserOnline(userId: string): boolean {
         }
 
         this.activeUsers.delete(userId);
-        
+
         // Remove from astrologer sockets if applicable
         if (userData.role === 'astrologer') {
           this.astrologerSockets.delete(userId);
@@ -146,16 +148,18 @@ isUserOnline(userId: string): boolean {
       // ✅ FIXED: Send ONLY to specific astrologer (via their socket)
       const astrologerSocketId = this.astrologerSockets.get(data.astrologerId);
 
-     const payload: IncomingChatRequestPayload = {
+      const payload: IncomingChatRequestPayload = {
         sessionId: result.data.sessionId,
         orderId: result.data.orderId,
         userId: data.userId,
+        userName: result.data.userName || 'User',
+        userProfilePic: result.data.userProfilePic || '',
         ratePerMinute: data.ratePerMinute,
         requestExpiresIn: 180000,
         sound: 'ringtone.mp3',
         vibration: true,
       };
-      
+
       if (astrologerSocketId) {
         this.server.to(astrologerSocketId).emit('incoming_chat_request', payload);
       } else {
@@ -173,19 +177,20 @@ isUserOnline(userId: string): boolean {
   }
 
   // ===== ACCEPT CHAT =====
- @SubscribeMessage('accept_chat')
+  @SubscribeMessage('accept_chat')
   async handleAcceptChat(@ConnectedSocket() client: Socket, @MessageBody() data: any) {
     try {
       const result = await this.chatSessionService.acceptChat(data.sessionId, data.astrologerId);
 
       // 🟢 Lookup user in GLOBAL map
       const targetUserId = data.userId || result.data?.userId;
-      
+
       if (targetUserId) {
         const userSocketId = this.userSockets.get(targetUserId.toString());
         if (userSocketId) {
-           this.server.to(userSocketId).emit('chat_accepted', {
+          this.server.to(userSocketId).emit('chat_accepted', {
             sessionId: data.sessionId,
+            orderId: result.data.orderId,
             astrologerId: data.astrologerId,
             message: 'Astrologer accepted your chat request',
             timestamp: new Date()
@@ -206,29 +211,43 @@ isUserOnline(userId: string): boolean {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: {
       sessionId: string;
-      astrologerId: string;
+      astrologerId?: string;
       reason?: string;
     }
   ) {
     try {
+      const session = await this.chatSessionService.getSession(data.sessionId);
+      if (!session) {
+        return { success: false, message: 'Session not found' };
+      }
+
+      const astrologerId = data.astrologerId || session.astrologerId.toString();
+
       const result = await this.chatSessionService.rejectChat(
         data.sessionId,
-        data.astrologerId,
+        astrologerId,
         data.reason || 'rejected'
       );
 
       // ✅ FIXED: Send ONLY to the user
-      const userSocketId = client.id; // The client calling this is the astrologer
-      // Need to find user socket
-      const userData = Array.from(this.activeUsers.values()).find(u => u.sessionId === data.sessionId);
-      
-      if (userData?.socketId) {
-        this.server.to(userData.socketId).emit('chat_rejected', {
-          sessionId: data.sessionId,
-          reason: data.reason || 'Chat request rejected',
-          refunded: true,
-          timestamp: new Date()
-        });
+      const targetUserId = session.userId?.toString();
+
+      this.logger.log(`🔍 [ChatGateway] Rejecting chat. Looking for user socket for targetUserId: ${targetUserId}`);
+      this.logger.log(`🔍 [ChatGateway] Current userSockets map keys: ${Array.from(this.userSockets.keys()).join(', ')}`);
+
+      if (targetUserId) {
+        const userSocketId = this.userSockets.get(targetUserId);
+        if (userSocketId) {
+          this.server.to(userSocketId).emit('chat_rejected', {
+            sessionId: data.sessionId,
+            reason: data.reason || 'Chat request rejected',
+            refunded: true,
+            timestamp: new Date()
+          });
+          this.logger.log(`✅ [ChatGateway] DIRECT send 'chat_rejected' to user: ${targetUserId} at socket: ${userSocketId}`);
+        } else {
+          this.logger.warn(`⚠️ [ChatGateway] User ${targetUserId} socket not found in global map for rejection`);
+        }
       }
 
       return result;
@@ -309,78 +328,92 @@ isUserOnline(userId: string): boolean {
     return { success: true, message: 'Astrologer registered' };
   }
 
+  // ===== REGISTER USER SOCKET =====
+  @SubscribeMessage('register_user')
+  handleRegisterUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { userId: string }
+  ) {
+    if (data.userId) {
+      this.userSockets.set(data.userId, client.id);
+      this.logger.log(`✅ [ChatGateway] User registered: ${data.userId} | Socket: ${client.id}`);
+      return { success: true, message: 'User registered' };
+    }
+    return { success: false, message: 'Missing userId' };
+  }
+
   // ===== START CHAT SESSION WITH KUNDLI MESSAGE =====
   @SubscribeMessage('start_chat')
-async handleStartChat(
-  @ConnectedSocket() client: Socket,
-  @MessageBody() payload: any
-) {
-  try {
-    const data = Array.isArray(payload) ? payload[0] : payload;
-    
-    this.logger.log(`🚀 start_chat from ${client.id}`);
-    this.logger.log(`🔍 Data: ${JSON.stringify(data)}`);
+  async handleStartChat(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any
+  ) {
+    try {
+      const data = Array.isArray(payload) ? payload[0] : payload;
 
-    if (!data || !data.sessionId || !data.userId || !data.role) {
-      this.logger.error('❌ Missing required start_chat fields');
-      return { success: false, message: 'Missing required fields' };
-    }
+      this.logger.log(`🚀 start_chat from ${client.id}`);
+      this.logger.log(`🔍 Data: ${JSON.stringify(data)}`);
 
-    this.logger.log(`⏳ Calling chatSessionService.startSession for ${data.sessionId}`);
-    const result = await this.chatSessionService.startSession(data.sessionId);
-    this.logger.log(`✅ startSession returned: ${JSON.stringify(result)}`);
-
-    client.join(data.sessionId);
-
-    this.activeUsers.set(data.userId, {
-      socketId: client.id,
-      userId: data.userId,
-      role: data.role,
-      sessionId: data.sessionId
-    });
-
-    await this.chatSessionService.updateOnlineStatus(data.sessionId, data.userId, data.role, true);
-
-    // ✅ Send kundli if user provides details
-    if (result.data.sendKundliMessage && data.kundliDetails) {
-      const session = await this.chatSessionService.getSession(data.sessionId);
-      
-      if (!session) {
-        throw new BadRequestException('Session not found');
+      if (!data || !data.sessionId || !data.userId || !data.role) {
+        this.logger.error('❌ Missing required start_chat fields');
+        return { success: false, message: 'Missing required fields' };
       }
-      
-      this.logger.log(`📜 Creating kundli message for session ${data.sessionId}`);
 
+      this.logger.log(`⏳ Calling chatSessionService.startSession for ${data.sessionId}`);
+      const result = await this.chatSessionService.startSession(data.sessionId);
+      this.logger.log(`✅ startSession returned: ${JSON.stringify(result)}`);
+
+      client.join(data.sessionId);
+
+      this.activeUsers.set(data.userId, {
+        socketId: client.id,
+        userId: data.userId,
+        role: data.role,
+        sessionId: data.sessionId
+      });
+
+      await this.chatSessionService.updateOnlineStatus(data.sessionId, data.userId, data.role, true);
+
+      // ✅ Send kundli if user provides details
+      if (result.data.sendKundliMessage && data.kundliDetails) {
+        const session = await this.chatSessionService.getSession(data.sessionId);
+
+        if (!session) {
+          throw new BadRequestException('Session not found');
+        }
+
+        this.logger.log(`📜 Creating kundli message for session ${data.sessionId}`);
+
+      }
+
+      // ✅ Emit timer_start
+      this.logger.log(`⏰ Emitting timer_start for session ${data.sessionId}`);
+      this.server.to(data.sessionId).emit('timer_start', {
+        sessionId: data.sessionId,
+        maxDurationMinutes: result.data.maxDurationMinutes,
+        maxDurationSeconds: result.data.maxDurationSeconds,
+        ratePerMinute: result.data.ratePerMinute,
+        chargingStarted: true,
+        timestamp: new Date()
+      });
+
+      this.startTimerTicker(data.sessionId, result.data.maxDurationSeconds);
+
+      client.to(data.sessionId).emit('user_joined', {
+        userId: data.userId,
+        role: data.role,
+        isOnline: true,
+        timestamp: new Date()
+      });
+
+      this.logger.log(`✅ start_chat completed successfully for ${data.sessionId}`);
+      return { success: true, message: 'Chat started' };
+    } catch (error: any) {
+      this.logger.error(`❌ Start chat error: ${error.message}`);
+      this.logger.error(`❌ Stack: ${error.stack}`);
+      return { success: false, message: error.message };
     }
-
-    // ✅ Emit timer_start
-    this.logger.log(`⏰ Emitting timer_start for session ${data.sessionId}`);
-    this.server.to(data.sessionId).emit('timer_start', {
-      sessionId: data.sessionId,
-      maxDurationMinutes: result.data.maxDurationMinutes,
-      maxDurationSeconds: result.data.maxDurationSeconds,
-      ratePerMinute: result.data.ratePerMinute,
-      chargingStarted: true,
-      timestamp: new Date()
-    });
-
-    this.startTimerTicker(data.sessionId, result.data.maxDurationSeconds);
-
-    client.to(data.sessionId).emit('user_joined', {
-      userId: data.userId,
-      role: data.role,
-      isOnline: true,
-      timestamp: new Date()
-    });
-
-    this.logger.log(`✅ start_chat completed successfully for ${data.sessionId}`);
-    return { success: true, message: 'Chat started' };
-  } catch (error: any) {
-    this.logger.error(`❌ Start chat error: ${error.message}`);
-    this.logger.error(`❌ Stack: ${error.stack}`);
-    return { success: false, message: error.message };
   }
-}
 
 
   // ===== REAL-TIME TIMER TICKER =====
@@ -472,172 +505,172 @@ async handleStartChat(
     }
   }
 
-// ===== SEND MESSAGE - BROADCAST TO ALL IN ROOM =====
-@SubscribeMessage('send_message')
-async handleSendMessage(
-  @ConnectedSocket() client: Socket,
-  @MessageBody() payload: any
-) {
-  try {
-    const data = Array.isArray(payload) ? payload[0] : payload;
+  // ===== SEND MESSAGE - BROADCAST TO ALL IN ROOM =====
+  @SubscribeMessage('send_message')
+  async handleSendMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any
+  ) {
+    try {
+      const data = Array.isArray(payload) ? payload[0] : payload;
 
-    this.logger.log(`📤 send_message from ${client.id}`);
-    this.logger.log(`🔍 SessionId: ${data.sessionId}`);
-    this.logger.log(`🔍 Content: ${data.content?.substring(0, 50)}`);
+      this.logger.log(`📤 send_message from ${client.id}`);
+      this.logger.log(`🔍 SessionId: ${data.sessionId}`);
+      this.logger.log(`🔍 Content: ${data.content?.substring(0, 50)}`);
 
-    // Basic validation
-    if (!data?.sessionId || !data?.senderId || !data?.receiverId) {
-      this.logger.error('❌ Missing required fields');
-      return { success: false, message: 'Missing required fields' };
-    }
+      // Basic validation
+      if (!data?.sessionId || !data?.senderId || !data?.receiverId) {
+        this.logger.error('❌ Missing required fields');
+        return { success: false, message: 'Missing required fields' };
+      }
 
-    const messageContent = data.content || data.message || '';
-    if (!messageContent.trim()) {
-      this.logger.error('❌ Empty message content');
-      return { success: false, message: 'Message content is required' };
-    }
+      const messageContent = data.content || data.message || '';
+      if (!messageContent.trim()) {
+        this.logger.error('❌ Empty message content');
+        return { success: false, message: 'Message content is required' };
+      }
 
-    // ===== SESSION STATE ENFORCEMENT =====
-    const session = await this.chatSessionService.getSession(data.sessionId);
-    if (!session) {
-      this.logger.error(`❌ Session not found: ${data.sessionId}`);
-      return { success: false, message: 'Session not found' };
-    }
+      // ===== SESSION STATE ENFORCEMENT =====
+      const session = await this.chatSessionService.getSession(data.sessionId);
+      if (!session) {
+        this.logger.error(`❌ Session not found: ${data.sessionId}`);
+        return { success: false, message: 'Session not found' };
+      }
 
-    const now = new Date();
+      const now = new Date();
 
-    // Determine real role based on session participants
-    const currentUserId: string =
-      (client as any).data?.userId || data.senderId;
+      // Determine real role based on session participants
+      const currentUserId: string =
+        (client as any).data?.userId || data.senderId;
 
-    const isUser = session.userId.toString() === currentUserId;
-    const isAstrologer = session.astrologerId.toString() === currentUserId;
+      const isUser = session.userId.toString() === currentUserId;
+      const isAstrologer = session.astrologerId.toString() === currentUserId;
 
-    if (!isUser && !isAstrologer) {
-      this.logger.error(
-        `❌ Sender ${currentUserId} is not part of session ${data.sessionId}`,
-      );
-      return { success: false, message: 'Not allowed in this session' };
-    }
+      if (!isUser && !isAstrologer) {
+        this.logger.error(
+          `❌ Sender ${currentUserId} is not part of session ${data.sessionId}`,
+        );
+        return { success: false, message: 'Not allowed in this session' };
+      }
 
-    const type = data.type || 'text';
+      const type = data.type || 'text';
 
-    // 1) Active session: allow both sides
-    if (session.status === 'active') {
-      // allowed
-    } else if (session.status === 'ended') {
-      // 2) Ended session: allow only astrologer within grace window
-      const withinGrace =
-        session.postSessionWindowEndsAt &&
-        now <= new Date(session.postSessionWindowEndsAt);
+      // 1) Active session: allow both sides
+      if (session.status === 'active') {
+        // allowed
+      } else if (session.status === 'ended') {
+        // 2) Ended session: allow only astrologer within grace window
+        const withinGrace =
+          session.postSessionWindowEndsAt &&
+          now <= new Date(session.postSessionWindowEndsAt);
 
-      if (!(isAstrologer && withinGrace)) {
+        if (!(isAstrologer && withinGrace)) {
+          this.logger.warn(
+            `🚫 Message blocked after end: session=${data.sessionId}, sender=${currentUserId}`,
+          );
+          return {
+            success: false,
+            message: 'Session has ended. Please continue chat to send messages.',
+          };
+        }
+
+        // Optional: in grace window, allow only text messages
+        if (type !== 'text') {
+          this.logger.warn(
+            `🚫 Non-text message blocked in grace window: session=${data.sessionId}, sender=${currentUserId}`,
+          );
+          return {
+            success: false,
+            message: 'Only text messages are allowed after session end.',
+          };
+        }
+      } else {
+        // 3) Any other status: waiting/pending/etc – block messaging
         this.logger.warn(
-          `🚫 Message blocked after end: session=${data.sessionId}, sender=${currentUserId}`,
+          `🚫 Message blocked; session not active: session=${data.sessionId}, status=${session.status}`,
         );
         return {
           success: false,
-          message: 'Session has ended. Please continue chat to send messages.',
+          message: 'Session is not active. Please wait for acceptance or continue chat.',
         };
       }
 
-      // Optional: in grace window, allow only text messages
-      if (type !== 'text') {
-        this.logger.warn(
-          `🚫 Non-text message blocked in grace window: session=${data.sessionId}, sender=${currentUserId}`,
-        );
-        return {
-          success: false,
-          message: 'Only text messages are allowed after session end.',
-        };
+      // ===== SAVE MESSAGE AFTER ALL CHECKS =====
+      const message = await this.chatMessageService.sendMessage({
+        sessionId: data.sessionId,
+        senderId: data.senderId,
+        senderModel: data.senderModel || (isUser ? 'User' : 'Astrologer'),
+        receiverId: data.receiverId,
+        receiverModel: data.receiverModel || (isUser ? 'Astrologer' : 'User'),
+        orderId: data.orderId,
+        type,
+        content: messageContent,
+        fileUrl: data.fileUrl,
+        fileDuration: data.fileDuration,
+        fileName: data.fileName,
+      });
+
+      // ✅ CRITICAL: Check who's in the room
+      const socketsInRoom = await this.server.in(data.sessionId).allSockets();
+      this.logger.log(`📊 Room ${data.sessionId} has ${socketsInRoom.size} sockets`);
+      this.logger.log(`📊 Socket IDs: ${Array.from(socketsInRoom).join(', ')}`);
+
+      // ✅ INTERNAL NOTIFICATION: if receiver is not in this chat room, send push/in-app
+      const receiverActive = this.activeUsers.get(data.receiverId);
+      const receiverInRoom = receiverActive && socketsInRoom.has(receiverActive.socketId);
+
+      if (!receiverInRoom) {
+        this.notificationService
+          .sendNotification({
+            recipientId: data.receiverId,
+            recipientModel: (data.receiverModel || 'Astrologer') as 'User' | 'Astrologer',
+            type: 'chat_message',
+            title: 'New chat message',
+            message: messageContent.substring(0, 80),
+            data: {
+              mode: 'chat',
+              sessionId: data.sessionId,
+              orderId: data.orderId,
+              senderId: data.senderId,
+              receiverId: data.receiverId,
+            },
+            priority: 'high',
+          })
+          .catch(err =>
+            this.logger.error(`Internal chat notification error: ${err.message}`),
+          );
       }
-    } else {
-      // 3) Any other status: waiting/pending/etc – block messaging
-      this.logger.warn(
-        `🚫 Message blocked; session not active: session=${data.sessionId}, status=${session.status}`,
-      );
+
+      // ✅ Broadcast to ALL in room (including sender)
+      this.server.to(data.sessionId).emit('chat_message', {
+        messageId: message.messageId,
+        sessionId: message.sessionId.toString(),
+        senderId: message.senderId.toString(),
+        senderModel: message.senderModel,
+        receiverId: message.receiverId.toString(),
+        receiverModel: message.receiverModel,
+        type: message.type,
+        content: message.content,
+        message: message.content,
+        fileUrl: message.fileUrl,
+        fileDuration: message.fileDuration,
+        deliveryStatus: 'sent',
+        sentAt: message.sentAt,
+        threadId: data.sessionId,
+        tempId: data.tempId,
+      });
+
+      this.logger.log(`✅ Message broadcasted to ${socketsInRoom.size} sockets`);
+
       return {
-        success: false,
-        message: 'Session is not active. Please wait for acceptance or continue chat.',
+        success: true,
+        messageId: message.messageId,
       };
+    } catch (error: any) {
+      this.logger.error(`❌ Send message error: ${error.message}`);
+      return { success: false, message: error.message };
     }
-
-    // ===== SAVE MESSAGE AFTER ALL CHECKS =====
-    const message = await this.chatMessageService.sendMessage({
-      sessionId: data.sessionId,
-      senderId: data.senderId,
-      senderModel: data.senderModel || (isUser ? 'User' : 'Astrologer'),
-      receiverId: data.receiverId,
-      receiverModel: data.receiverModel || (isUser ? 'Astrologer' : 'User'),
-      orderId: data.orderId,
-      type,
-      content: messageContent,
-      fileUrl: data.fileUrl,
-      fileDuration: data.fileDuration,
-      fileName: data.fileName,
-    });
-
-    // ✅ CRITICAL: Check who's in the room
-    const socketsInRoom = await this.server.in(data.sessionId).allSockets();
-    this.logger.log(`📊 Room ${data.sessionId} has ${socketsInRoom.size} sockets`);
-    this.logger.log(`📊 Socket IDs: ${Array.from(socketsInRoom).join(', ')}`);
-
-    // ✅ INTERNAL NOTIFICATION: if receiver is not in this chat room, send push/in-app
-    const receiverActive = this.activeUsers.get(data.receiverId);
-    const receiverInRoom = receiverActive && socketsInRoom.has(receiverActive.socketId);
-
-    if (!receiverInRoom) {
-      this.notificationService
-        .sendNotification({
-          recipientId: data.receiverId,
-          recipientModel: (data.receiverModel || 'Astrologer') as 'User' | 'Astrologer',
-          type: 'chat_message',
-          title: 'New chat message',
-          message: messageContent.substring(0, 80),
-          data: {
-            mode: 'chat',
-            sessionId: data.sessionId,
-            orderId: data.orderId,
-            senderId: data.senderId,
-            receiverId: data.receiverId,
-          },
-          priority: 'high',
-        })
-        .catch(err =>
-          this.logger.error(`Internal chat notification error: ${err.message}`),
-        );
-    }
-
-    // ✅ Broadcast to ALL in room (including sender)
-    this.server.to(data.sessionId).emit('chat_message', {
-      messageId: message.messageId,
-      sessionId: message.sessionId.toString(),
-      senderId: message.senderId.toString(),
-      senderModel: message.senderModel,
-      receiverId: message.receiverId.toString(),
-      receiverModel: message.receiverModel,
-      type: message.type,
-      content: message.content,
-      message: message.content,
-      fileUrl: message.fileUrl,
-      fileDuration: message.fileDuration,
-      deliveryStatus: 'sent',
-      sentAt: message.sentAt,
-      threadId: data.sessionId,
-      tempId: data.tempId,
-    });
-
-    this.logger.log(`✅ Message broadcasted to ${socketsInRoom.size} sockets`);
-
-    return {
-      success: true,
-      messageId: message.messageId,
-    };
-  } catch (error: any) {
-    this.logger.error(`❌ Send message error: ${error.message}`);
-    return { success: false, message: error.message };
   }
-}
 
 
 
@@ -804,75 +837,75 @@ async handleSendMessage(
     return { success: true };
   }
 
-// ===== JOIN SESSION WITH AUTO-KUNDLI =====
-@SubscribeMessage('join_session')
-async handleJoinSession(
-  @ConnectedSocket() client: Socket,
-  @MessageBody() payload: any
-) {
-  try {
-    const data = Array.isArray(payload) ? payload[0] : payload;
-    
-    this.logger.log(`📍 join_session from ${client.id}`);
-    this.logger.log(`🔍 SessionId: ${data.sessionId}, Role: ${data.role}, UserId: ${data.userId}`);
-    
-    // Join room
-    client.join(data.sessionId);
+  // ===== JOIN SESSION WITH AUTO-KUNDLI =====
+  @SubscribeMessage('join_session')
+  async handleJoinSession(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any
+  ) {
+    try {
+      const data = Array.isArray(payload) ? payload[0] : payload;
 
-    if (data.role === 'user') {
+      this.logger.log(`📍 join_session from ${client.id}`);
+      this.logger.log(`🔍 SessionId: ${data.sessionId}, Role: ${data.role}, UserId: ${data.userId}`);
+
+      // Join room
+      client.join(data.sessionId);
+
+      if (data.role === 'user') {
         this.chatSessionService.clearUserJoinTimeout(data.sessionId);
       }
-    
-    // Check room population
-    const socketsInRoom = await this.server.in(data.sessionId).allSockets();
-    this.logger.log(`👥 Room ${data.sessionId} now has ${socketsInRoom.size} sockets`);
 
-    // Store user
-    this.activeUsers.set(data.userId, {
-      socketId: client.id,
-      userId: data.userId,
-      role: data.role,
-      sessionId: data.sessionId
-    });
+      // Check room population
+      const socketsInRoom = await this.server.in(data.sessionId).allSockets();
+      this.logger.log(`👥 Room ${data.sessionId} now has ${socketsInRoom.size} sockets`);
 
-    await this.chatSessionService.updateOnlineStatus(
-      data.sessionId, 
-      data.userId, 
-      data.role, 
-      true
-    );
+      // Store user
+      this.activeUsers.set(data.userId, {
+        socketId: client.id,
+        userId: data.userId,
+        role: data.role,
+        sessionId: data.sessionId
+      });
 
-    // Emit to others
-    client.to(data.sessionId).emit('user_joined', {
-      userId: data.userId,
-      role: data.role,
-      isOnline: true,
-      timestamp: new Date()
-    });
+      await this.chatSessionService.updateOnlineStatus(
+        data.sessionId,
+        data.userId,
+        data.role,
+        true
+      );
 
-    // ✅ AUTO-SEND KUNDLI if user joins with kundli details
-    if (data.role === 'user' && data.kundliDetails) {
-      this.logger.log(`📜 User has kundli details, sending to session ${data.sessionId}`);
-      
-      try {
-        const session = await this.chatSessionService.getSession(data.sessionId);
-        
-        if (!session) {
-          this.logger.error('❌ Session not found for kundli');
-          return { success: true, message: 'Joined but session not found' };
+      // Emit to others
+      client.to(data.sessionId).emit('user_joined', {
+        userId: data.userId,
+        role: data.role,
+        isOnline: true,
+        timestamp: new Date()
+      });
+
+      // ✅ AUTO-SEND KUNDLI if user joins with kundli details
+      if (data.role === 'user' && data.kundliDetails) {
+        this.logger.log(`📜 User has kundli details, sending to session ${data.sessionId}`);
+
+        try {
+          const session = await this.chatSessionService.getSession(data.sessionId);
+
+          if (!session) {
+            this.logger.error('❌ Session not found for kundli');
+            return { success: true, message: 'Joined but session not found' };
+          }
+
+        } catch (kundliError) {
+          this.logger.error(`❌ Kundli send error: ${kundliError.message}`);
         }
-        
-      } catch (kundliError) {
-        this.logger.error(`❌ Kundli send error: ${kundliError.message}`);
       }
-    }
 
-    return { success: true, message: 'Joined session successfully' };
-  } catch (error: any) {
-    this.logger.error(`❌ Join session error: ${error.message}`);
-    return { success: false, message: error.message };
+      return { success: true, message: 'Joined session successfully' };
+    } catch (error: any) {
+      this.logger.error(`❌ Join session error: ${error.message}`);
+      return { success: false, message: error.message };
+    }
   }
-}
 
   // ===== LEAVE SESSION =====
   @SubscribeMessage('leave_session')
@@ -901,93 +934,93 @@ async handleJoinSession(
   }
 
   // ===== END SESSION =====
- /**
- * ✅ FIXED: END CHAT (WebSocket)
- */
-@SubscribeMessage('end_chat')
-async handleEndChat(
-  @ConnectedSocket() client: Socket,
-  @MessageBody() payload: any,
-) {
-  try {
-    // ✅ Handle array or object payload
-    const data = Array.isArray(payload) ? payload[0] : payload;
-    
-    this.logger.log(`🔴 end_chat from ${client.id}: ${JSON.stringify(data)}`);
+  /**
+  * ✅ FIXED: END CHAT (WebSocket)
+  */
+  @SubscribeMessage('end_chat')
+  async handleEndChat(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any,
+  ) {
+    try {
+      // ✅ Handle array or object payload
+      const data = Array.isArray(payload) ? payload[0] : payload;
 
-    // ✅ Validate sessionId
-    if (!data || !data.sessionId) {
-      this.logger.error('❌ Missing sessionId in end_chat');
-      return { success: false, message: 'Session ID is required' };
-    }
+      this.logger.log(`🔴 end_chat from ${client.id}: ${JSON.stringify(data)}`);
 
-    const sessionId = data.sessionId;
-    const reason = data.reason || 'user_ended';
-    const userId = data.userId || (client as any).handshake?.auth?.userId;
+      // ✅ Validate sessionId
+      if (!data || !data.sessionId) {
+        this.logger.error('❌ Missing sessionId in end_chat');
+        return { success: false, message: 'Session ID is required' };
+      }
 
-    // ✅ Check if session exists and is not already ended
-    const session = await this.chatSessionService.getSession(sessionId);
-    
-    if (!session) {
-      this.logger.warn(`⚠️ Session ${sessionId} not found (may be already ended)`);
-      return { 
-        success: true, 
-        message: 'Session already ended or not found',
-        data: { sessionId, status: 'ended' }
-      };
-    }
+      const sessionId = data.sessionId;
+      const reason = data.reason || 'user_ended';
+      const userId = data.userId || (client as any).handshake?.auth?.userId;
 
-    // ✅ If already ended, return gracefully
-    if (session.status === 'ended') {
-      this.logger.log(`✅ Session ${sessionId} already ended, skipping`);
+      // ✅ Check if session exists and is not already ended
+      const session = await this.chatSessionService.getSession(sessionId);
+
+      if (!session) {
+        this.logger.warn(`⚠️ Session ${sessionId} not found (may be already ended)`);
+        return {
+          success: true,
+          message: 'Session already ended or not found',
+          data: { sessionId, status: 'ended' }
+        };
+      }
+
+      // ✅ If already ended, return gracefully
+      if (session.status === 'ended') {
+        this.logger.log(`✅ Session ${sessionId} already ended, skipping`);
+        return {
+          success: true,
+          message: 'Session already ended',
+          data: {
+            sessionId,
+            status: 'ended',
+            billedMinutes: session.billedMinutes,
+            chargeAmount: session.totalAmount,
+          },
+        };
+      }
+
+      // ✅ End the session
+      const result = await this.chatSessionService.endSession(
+        sessionId,
+        userId || 'user',
+        reason,
+      );
+
+      // ✅ Stop timer if exists
+      if (this.sessionTimers.has(sessionId)) {
+        clearInterval(this.sessionTimers.get(sessionId)!);
+        this.sessionTimers.delete(sessionId);
+        this.logger.log(`⏹️ Timer cleared for session ${sessionId}`);
+      }
+
+      // ✅ Notify all participants
+      this.server.to(sessionId).emit('chat_ended', {
+        sessionId,
+        reason,
+        billedMinutes: result.data.billedMinutes,
+        chargeAmount: result.data.chargeAmount,
+        status: 'ended',
+        timestamp: new Date(),
+      });
+
+      this.logger.log(`✅ Chat ended via WebSocket: ${sessionId}`);
+
       return {
         success: true,
-        message: 'Session already ended',
-        data: {
-          sessionId,
-          status: 'ended',
-          billedMinutes: session.billedMinutes,
-          chargeAmount: session.totalAmount,
-        },
+        message: 'Chat ended successfully',
+        data: result.data,
       };
+    } catch (error: any) {
+      this.logger.error(`❌ End chat error: ${error.message}`);
+      return { success: false, message: error.message };
     }
-
-    // ✅ End the session
-    const result = await this.chatSessionService.endSession(
-      sessionId,
-      userId || 'user',
-      reason,
-    );
-
-    // ✅ Stop timer if exists
-    if (this.sessionTimers.has(sessionId)) {
-      clearInterval(this.sessionTimers.get(sessionId)!);
-      this.sessionTimers.delete(sessionId);
-      this.logger.log(`⏹️ Timer cleared for session ${sessionId}`);
-    }
-
-    // ✅ Notify all participants
-    this.server.to(sessionId).emit('chat_ended', {
-      sessionId,
-      reason,
-      billedMinutes: result.data.billedMinutes,
-      chargeAmount: result.data.chargeAmount,
-      status: 'ended',
-      timestamp: new Date(),
-    });
-
-    this.logger.log(`✅ Chat ended via WebSocket: ${sessionId}`);
-
-    return {
-      success: true,
-      message: 'Chat ended successfully',
-      data: result.data,
-    };
-  } catch (error: any) {
-    this.logger.error(`❌ End chat error: ${error.message}`);
-    return { success: false, message: error.message };
   }
-}
 
 
   // ===== REACT TO MESSAGE =====
@@ -1116,4 +1149,55 @@ async handleEndChat(
     }
   }
 
+  // ===== PUBLIC METHOD: ACCEPT CHAT NOTIFICATION (Called from Controller) =====
+  public async notifyUserOfAcceptance(sessionId: string, astrologerId: string, payload?: any) {
+    const session = await this.chatSessionService.getSession(sessionId);
+    if (!session) return;
+
+    const targetUserId = session.userId?.toString();
+    this.logger.log(`🔍 [ChatGateway] Notifying chat accepted. Looking for user socket for targetUserId: ${targetUserId}`);
+
+    if (targetUserId) {
+      const userSocketId = this.userSockets.get(targetUserId);
+      if (userSocketId) {
+        this.server.to(userSocketId).emit('chat_accepted', {
+          sessionId,
+          orderId: session.orderId,
+          astrologerId,
+          timestamp: new Date(),
+          ...payload
+        });
+        this.logger.log(`✅ [ChatGateway] DIRECT send 'chat_accepted' to user: ${targetUserId}`);
+      } else {
+        this.logger.warn(`⚠️ [ChatGateway] User ${targetUserId} socket not found for accept notification`);
+      }
+    }
+  }
+
+  // ===== PUBLIC METHOD: REJECT CHAT NOTIFICATION (Called from Controller) =====
+  public async notifyUserOfRejection(sessionId: string, astrologerId: string, reason: string) {
+    const session = await this.chatSessionService.getSession(sessionId);
+    if (!session) return { success: false, message: 'Session not found' };
+
+    const targetUserId = session.userId?.toString();
+
+    this.logger.log(`🔍 [ChatGateway] Notifying chat rejected. Looking for user socket for targetUserId: ${targetUserId}`);
+    this.logger.log(`🔍 [ChatGateway] Current userSockets map keys: ${Array.from(this.userSockets.keys()).join(', ')}`);
+
+    if (targetUserId) {
+      const userSocketId = this.userSockets.get(targetUserId);
+      if (userSocketId) {
+        this.server.to(userSocketId).emit('chat_rejected', {
+          sessionId,
+          reason,
+          refunded: true,
+          timestamp: new Date()
+        });
+        this.logger.log(`✅ [ChatGateway] DIRECT send 'chat_rejected' to user: ${targetUserId} at socket: ${userSocketId}`);
+      } else {
+        this.logger.warn(`⚠️ [ChatGateway] User ${targetUserId} socket not found in global map for rejection`);
+      }
+    }
+    return { success: true };
+  }
 }

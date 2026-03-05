@@ -12,6 +12,7 @@ import { AdminRegistrationController } from './controllers/admin-registration.co
 
 import { AdminAstrologersService } from './services/admin-astrologers.service';
 import { AdminRegistrationService } from './services/admin-registration.service';
+import { PenaltyService } from '../../../astrologers/services/penalty.service';
 
 import { ActivityLogsModule } from '../activity-logs/activity-logs.module';
 
@@ -47,10 +48,11 @@ import { Admin, AdminSchema } from '../../core/schemas/admin.schema';
   providers: [
     AdminAstrologersService,
     AdminRegistrationService,
+    PenaltyService,
   ],
   exports: [
     AdminAstrologersService,
     AdminRegistrationService,
   ],
 })
-export class AstrologerManagementModule {}
+export class AstrologerManagementModule { }

@@ -370,6 +370,7 @@ export class Astrologer {
   })
   devices: {
     fcmToken: string;
+    voipToken?: string;
     deviceId?: string;
     deviceType?: 'android' | 'ios' | 'web' | 'phone' | 'tablet';
     deviceName?: string;

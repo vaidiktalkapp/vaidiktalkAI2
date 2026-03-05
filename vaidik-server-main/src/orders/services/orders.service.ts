@@ -56,7 +56,6 @@ export class OrdersService {
           orderId: this.generateOrderId(),
           conversationThreadId,
           userId: this.toObjectId(userId),
-          astrologerModel: 'Astrologer',
           astrologerId: this.toObjectId(astrologerId),
           astrologerName,
           type: 'conversation',
@@ -668,15 +667,26 @@ export class OrdersService {
     const order = await this.orderModel.findOne({
       orderId,
       userId: this.toObjectId(userId),
-      status: { $in: ['pending', 'waiting', 'waiting_in_queue'] },
       isDeleted: false
     });
 
     if (!order) {
-      throw new NotFoundException('Order not found or cannot be cancelled at this stage');
+      throw new NotFoundException('Order not found');
     }
 
-    // ❌ Removed: refundHold – no more holds for chat/call conversation threads
+    if (order.type === 'conversation') {
+      // ✅ Conversation threads stay 'active', we just clear the pending session markers
+      order.currentSessionId = undefined;
+      order.currentSessionType = 'none';
+      await order.save();
+      this.logger.log(`Conversation thread session cleared: ${orderId} | By: ${cancelledBy}`);
+      return { success: true, message: 'Session cancelled successfully' };
+    }
+
+    // Legacy Order logic
+    if (!['pending', 'waiting', 'waiting_in_queue'].includes(order.status)) {
+      throw new BadRequestException('Order cannot be cancelled at this stage');
+    }
 
     order.status = 'cancelled';
     order.cancellationReason = reason;
