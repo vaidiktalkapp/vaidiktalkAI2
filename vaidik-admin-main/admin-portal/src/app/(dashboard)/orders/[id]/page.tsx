@@ -152,8 +152,8 @@ export default function OrderDetailPage() {
               <StatusBadge status={order.status} />
               {order.refundRequest && (
                 <span className={`px-2 py-1 rounded text-xs font-medium ${order.refundRequest.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                  order.refundRequest.status === 'approved' ? 'bg-green-100 text-green-800' :
-                    'bg-red-100 text-red-800'
+                    order.refundRequest.status === 'approved' ? 'bg-green-100 text-green-800' :
+                      'bg-red-100 text-red-800'
                   }`}>
                   Refund {order.refundRequest.status}
                 </span>
@@ -478,8 +478,8 @@ function ChatViewerModal({ sessionId, onClose }: { sessionId: string; onClose: (
               return (
                 <div key={msg._id || msg.id} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
                   <div className={`p-3 rounded-2xl max-w-[80%] ${isUser
-                    ? 'bg-blue-600 text-white rounded-tr-sm shadow-sm'
-                    : 'bg-white border shadow-sm rounded-tl-sm text-gray-800'
+                      ? 'bg-blue-600 text-white rounded-tr-sm shadow-sm'
+                      : 'bg-white border shadow-sm rounded-tl-sm text-gray-800'
                     }`}>
                     <p className="text-sm whitespace-pre-wrap">{msg.content || msg.message}</p>
                     <span className={`text-[10px] mt-1 block font-medium ${isUser ? 'text-blue-200' : 'text-gray-400'}`}>

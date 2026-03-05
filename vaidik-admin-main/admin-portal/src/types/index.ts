@@ -80,5 +80,3 @@ export interface PayoutRequest {
   status: string;
   createdAt: Date;
 }
-
-export * from './ai-astrologer';

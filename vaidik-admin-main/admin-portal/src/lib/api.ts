@@ -45,17 +45,6 @@ export const adminApi = {
       password: password.trim() // Remove whitespace
     }),
 
-  // Upload
-  uploadImage: (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    return apiClient.post('/upload/image', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-  },
-
   getProfile: () =>
     apiClient.get('/admin/auth/profile'),
 
@@ -141,6 +130,9 @@ export const adminApi = {
     apiClient.get('/admin/registrations/stats/summary'),
 
   // ==================== ASTROLOGERS ====================
+
+  // Add this inside your adminApi object in src/lib/api.ts
+  getChatMessages: (sessionId: string) => apiClient.get(`/chat/sessions/${sessionId}/messages`),
 
   /**
    * Get all astrologers (approved profiles)
@@ -625,6 +617,12 @@ Send full-screen notification to a single User or Astrologer
   deleteAstrologer: (astrologerId: string, reason?: string) =>
     apiClient.delete(`/admin/astrologers/${astrologerId}`, { data: { reason } }),
 
+  /**
+   * Waive a penalty applied to an astrologer
+   */
+  waivePenalty: (astrologerId: string, penaltyId: string, reason: string) =>
+    apiClient.post(`/admin/astrologers/penalties/${penaltyId}/waive`, { astrologerId, reason }),
+
   // ==================== REFUNDS ====================
 
   /**
@@ -709,6 +707,12 @@ Send full-screen notification to a single User or Astrologer
    */
   rejectPayout: (payoutId: string, reason: string) =>
     apiClient.post(`/admin/payments/payouts/${payoutId}/reject`, { reason }),
+
+  /**
+   * Get an exhaustive financial audit for a payout (Orders, Refunds, Penalties)
+   */
+  getPayoutFinancialAudit: (payoutId: string) =>
+    apiClient.get(`/admin/payments/payouts/${payoutId}/financial-audit`),
 
   // ==================== WALLET REFUNDS ====================
 
@@ -1022,6 +1026,25 @@ Send full-screen notification to a single User or Astrologer
   deleteRechargePack: (amount: number) =>
     apiClient.delete(`/admin/payments/recharge-packs/${amount}`),
 
+  // ==================== FREE CHAT CONFIG ====================
+
+  /**
+   * Get free chat configuration
+   */
+  getFreeChatConfig: () =>
+    apiClient.get('/admin/config/free-chat'),
+
+  /**
+   * Update free chat configuration
+   */
+  updateFreeChatConfig: (data: {
+    isEnabled?: boolean;
+    durationMinutes?: number;
+    maxPerUser?: number;
+    eligibleUserType?: string;
+  }) =>
+    apiClient.patch('/admin/config/free-chat', data),
+
   // --- MODERATION: REPORTS ---
 
   /** * Get all safety reports. 
@@ -1061,85 +1084,4 @@ Send full-screen notification to a single User or Astrologer
   // // Block/Unblock Astrologer
   // updateAstrologerStatus: (astrologerId: string, status: 'active' | 'blocked', reason?: string) =>
   //   apiClient.patch(`/admin/astrologers/${astrologerId}/status`, { status, reason }),
-
-  /**
-   * AI ASTROLOGERS
-   */
-  getAllAIAstrologers: (params: { page?: number; limit?: number; search?: string; status?: string }) =>
-    apiClient.get('/admin/ai-astrologers', { params }),
-
-  getAIAstrologersStats: () =>
-    apiClient.get('/admin/ai-astrologers/stats'),
-
-  getAIAstrologerDetails: (aiAstrologerId: string) =>
-    apiClient.get(`/admin/ai-astrologers/${aiAstrologerId}`),
-
-  createAIAstrologer: (data: any) =>
-    apiClient.post('/admin/ai-astrologers', data),
-
-  updateAIAstrologer: (aiAstrologerId: string, data: any) =>
-    apiClient.patch(`/admin/ai-astrologers/${aiAstrologerId}`, data),
-
-  deleteAIAstrologer: (aiAstrologerId: string) =>
-    apiClient.delete(`/admin/ai-astrologers/${aiAstrologerId}`),
-
-  toggleAIAstrologerAvailability: (id: string) =>
-    apiClient.patch(`/admin/ai-astrologers/${id}/availability`),
-
-  getAIAstrologerChatLogs: (params: { page?: number; limit?: number; search?: string; aiAstrologerId?: string; resolution?: string }) =>
-    apiClient.get('/admin/ai-astrologers/chat-logs', { params }),
-
-  getAIAstrologerChatLogDetails: (chatLogId: string) =>
-    apiClient.get(`/admin/ai-astrologers/chat-logs/${chatLogId}`),
-
-  getChatMessages: (sessionId: string) =>
-    apiClient.get(`/admin/ai-astrologers/chat-logs/${sessionId}/messages`),
-
-  getAIAstrologerChatStats: () =>
-    apiClient.get('/admin/ai-astrologers/chat-stats'),
-
-  getAIAstrologerTransactions: (params: { page?: number; limit?: number; search?: string; type?: string; status?: string }) =>
-    apiClient.get('/admin/ai-astrologers/transactions', { params }),
-
-  getAIAstrologerWalletStats: () =>
-    apiClient.get('/admin/ai-astrologers/wallet-stats'),
-
-  getAIAstrologerPerformanceMetrics: (params: { page?: number; limit?: number; search?: string; timeRange?: string }) =>
-    apiClient.get('/admin/ai-astrologers/performance-metrics', { params }),
-
-  getAIAstrologerOverallStats: (timeRange: string = 'monthly') =>
-    apiClient.get('/admin/ai-astrologers/overall-stats', { params: { timeRange } }),
-
-  updateAIAstrologerStatus: (aiAstrologerId: string, status: string) =>
-    apiClient.patch(`/admin/ai-astrologers/${aiAstrologerId}/status`, { status }),
-
-  exportAIAstrologersData: (format: string = 'csv') =>
-    apiClient.get('/admin/ai-astrologers/export', {
-      params: { format },
-      responseType: 'blob'
-    }),
-
-  exportAIAstrologerChatLogs: (format: string = 'csv') =>
-    apiClient.get('/admin/ai-astrologers/chat-logs/export', {
-      params: { format },
-      responseType: 'blob'
-    }),
-
-  exportAIAstrologerTransactions: (format: string = 'csv') =>
-    apiClient.get('/admin/ai-astrologers/transactions/export', {
-      params: { format },
-      responseType: 'blob'
-    }),
-
-  getAIRevenueAnalytics: (params: { timeRange: string; startDate?: string; endDate?: string }) =>
-    apiClient.get('/admin/ai-astrologers/analytics/revenue', { params }),
-
-  getAITimeSlotAnalysis: () =>
-    apiClient.get('/admin/ai-astrologers/analytics/time-slots'),
-
-  getAIAstrologerComparison: (params: { metric?: string; limit?: number }) =>
-    apiClient.get('/admin/ai-astrologers/analytics/comparison', { params }),
-
-  getAIConversionMetrics: () =>
-    apiClient.get('/ai-astrologers/analytics/conversion-metrics'),
 };

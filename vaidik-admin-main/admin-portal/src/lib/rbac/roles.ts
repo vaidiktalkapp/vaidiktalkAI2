@@ -56,11 +56,6 @@ export type Permission =
   | 'view_user_reports'    // For seeing flagged content/users
   | 'manage_user_reports'  // For resolving reports
   | 'view_blocked_users'
-
-  // AI Astrologers
-  | 'view_ai_astrologers'
-  | 'manage_ai_astrologers'
-
   // System
   | 'manage_admins'
   | 'create_admins'  // ✅ Add this
@@ -91,8 +86,7 @@ export const ROLE_PERMISSIONS: Record<RoleType, Permission[]> = {
     'support:tickets:edit',
     'support:refund:process',
     'support:payout:approve',
-    'support:stats:view', 'view_user_reports', 'manage_user_reports', 'view_blocked_users',
-    'view_ai_astrologers', 'manage_ai_astrologers'
+    'support:stats:view', 'view_user_reports', 'manage_user_reports', 'view_blocked_users'
   ],
   admin: [
     'view_dashboard', 'view_analytics',
@@ -111,7 +105,7 @@ export const ROLE_PERMISSIONS: Record<RoleType, Permission[]> = {
   moderator: [
     'view_dashboard',
     'view_users', 'manage_users', // Can block bad users
-    'view_astrologers',
+    'view_astrologers', 'manage_astrologers',
     'manage_livestreams', // Can force end bad streams
     'manage_notifications',
     'view_user_reports', 'manage_user_reports', 'view_blocked_users'

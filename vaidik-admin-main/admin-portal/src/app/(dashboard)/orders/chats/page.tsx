@@ -4,34 +4,36 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, Timer, AlertCircle, Square, Activity } from 'lucide-react';
+import { MessageCircle, Timer, AlertCircle, Square, Activity, Eye, X } from 'lucide-react';
 import { DataTable, Column } from '@/components/shared/DataTable';
 import { toast } from 'sonner';
 
 interface ChatSession {
   _id: string;
   orderId: string;
-  sessionId: string; // Ensure this is present in API response
-  userId: { name: string; phoneNumber?: string; profileImage?: string };
-  astrologerId: { name: string; profilePicture?: string };
+  sessionId: string;
+  userId: { _id?: string; name: string; phoneNumber?: string; profileImage?: string };
+  astrologerId: { _id?: string; name: string; profilePicture?: string };
   type: string;
   status: string;
   duration?: number;
   messageCount?: number;
   createdAt: string;
+  endedBy?: string;
 }
 
 export default function ChatsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const [viewingChatSessionId, setViewingChatSessionId] = useState<string | null>(null);
 
   // 1. Fetch Active Chats
   const { data: activeChats, isLoading: isLoadingActive } = useQuery({
     queryKey: ['active-chats'],
     queryFn: async () => {
       const response = await adminApi.getAllChats({ status: 'active', limit: 50 });
-      return response.data.data.orders; 
+      return response.data.data.orders;
     },
     refetchInterval: 5000,
   });
@@ -59,21 +61,21 @@ export default function ChatsPage() {
   });
 
   const columns: Column<ChatSession>[] = [
-    { 
-      header: 'Session ID', 
-      accessorKey: 'sessionId', 
-      cell: (row) => <span className="font-mono text-xs">{row.sessionId || row.orderId}</span> 
+    {
+      header: 'Session ID',
+      accessorKey: 'sessionId',
+      cell: (row) => <span className="font-mono text-xs">{row.sessionId || row.orderId}</span>
     },
-    { 
-      header: 'User', 
-      cell: (row) => <span className="font-medium">{row.userId?.name}</span> 
+    {
+      header: 'User',
+      cell: (row) => <span className="font-medium">{row.userId?.name}</span>
     },
-    { 
-      header: 'Astrologer', 
-      cell: (row) => row.astrologerId?.name 
+    {
+      header: 'Astrologer',
+      cell: (row) => row.astrologerId?.name
     },
-    { 
-      header: 'Messages', 
+    {
+      header: 'Messages',
       cell: (row) => (
         <div className="flex items-center gap-1">
           <MessageCircle size={14} className="text-gray-400" />
@@ -81,21 +83,50 @@ export default function ChatsPage() {
         </div>
       )
     },
-    { 
-      header: 'Status', 
+    {
+      header: 'Status',
       accessorKey: 'status',
       cell: (row) => (
-        <span className={`px-2 py-1 rounded-full text-xs capitalize ${
-          row.status === 'active' ? 'bg-blue-100 text-blue-700 animate-pulse' : 
-          row.status === 'ended' ? 'bg-green-100 text-green-700' : 'bg-gray-100'
-        }`}>
-          {row.status}
-        </span>
+        <div className="flex flex-col gap-1 items-start">
+          <span className={`px-2 py-1 rounded-full text-xs capitalize ${row.status === 'active' ? 'bg-blue-100 text-blue-700 animate-pulse' :
+            row.status === 'ended' ? 'bg-green-100 text-green-700' : 'bg-gray-100'
+            }`}>
+            {row.status}
+          </span>
+          {row.status === 'ended' && row.endedBy && (
+            <span className="text-[10px] text-gray-500 font-medium">
+              Ended by: <span className="capitalize">
+                {row.endedBy === 'user' || row.endedBy === row.userId?._id ? 'User' :
+                  row.endedBy === 'astrologer' || row.endedBy === row.astrologerId?._id ? 'Astrologer' :
+                    'System'}
+              </span>
+            </span>
+          )}
+        </div>
       )
     },
-    { 
-      header: 'Date', 
-      cell: (row) => new Date(row.createdAt).toLocaleDateString() 
+    {
+      header: 'Date',
+      cell: (row) => new Date(row.createdAt).toLocaleDateString()
+    },
+    {
+      header: 'Actions',
+      cell: (row) => (
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setViewingChatSessionId(row.sessionId)}
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+          >
+            <Eye size={14} /> Read Chat
+          </button>
+          <button
+            onClick={() => router.push(`/orders/${row.orderId}`)}
+            className="text-gray-600 hover:text-gray-900 text-sm font-medium flex items-center gap-1"
+          >
+            <Eye size={14} /> View Order
+          </button>
+        </div>
+      )
     },
   ];
 
@@ -137,12 +168,13 @@ export default function ChatsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeChats?.map((chat: ChatSession) => (
-              <ActiveChatCard 
-                key={chat._id} 
-                chat={chat} 
-                // ✅ Pass sessionId, fallback to orderId if missing but backend needs sessionId
-                onEnd={() => endChatMutation.mutate(chat.sessionId)} 
+              <ActiveChatCard
+                key={chat._id}
+                chat={chat}
+                onEnd={() => endChatMutation.mutate(chat.sessionId)}
                 isEnding={endChatMutation.isPending && endChatMutation.variables === chat.sessionId}
+                // Pass the onView prop
+                onView={(id) => setViewingChatSessionId(id)}
               />
             ))}
           </div>
@@ -165,11 +197,20 @@ export default function ChatsPage() {
           />
         </div>
       </section>
+
+      {/* NEW: Render Chat Modal when an ID is selected */}
+      {viewingChatSessionId && (
+        <ChatViewerModal
+          sessionId={viewingChatSessionId}
+          onClose={() => setViewingChatSessionId(null)}
+        />
+      )}
     </div>
   );
 }
 
-function ActiveChatCard({ chat, onEnd, isEnding }: { chat: ChatSession; onEnd: () => void; isEnding: boolean }) {
+// Ensure ActiveChatCard receives and uses the onView prop
+function ActiveChatCard({ chat, onEnd, isEnding, onView }: { chat: ChatSession; onEnd: () => void; isEnding: boolean; onView: (id: string) => void }) {
   const startTime = new Date(chat.createdAt).getTime();
   const durationMin = Math.floor((Date.now() - startTime) / 60000);
 
@@ -197,14 +238,89 @@ function ActiveChatCard({ chat, onEnd, isEnding }: { chat: ChatSession; onEnd: (
         </div>
       </div>
 
-      <button 
-        onClick={onEnd}
-        disabled={isEnding}
-        className="w-full py-2 bg-red-50 text-red-700 text-sm font-medium rounded-lg hover:bg-red-100 transition flex items-center justify-center gap-2 disabled:opacity-50"
-      >
-        <Square size={14} fill="currentColor" />
-        {isEnding ? 'Ending...' : 'Force End Chat'}
-      </button>
+      {/* Wrap buttons in a flex container */}
+      <div className="flex gap-2">
+        <button
+          onClick={onEnd}
+          disabled={isEnding}
+          className="flex-1 py-2 bg-red-50 text-red-700 text-sm font-medium rounded-lg hover:bg-red-100 transition flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          <Square size={14} fill="currentColor" />
+          {isEnding ? 'Ending...' : 'Force End'}
+        </button>
+        <button
+          onClick={() => onView(chat.sessionId)}
+          className="flex-1 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-100 transition flex items-center justify-center gap-2"
+        >
+          <Eye size={14} />
+          Monitor
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// NEW: ChatViewerModal component added to the bottom
+function ChatViewerModal({ sessionId, onClose }: { sessionId: string; onClose: () => void }) {
+  const { data: messages, isLoading } = useQuery({
+    queryKey: ['admin-chat-messages', sessionId],
+    queryFn: async () => {
+      // Make sure adminApi.getChatMessages is defined in your src/lib/api.ts
+      const response = await adminApi.getChatMessages(sessionId);
+      return response.data?.data?.messages || response.data?.data || [];
+    },
+    refetchInterval: 5000
+  });
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-slate-50 rounded-2xl w-full max-w-2xl h-[80vh] flex flex-col shadow-2xl overflow-hidden">
+        {/* Modal Header */}
+        <div className="p-4 bg-white border-b flex justify-between items-center z-10">
+          <div>
+            <h3 className="font-bold text-gray-900 flex items-center gap-2">
+              <MessageCircle className="text-blue-600" size={20} />
+              Security & Fraud Monitoring
+            </h3>
+            <p className="text-xs text-gray-500 font-mono mt-1">Session ID: {sessionId}</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition">
+            <X size={20} className="text-gray-500" />
+          </button>
+        </div>
+
+        {/* Chat Canvas */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-full">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : messages?.length > 0 ? (
+            messages.map((msg: any) => {
+              const isUser = msg.senderType === 'User' || msg.senderModel === 'User' || msg.sender === 'user';
+
+              return (
+                <div key={msg._id || msg.id} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+                  <div className={`p-3 rounded-2xl max-w-[80%] ${isUser
+                    ? 'bg-blue-600 text-white rounded-tr-sm shadow-sm'
+                    : 'bg-white border shadow-sm rounded-tl-sm text-gray-800'
+                    }`}>
+                    <p className="text-sm whitespace-pre-wrap">{msg.content || msg.message}</p>
+                    <span className={`text-[10px] mt-1 block font-medium ${isUser ? 'text-blue-200' : 'text-gray-400'}`}>
+                      {isUser ? 'User' : 'Astrologer'} • {new Date(msg.createdAt || msg.timestamp).toLocaleTimeString()}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="h-full flex items-center justify-center flex-col text-gray-400 gap-2">
+              <MessageCircle size={40} className="opacity-20" />
+              <p>No messages recorded yet.</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

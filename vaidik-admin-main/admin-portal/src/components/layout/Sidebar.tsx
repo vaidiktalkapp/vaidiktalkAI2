@@ -27,7 +27,6 @@ import {
   RotateCcw,
   Flag,      // For Reports
   Ban,       // For Blocked Users
-  Bot,       // For AI Astrologers
 } from 'lucide-react';
 
 // Define interface for menu items
@@ -53,39 +52,39 @@ export default function Sidebar() {
     {
       category: 'Main',
       items: [
-        {
-          icon: LayoutDashboard,
-          label: 'Dashboard',
-          href: '/dashboard',
-          requiredPermission: 'view_dashboard'
+        { 
+          icon: LayoutDashboard, 
+          label: 'Dashboard', 
+          href: '/dashboard', 
+          requiredPermission: 'view_dashboard' 
         },
       ],
     },
     {
       category: 'Management',
       items: [
-        {
-          icon: Users,
-          label: 'Users',
-          href: '/users',
-          requiredPermission: 'view_users'
+        { 
+          icon: Users, 
+          label: 'Users', 
+          href: '/users', 
+          requiredPermission: 'view_users' 
         },
-        {
-          icon: Star,
-          label: 'Astrologers',
-          href: '/astrologers',
-          requiredPermission: 'view_astrologers'
+        { 
+          icon: Star, 
+          label: 'Astrologers', 
+          href: '/astrologers', 
+          requiredPermission: 'view_astrologers' 
         },
-        {
-          icon: ClipboardList,
-          label: 'Interviews',
-          href: '/interviews',
-          requiredPermission: 'view_interviews'
+        { 
+          icon: ClipboardList, 
+          label: 'Interviews', 
+          href: '/interviews', 
+          requiredPermission: 'view_interviews' 
         },
-        {
-          icon: Shield,
-          label: 'Admins',
-          href: '/admins',
+        { 
+          icon: Shield, 
+          label: 'Admins', 
+          href: '/admins', 
           requiredPermission: 'manage_admins',
         },
       ],
@@ -93,23 +92,23 @@ export default function Sidebar() {
     {
       category: 'Orders',
       items: [
-        {
-          icon: ShoppingCart,
-          label: 'All Orders',
-          href: '/orders',
-          requiredPermission: 'view_orders'
+        { 
+          icon: ShoppingCart, 
+          label: 'All Orders', 
+          href: '/orders', 
+          requiredPermission: 'view_orders' 
         },
-        {
-          icon: Phone,
-          label: 'Call Traction',
-          href: '/orders/calls',
-          requiredPermission: 'view_orders'
+        { 
+          icon: Phone, 
+          label: 'Call Traction', 
+          href: '/orders/calls', 
+          requiredPermission: 'view_orders' 
         },
-        {
-          icon: MessageCircle,
-          label: 'Chat Traction',
-          href: '/orders/chats',
-          requiredPermission: 'view_orders'
+        { 
+          icon: MessageCircle, 
+          label: 'Chat Traction', 
+          href: '/orders/chats', 
+          requiredPermission: 'view_orders' 
         },
       ],
     },
@@ -149,41 +148,6 @@ export default function Sidebar() {
       ],
     },
     {
-      category: 'AI Astrologers',
-      items: [
-        {
-          icon: Users,
-          label: 'AI Personalities',
-          href: '/ai-astrologers',
-          requiredPermission: 'view_astrologers'
-        },
-        {
-          icon: Activity,
-          label: 'AI Traction',
-          href: '/ai-astrologers/traction',
-          requiredPermission: 'view_orders'
-        },
-        {
-          icon: MessageCircle,
-          label: 'AI Chat Logs',
-          href: '/ai-astrologers/chat-logs',
-          requiredPermission: 'view_orders'
-        },
-        {
-          icon: Wallet,
-          label: 'AI Wallet & Billing',
-          href: '/ai-astrologers/wallet-billing',
-          requiredPermission: 'view_transactions'
-        },
-        {
-          icon: BarChart3,
-          label: 'AI Performance',
-          href: '/ai-astrologers/performance-analytics',
-          requiredPermission: 'view_analytics'
-        },
-      ],
-    },
-    {
       category: 'Moderation & Comms',
       items: [
         {
@@ -192,50 +156,50 @@ export default function Sidebar() {
           href: '/reviews',
           requiredPermission: 'manage_reviews', // Fixed permission
         },
-        {
-          icon: Video,
-          label: 'Livestreams',
-          href: '/livestreams',
-          requiredPermission: 'manage_livestreams'
+        { 
+          icon: Video, 
+          label: 'Livestreams', 
+          href: '/livestreams', 
+          requiredPermission: 'manage_livestreams' 
         },
       ],
     },
     {
       category: 'Trust & Safety', // <--- NEW PROFESSIONAL SECTION
       items: [
-        {
-          icon: Flag,
-          label: 'User Reports',
-          href: '/moderation/reports',
-          requiredPermission: 'view_user_reports'
+        { 
+          icon: Flag, 
+          label: 'User Reports', 
+          href: '/moderation/reports', 
+          requiredPermission: 'view_user_reports' 
         },
-        {
-          icon: Ban,
-          label: 'Block List',
-          href: '/moderation/blocked',
-          requiredPermission: 'view_blocked_users'
+        { 
+          icon: Ban, 
+          label: 'Block List', 
+          href: '/moderation/blocked', 
+          requiredPermission: 'view_blocked_users' 
         },
       ],
     },
     {
       category: 'Communication', // Split Notifications here if you like, or keep in Moderation
       items: [
-        {
-          icon: Bell,
-          label: 'Notifications',
-          href: '/notifications/manage',
-          requiredPermission: 'manage_notifications'
+        { 
+          icon: Bell, 
+          label: 'Notifications', 
+          href: '/notifications/manage', 
+          requiredPermission: 'manage_notifications' 
         },
       ],
     },
     {
       category: 'System',
       items: [
-        {
-          icon: BarChart3,
-          label: 'Analytics',
-          href: '/analytics',
-          requiredPermission: 'view_analytics'
+        { 
+          icon: BarChart3, 
+          label: 'Analytics', 
+          href: '/analytics', 
+          requiredPermission: 'view_analytics' 
         },
         {
           icon: BarChart3,
@@ -243,11 +207,11 @@ export default function Sidebar() {
           href: '/reports',
           requiredPermission: 'view_reports',
         },
-        {
-          icon: Activity,
-          label: 'Activity Logs',
-          href: '/activity-logs',
-          requiredPermission: 'view_logs'
+        { 
+          icon: Activity, 
+          label: 'Activity Logs', 
+          href: '/activity-logs', 
+          requiredPermission: 'view_logs' 
         },
       ],
     },
@@ -297,18 +261,20 @@ export default function Sidebar() {
                       key={item.href}
                       href={item.href}
                       title={item.description}
-                      className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 group relative ${isActive
-                        ? 'bg-indigo-50 text-indigo-700 font-semibold'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'
-                        }`}
+                      className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 group relative ${
+                        isActive
+                          ? 'bg-indigo-50 text-indigo-700 font-semibold'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'
+                      }`}
                     >
                       {isActive && (
                         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-600 rounded-r-full" />
                       )}
-                      <Icon
-                        size={18}
-                        className={`transition-colors ${isActive ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'
-                          }`}
+                      <Icon 
+                        size={18} 
+                        className={`transition-colors ${
+                          isActive ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'
+                        }`} 
                       />
                       <span className="text-sm">{item.label}</span>
                     </Link>
