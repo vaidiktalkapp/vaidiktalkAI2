@@ -42,4 +42,20 @@ export class UpdateAstrologerProfileDto {
   @IsOptional()
   @IsBoolean()
   isCallEnabled?: boolean;
+
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  phoneNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  gender?: string;
+
+  @IsOptional()
+  @IsString()
+  dateOfBirth?: string;
 }

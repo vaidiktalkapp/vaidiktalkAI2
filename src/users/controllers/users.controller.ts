@@ -22,7 +22,7 @@ interface AuthenticatedRequest extends Request {
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(private usersService: UsersService) { }
 
   // ===== PROFILE =====
 
@@ -37,6 +37,22 @@ export class UsersController {
     @Body(ValidationPipe) updateProfileDto: UpdateProfileDto
   ) {
     return this.usersService.updateProfile(req.user._id, updateProfileDto);
+  }
+
+  @Post('profile/phone/send-otp')
+  async sendPhoneChangeOtp(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: { phoneNumber: string; countryCode: string }
+  ) {
+    return this.usersService.sendPhoneChangeOtp(req.user._id, body.phoneNumber, body.countryCode);
+  }
+
+  @Post('profile/phone/verify-otp')
+  async verifyPhoneChangeOtp(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: { phoneNumber: string; countryCode: string; otp: string }
+  ) {
+    return this.usersService.verifyPhoneChangeOtp(req.user._id, body.phoneNumber, body.countryCode, body.otp);
   }
 
   // ===== PREFERENCES =====

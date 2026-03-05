@@ -79,6 +79,24 @@ export class AstrologerProfileController {
     return this.astrologersService.updateProfile(astrologerId, updateDto);
   }
 
+  @Post('profile/phone/send-otp')
+  async sendPhoneChangeOtp(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: { phoneNumber: string; countryCode: string }
+  ) {
+    const astrologerId = req.user.astrologerId || req.user._id;
+    return this.astrologersService.sendPhoneChangeOtp(astrologerId, body.phoneNumber, body.countryCode);
+  }
+
+  @Post('profile/phone/verify-otp')
+  async verifyPhoneChangeOtp(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: { phoneNumber: string; countryCode: string; otp: string }
+  ) {
+    const astrologerId = req.user.astrologerId || req.user._id;
+    return this.astrologersService.verifyPhoneChangeOtp(astrologerId, body.phoneNumber, body.countryCode, body.otp);
+  }
+
   @Patch('profile/pricing')
   async updatePricing(
     @Req() req: AuthenticatedRequest,
