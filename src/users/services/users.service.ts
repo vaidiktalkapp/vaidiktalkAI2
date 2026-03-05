@@ -1,11 +1,13 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { User, UserDocument } from '../schemas/user.schema';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { UpdatePreferencesDto } from '../dto/update-preferences.dto';
 import { OtpService } from '../../auth/services/otp/otp.service';
+import { JwtAuthService } from '../../auth/services/jwt-auth/jwt-auth.service';
+import { SimpleCacheService } from '../../auth/services/cache/cache.service';
 
 @Injectable()
 export class UsersService {
@@ -14,6 +16,8 @@ export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private otpService: OtpService,
+    private jwtAuthService: JwtAuthService,
+    private cacheService: SimpleCacheService,
   ) { }
 
   // ===== PROFILE MANAGEMENT =====
@@ -118,14 +122,26 @@ export class UsersService {
   }
 
   async sendPhoneChangeOtp(userId: string, phoneNumber: string, countryCode: string): Promise<any> {
+    const cleanPhone = this.otpService.normalizePhoneNumber(phoneNumber, countryCode);
+    const fullPhoneNumber = `+${countryCode}${cleanPhone}`;
+    const phoneHash = this.otpService.hashPhoneNumber(cleanPhone, countryCode);
+
     // 1. Check if another user already has this phone number
-    const existingUser = await this.userModel.findOne({ phoneNumber, _id: { $ne: userId } });
+    const existingUser = await this.userModel.findOne({
+      $or: [
+        { phoneNumber: fullPhoneNumber },
+        { phoneNumber: cleanPhone },
+        { phoneHash: phoneHash }
+      ],
+      _id: { $ne: userId }
+    });
+
     if (existingUser) {
       throw new BadRequestException('This phone number is already associated with another account');
     }
 
     // 2. Send OTP
-    return this.otpService.sendOTP(phoneNumber, countryCode);
+    return this.otpService.sendOTP(cleanPhone, countryCode);
   }
 
   async verifyPhoneChangeOtp(userId: string, phoneNumber: string, countryCode: string, otp: string): Promise<any> {
@@ -135,18 +151,43 @@ export class UsersService {
       throw new BadRequestException('Invalid or expired OTP');
     }
 
+    // Ensure we use the clean phone number for storage and hashing
+    const cleanPhone = this.otpService.normalizePhoneNumber(phoneNumber, countryCode);
+    const fullPhoneNumber = `+${countryCode}${cleanPhone}`;
+    const phoneHash = this.otpService.hashPhoneNumber(cleanPhone, countryCode);
+
     // 2. Update user's phone number
-    await this.userModel.findByIdAndUpdate(userId, {
+    const updatedUser = await this.userModel.findByIdAndUpdate(userId, {
       $set: {
-        phoneNumber: phoneNumber,
+        phoneNumber: fullPhoneNumber,
+        phoneHash: phoneHash,
         countryCode: countryCode,
         updatedAt: new Date()
       }
-    });
+    }, { new: true });
+
+    if (!updatedUser) {
+      throw new BadRequestException('User not found');
+    }
+
+    const tokens = this.jwtAuthService.generateTokenPair(
+      updatedUser._id as Types.ObjectId,
+      updatedUser.phoneNumber,
+      updatedUser.phoneHash
+    );
+
+    await this.cacheService.set(
+      `refresh_token_${(updatedUser._id).toString()}`,
+      tokens.refreshToken,
+      7 * 24 * 60 * 60
+    );
 
     return {
       success: true,
       message: 'Phone number updated successfully',
+      data: {
+        tokens
+      }
     };
   }
 

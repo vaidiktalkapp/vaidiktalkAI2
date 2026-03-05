@@ -411,6 +411,34 @@
         ]
       }
     },
+    "/api/v1/users/profile/phone/send-otp": {
+      "post": {
+        "operationId": "UsersController_sendPhoneChangeOtp",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/api/v1/users/profile/phone/verify-otp": {
+      "post": {
+        "operationId": "UsersController_verifyPhoneChangeOtp",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Users"
+        ]
+      }
+    },
     "/api/v1/users/preferences": {
       "get": {
         "operationId": "UsersController_getPreferences",
@@ -997,6 +1025,34 @@
         "parameters": [],
         "responses": {
           "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AstrologerProfile"
+        ]
+      }
+    },
+    "/api/v1/astrologer/profile/phone/send-otp": {
+      "post": {
+        "operationId": "AstrologerProfileController_sendPhoneChangeOtp",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AstrologerProfile"
+        ]
+      }
+    },
+    "/api/v1/astrologer/profile/phone/verify-otp": {
+      "post": {
+        "operationId": "AstrologerProfileController_verifyPhoneChangeOtp",
+        "parameters": [],
+        "responses": {
+          "201": {
             "description": ""
           }
         },

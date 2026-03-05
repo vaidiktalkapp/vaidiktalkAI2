@@ -11,7 +11,9 @@ import {
 } from '../dto/search-astrologers.dto';
 import { User, UserDocument } from '../../users/schemas/user.schema';
 import { AvailabilityService } from './availability.service';
-import { OtpService } from '../../auth/services/otp/otp.service'; // ✅ ADD
+import { OtpService } from '../../auth/services/otp/otp.service';
+import { JwtAuthService } from '../../auth/services/jwt-auth/jwt-auth.service';
+import { SimpleCacheService } from '../../auth/services/cache/cache.service';
 
 export interface SearchResult {
   success: boolean;
@@ -37,7 +39,9 @@ export class AstrologersService {
     @InjectModel(User.name)
     private readonly userModel: Model<UserDocument>,
     private readonly availabilityService: AvailabilityService,
-    private readonly otpService: OtpService, // ✅ ADD
+    private readonly otpService: OtpService,
+    private readonly jwtAuthService: JwtAuthService,
+    private readonly cacheService: SimpleCacheService,
   ) { }
 
   // ✅ Helper: Get blocked astrologer IDs for a user
@@ -827,14 +831,24 @@ export class AstrologersService {
   }
 
   async sendPhoneChangeOtp(astrologerId: string, phoneNumber: string, countryCode: string): Promise<any> {
+    const cleanPhone = this.otpService.normalizePhoneNumber(phoneNumber, countryCode);
+    const fullPhoneNumber = `+${countryCode}${cleanPhone}`;
+
     // 1. Check if another astrologer already has this phone number
-    const existingAstrologer = await this.astrologerModel.findOne({ phoneNumber, _id: { $ne: astrologerId } });
+    const existingAstrologer = await this.astrologerModel.findOne({
+      $or: [
+        { phoneNumber: fullPhoneNumber },
+        { phoneNumber: cleanPhone }
+      ],
+      _id: { $ne: astrologerId }
+    });
+
     if (existingAstrologer) {
       throw new BadRequestException('This phone number is already associated with another account');
     }
 
     // 2. Send OTP
-    return this.otpService.sendOTP(phoneNumber, countryCode);
+    return this.otpService.sendOTP(cleanPhone, countryCode);
   }
 
   async verifyPhoneChangeOtp(astrologerId: string, phoneNumber: string, countryCode: string, otp: string): Promise<any> {
@@ -844,18 +858,41 @@ export class AstrologersService {
       throw new BadRequestException('Invalid or expired OTP');
     }
 
+    // Ensure we use the clean phone number for storage
+    const cleanPhone = this.otpService.normalizePhoneNumber(phoneNumber, countryCode);
+    const fullPhoneNumber = `+${countryCode}${cleanPhone}`;
+
     // 2. Update astrologer's phone number
-    await this.astrologerModel.findByIdAndUpdate(astrologerId, {
+    const updatedAstrologer = await this.astrologerModel.findByIdAndUpdate(astrologerId, {
       $set: {
-        phoneNumber: phoneNumber,
+        phoneNumber: fullPhoneNumber,
         countryCode: countryCode,
         updatedAt: new Date()
       }
-    });
+    }, { new: true });
+
+    if (!updatedAstrologer) {
+      throw new BadRequestException('Astrologer not found');
+    }
+
+    const tokens = this.jwtAuthService.generateAstrologerTokens(
+      updatedAstrologer._id as Types.ObjectId,
+      updatedAstrologer.phoneNumber,
+      'astrologer'
+    );
+
+    await this.cacheService.set(
+      `refresh_token_${(updatedAstrologer._id).toString()}`,
+      tokens.refreshToken,
+      30 * 24 * 60 * 60
+    );
 
     return {
       success: true,
       message: 'Phone number updated successfully',
+      data: {
+        tokens
+      }
     };
   }
 
