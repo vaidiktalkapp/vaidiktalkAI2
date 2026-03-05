@@ -209,6 +209,7 @@ export default function AstrologerDetailPage() {
                 <h2 className="text-2xl font-bold text-gray-900">{astrologer.name}</h2>
                 <p className="text-gray-600 mt-1">{astrologer.phoneNumber}</p>
                 {astrologer.email && <p className="text-gray-500 text-sm">{astrologer.email}</p>}
+                <p className="text-gray-400 text-xs font-mono mt-1">ID: {astrologer._id}</p>
 
                 {/* Rating */}
                 <div className="flex items-center gap-2 mt-2">
