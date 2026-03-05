@@ -11,18 +11,12 @@ export interface User {
   email: string;
   phoneNumber: string;
   profileImage?: string;
-  wallet: { balance: number; currency: string; };
+  wallet: { balance: number; currency: string;};
   role: 'user' | 'astrologer';
   gender?: string;
   dateOfBirth?: string;
   timeOfBirth?: string;
   placeOfBirth?: string;
-  birthDetails?: {
-    date: string;
-    time: string;
-    place: string;
-  };
-  maritalStatus?: string;
 }
 
 export interface Astrologer {
@@ -71,15 +65,6 @@ export interface Astrologer {
   };
   realStatus?: string; // Added to match Home.js logic
   tier?: string;
-  isAi?: boolean;
-  id?: string;
-  profileImage?: string;
-  image?: string;
-  price?: number;
-  chatRate?: number;
-  callRate?: number;
-  callPrice?: number;
-  currentRate?: number;
 }
 
 export interface WalletTransaction {
@@ -167,52 +152,4 @@ export interface Report {
   createdAt: string;
   updatedAt: string;
   deliveredAt?: string;
-}
-
-export interface AiAstrologer {
-  _id: string;
-  name: string;
-  specialization: string[];
-  bio: string;
-  profileImage: string;
-  rating: number;
-  reviewCount?: number;
-  responseTime: number;
-  totalChats: number;
-  status: 'active' | 'inactive';
-  chatRate?: number;
-  rate?: number;
-  experienceYears?: number;
-  languages?: string[];
-  isAi?: boolean;
-}
-
-export interface AiChatMessage {
-  _id: string;
-  orderId: string;
-  senderId: string;
-  senderModel: 'User' | 'AiAstrologer';
-  senderName?: string;
-  content: string;
-  type: 'text' | 'image' | 'audio' | 'video';
-  status: 'sent' | 'delivered' | 'read';
-  sentAt: string;
-}
-
-export interface AiChatOrder {
-  _id: string;
-  userId: string;
-  aiAstrologerId: string;
-  astrologerType: 'ai';
-  type: 'chat' | 'call';
-  status: string;
-  startedAt: string;
-  endedAt?: string;
-  duration?: number;
-  messages?: AiChatMessage[];
-  astrologer?: AiAstrologer;
-  totalMessages?: number;
-  totalCost?: number;
-  orderId?: string;
-  sessionId?: string;
 }

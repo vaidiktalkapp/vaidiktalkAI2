@@ -48,12 +48,6 @@ const PhoneIcon = () => (
   </svg>
 );
 
-const MoreVerticalIcon = () => (
-  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-  </svg>
-);
-
 export default function Header() {
   const {
     user,
@@ -65,9 +59,7 @@ export default function Header() {
   } = useAuth();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const mobileMenuRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = () => {
@@ -84,18 +76,7 @@ export default function Header() {
   };
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsProfileOpen(false);
-      }
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
-        setIsMobileMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
       }
@@ -129,19 +110,10 @@ export default function Header() {
             <Link href="/astrologers-call" className="flex items-center gap-2 px-5 py-2.5 text-[15px] font-semibold text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 rounded-xl transition-all whitespace-nowrap border border-transparent hover:border-yellow-200">
               Talk to Astrologer
             </Link>
-            <Link href="/ai-astrologer-chat" className="flex items-center gap-2 px-5 py-2.5 text-[15px] font-semibold text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 rounded-xl transition-all whitespace-nowrap border border-transparent hover:border-yellow-200">
-              <span className="flex items-center gap-1.5">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
-                </span>
-                AI Astrologer
-              </span>
-            </Link>
           </nav>
 
           {/* Right: Auth Button / Profile */}
-          <div className="flex items-center gap-1.5 sm:gap-3">
+          <div className="flex items-center gap-3">
             {!isAuthenticated ? (
               <button
                 onClick={openLoginModal}
@@ -157,10 +129,7 @@ export default function Header() {
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
               >
-                <div
-                  className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 rounded-full hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
-                >
+                <div className="flex items-center gap-3 px-3 py-1.5 rounded-full hover:bg-gray-50 transition-colors cursor-pointer">
                   <span className="hidden sm:block text-sm font-semibold text-gray-800">
                     {user?.name || 'User'}
                   </span>
@@ -178,9 +147,9 @@ export default function Header() {
 
                 {/* Dropdown Menu */}
                 {isProfileOpen && (
-                  <div className="absolute right-[-48px] sm:right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                    {/* ... Profile Header and Menu Items ... */}
-                    <div className="from-yellow-50 via-orange-50 to-yellow-100 px-4 sm:px-6 py-4 sm:py-6 border-b border-gray-200">
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    {/* ... Profile Header and Menu Items (Same as before) ... */}
+                    <div className="from-yellow-50 via-orange-50 to-yellow-100 px-6 py-6 border-b border-gray-200">
                       <Link href="/profile">
                         <div className="flex items-center gap-4">
                           <div className="w-16 h-16 rounded-full border-3 border-black shadow-lg overflow-hidden ring-4 ring-yellow-200">
@@ -222,51 +191,6 @@ export default function Header() {
                 )}
               </div>
             )}
-
-            {/* Mobile Three-Dots Menu */}
-            <div className="md:hidden relative" ref={mobileMenuRef}>
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2 text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
-                aria-label="More navigation options"
-              >
-                <MoreVerticalIcon />
-              </button>
-
-              {isMobileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="py-2">
-                    <Link
-                      href="/astrologers-chat"
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-yellow-50 text-gray-700 font-semibold transition-colors"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <ChatIcon />
-                      Chat with Astrologer
-                    </Link>
-                    <Link
-                      href="/astrologers-call"
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-yellow-50 text-gray-700 font-semibold transition-colors"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <PhoneIcon />
-                      Talk to Astrologer
-                    </Link>
-                    <Link
-                      href="/ai-astrologer-chat"
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-yellow-50 text-yellow-600 font-bold transition-colors"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
-                      </span>
-                      AI Astrologer
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </header>

@@ -20,7 +20,7 @@ export class AuthService {
     const fcmToken = await getFCMToken();
     console.log('📱 Device info:', deviceInfo);
     console.log('🔔 FCM Token:', fcmToken);
-
+    
     const response = await apiClient.post('/auth/verify-otp', {
       phoneNumber,
       countryCode,
@@ -32,11 +32,11 @@ export class AuthService {
     });
 
     console.log('✅ OTP Verification Response:', response.data);
-
+    
     if (response.data.success) {
       const { tokens } = response.data.data;
       const { accessToken, refreshToken } = tokens || {};
-
+      
       console.log('🔑 Access Token received:', accessToken ? 'Yes' : 'No');
       console.log('🔑 Refresh Token received:', refreshToken ? 'Yes' : 'No');
 
@@ -55,17 +55,17 @@ export class AuthService {
         const profileResponse = await apiClient.get('/users/profile');
         if (profileResponse.data.success && profileResponse.data.data) {
           const fullUser = profileResponse.data.data;
-
+          
           // 🆕 Ensure both _id and id exist
           if (fullUser._id && !fullUser.id) {
             fullUser.id = fullUser._id;
           } else if (fullUser.id && !fullUser._id) {
             fullUser._id = fullUser.id;
           }
-
+          
           localStorage.setItem('userData', JSON.stringify(fullUser));
           console.log('✅ Full user profile stored:', fullUser.name, 'ID:', fullUser._id);
-
+          
           // Return with full user data
           return {
             ...response.data,
@@ -85,10 +85,10 @@ export class AuthService {
 
   static async verifyTruecaller(truecallerData: any) {
     const response = await apiClient.post('/auth/truecaller', truecallerData);
-
+    
     if (response.data.success) {
       const { accessToken, refreshToken } = response.data.data;
-
+      
       if (accessToken) {
         localStorage.setItem('accessToken', accessToken);
       }
@@ -101,16 +101,16 @@ export class AuthService {
         const profileResponse = await apiClient.get('/users/profile');
         if (profileResponse.data.success && profileResponse.data.data) {
           const fullUser = profileResponse.data.data;
-
+          
           if (fullUser._id && !fullUser.id) {
             fullUser.id = fullUser._id;
           } else if (fullUser.id && !fullUser._id) {
             fullUser._id = fullUser.id;
           }
-
+          
           localStorage.setItem('userData', JSON.stringify(fullUser));
           console.log('✅ Full user profile stored');
-
+          
           return {
             ...response.data,
             data: {
@@ -123,7 +123,7 @@ export class AuthService {
         console.error('⚠️ Failed to fetch profile:', profileError);
       }
     }
-
+    
     return response.data;
   }
 
@@ -149,11 +149,11 @@ export class AuthService {
 
       const token = localStorage.getItem('accessToken');
       const userData = localStorage.getItem('userData');
-
+      
       console.log('🔍 [AuthService] Checking auth status...');
       console.log('🔑 [AuthService] Token found:', token ? 'Yes' : 'No');
       console.log('👤 [AuthService] User data found:', userData ? 'Yes' : 'No');
-
+      
       if (!token || !userData) {
         console.log('⚠️ [AuthService] Missing token or user data');
         return { isAuthenticated: false, user: null };
@@ -161,14 +161,14 @@ export class AuthService {
 
       try {
         const user = JSON.parse(userData);
-
+        
         // 🆕 Ensure both _id and id exist
         if (user._id && !user.id) {
           user.id = user._id;
         } else if (user.id && !user._id) {
           user._id = user.id;
         }
-
+        
         console.log('✅ [AuthService] Auth valid from localStorage - User:', user.name, 'ID:', user._id);
         return { isAuthenticated: true, user };
       } catch (parseError) {
@@ -191,7 +191,7 @@ export class AuthService {
     } else if (user.id && !user._id) {
       user._id = user.id;
     }
-
+    
     localStorage.setItem('userData', JSON.stringify(user));
     console.log('✅ User data stored');
   }
@@ -201,13 +201,13 @@ export class AuthService {
       const response = await apiClient.get('/users/profile');
       if (response.data.success && response.data.data) {
         const user = response.data.data;
-
+        
         if (user._id && !user.id) {
           user.id = user._id;
         } else if (user.id && !user._id) {
           user._id = user.id;
         }
-
+        
         await this.storeUser(user);
         return user;
       }
@@ -218,44 +218,19 @@ export class AuthService {
     }
   }
 
-  // 👇 ADDED: Support for updating birth details from AI Intake Modal
-  static async updateBirthDetails(data: any) {
-    try {
-      console.log('📡 Updating birth details...', data);
-      const response = await apiClient.patch('/users/profile', data);
-
-      if (response.data.success && response.data.data) {
-        await this.storeUser(response.data.data);
-      }
-
-      return response.data;
-    } catch (error: any) {
-      if (error.response) {
-        console.error('❌ Failed to update birth details:', {
-          status: error.response.status,
-          data: error.response.data,
-          message: error.response.data?.message || error.message
-        });
-      } else {
-        console.error('❌ Failed to update birth details:', error.message);
-      }
-      throw error;
-    }
-  }
-
   // 👇 FIXED: Changed from .put to .patch
   static async updateProfile(data: Partial<User>) {
     try {
       const response = await apiClient.patch('/users/profile', data);
-
+      
       if (response.data.success) {
         // Update local storage with new data
-        await this.refreshUserProfile();
+        await this.refreshUserProfile(); 
       }
       return response.data;
     } catch (error: any) {
-      console.error('Update profile error', error);
-      throw error.response?.data || error;
+        console.error('Update profile error', error);
+        throw error.response?.data || error;
     }
   }
 
@@ -265,7 +240,7 @@ export class AuthService {
       const response = await apiClient.delete('/users/account', {
         data: { reason } // Axios sends body in 'data' for DELETE requests
       });
-
+      
       if (response.data.success) {
         // Clear local session immediately upon success
         await this.logout();

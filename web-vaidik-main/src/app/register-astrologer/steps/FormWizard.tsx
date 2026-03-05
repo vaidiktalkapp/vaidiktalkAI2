@@ -3,16 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { useRegistration } from '../../context/RegistrationContext';
 import { uploadService } from '../../../lib/upload.web';
 import toast from 'react-hot-toast';
-import {
-  User,
-  Calendar,
-  Users,
-  Languages,
-  Star,
-  Smartphone,
-  Mail,
-  Camera,
-  ChevronRight,
+import { 
+  User, 
+  Calendar, 
+  Users, 
+  Languages, 
+  Star, 
+  Smartphone, 
+  Mail, 
+  Camera, 
+  ChevronRight, 
   ChevronLeft,
   Loader2,
   Briefcase,
@@ -20,31 +20,31 @@ import {
 
 // --- CONSTANTS ---
 const SKILLS = [
-  'Vedic',
-  'KP',
-  'Palmistry',
-  'Face Reading',
-  'Tarot',
-  'Vastu',
-  'Healing',
+  'Vedic', 
+  'KP', 
+  'Palmistry', 
+  'Face Reading', 
+  'Tarot', 
+  'Vastu', 
+  'Healing', 
   'Numerology'
 ];
 
 const LANGUAGES_LIST = [
-  'English',
-  'Hindi',
-  'Marathi',
-  'Gujarati',
-  'Punjabi',
-  'Haryanvi',
-  'Bengali',
-  'Tamil',
-  'Telugu',
-  'Kannada',
-  'Bhojpuri',
-  'Sindhi',
-  'Odia',
-  'Dogri',
+  'English', 
+  'Hindi', 
+  'Marathi', 
+  'Gujarati', 
+  'Punjabi', 
+  'Haryanvi', 
+  'Bengali', 
+  'Tamil', 
+  'Telugu', 
+  'Kannada', 
+  'Bhojpuri', 
+  'Sindhi', 
+  'Odia', 
+  'Dogri', 
   'Kashmiri'
 ];
 
@@ -95,7 +95,7 @@ export default function FormWizard() {
         break;
       case 3: // DOB & Age Check (18+)
         if (!formData.dateOfBirth) return toast.error('Please select your birth date');
-
+        
         const birthDate = new Date(formData.dateOfBirth);
         const today = new Date();
         let age = today.getFullYear() - birthDate.getFullYear();
@@ -207,12 +207,13 @@ export default function FormWizard() {
         return (
           <div
             key={step.id}
-            className={`flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${isActive
-                ? 'bg-[#5b2b84] text-white scale-110 shadow-lg'
-                : isCompleted
-                  ? 'bg-purple-100 text-[#5b2b84]'
+            className={`flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${
+              isActive 
+                ? 'bg-[#5b2b84] text-white scale-110 shadow-lg' 
+                : isCompleted 
+                  ? 'bg-purple-100 text-[#5b2b84]' 
                   : 'bg-slate-100 text-slate-300'
-              }`}
+            }`}
           >
             <step.icon size={14} />
           </div>
@@ -256,13 +257,15 @@ export default function FormWizard() {
                     updateData('gender', g.toLowerCase());
                     setTimeout(handleNext, 200);
                   }}
-                  className={`flex flex-col items-center gap-3 p-6 rounded-2xl border-2 transition-all duration-200 ${formData.gender === g.toLowerCase()
+                  className={`flex flex-col items-center gap-3 p-6 rounded-2xl border-2 transition-all duration-200 ${
+                    formData.gender === g.toLowerCase()
                       ? 'border-[#5b2b84] bg-purple-50'
                       : 'border-slate-100 bg-white hover:border-purple-200'
-                    }`}
+                  }`}
                 >
-                  <div className={`p-4 rounded-full ${formData.gender === g.toLowerCase() ? 'bg-[#5b2b84] text-white' : 'bg-slate-100 text-slate-400'
-                    }`}>
+                  <div className={`p-4 rounded-full ${
+                    formData.gender === g.toLowerCase() ? 'bg-[#5b2b84] text-white' : 'bg-slate-100 text-slate-400'
+                  }`}>
                     {g === 'Male' ? <User size={32} /> : <Users size={32} />}
                   </div>
                   <span className="font-semibold text-slate-700">{g}</span>
@@ -294,11 +297,11 @@ export default function FormWizard() {
       case 4: // Professional (Experience & Bio)
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-            <div className="space-y-2 text-center">
+             <div className="space-y-2 text-center">
               <h2 className="text-2xl font-bold text-slate-900">Professional Details 💼</h2>
               <p className="text-slate-500">Tell us about your experience.</p>
             </div>
-
+            
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Years of Experience</label>
@@ -340,14 +343,15 @@ export default function FormWizard() {
                 return (
                   <button
                     key={lang}
-                    onClick={() => updateData('languages', isSelected
-                      ? formData.languages.filter(l => l !== lang)
+                    onClick={() => updateData('languages', isSelected 
+                      ? formData.languages.filter(l => l !== lang) 
                       : [...formData.languages, lang]
                     )}
-                    className={`px-6 py-3 rounded-full text-sm font-medium transition-all ${isSelected
+                    className={`px-6 py-3 rounded-full text-sm font-medium transition-all ${
+                      isSelected
                         ? 'bg-[#5b2b84] text-white shadow-md transform scale-105'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
+                    }`}
                   >
                     {lang} {isSelected && '✓'}
                   </button>
@@ -370,14 +374,15 @@ export default function FormWizard() {
                 return (
                   <button
                     key={skill}
-                    onClick={() => updateData('skills', isSelected
-                      ? formData.skills.filter(s => s !== skill)
+                    onClick={() => updateData('skills', isSelected 
+                      ? formData.skills.filter(s => s !== skill) 
                       : [...formData.skills, skill]
                     )}
-                    className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${isSelected
+                    className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                      isSelected
                         ? 'border-[#5b2b84] bg-purple-50 text-[#5b2b84] font-semibold'
                         : 'border-slate-200 hover:border-slate-300 text-slate-600'
-                      }`}
+                    }`}
                   >
                     {skill}
                     {isSelected && <Star size={16} fill="#5b2b84" />}
@@ -395,7 +400,7 @@ export default function FormWizard() {
               <h2 className="text-2xl font-bold text-slate-900">Device & Contact 📱</h2>
               <p className="text-slate-500">Required for app compatibility.</p>
             </div>
-
+            
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Primary Device</label>
@@ -404,10 +409,11 @@ export default function FormWizard() {
                     <button
                       key={model}
                       onClick={() => updateData('phoneModel', model)}
-                      className={`py-3 px-4 rounded-xl border text-sm font-medium transition-all ${formData.phoneModel === model
+                      className={`py-3 px-4 rounded-xl border text-sm font-medium transition-all ${
+                        formData.phoneModel === model
                           ? 'border-[#5b2b84] bg-purple-50 text-[#5b2b84]'
                           : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                        }`}
+                      }`}
                     >
                       {model}
                     </button>
@@ -442,8 +448,9 @@ export default function FormWizard() {
 
             <div className="flex flex-col items-center gap-6">
               <div className="relative group cursor-pointer">
-                <div className={`w-32 h-32 rounded-full overflow-hidden border-4 ${formData.previewUrl ? 'border-[#5b2b84]' : 'border-slate-100 bg-slate-50'
-                  }`}>
+                <div className={`w-32 h-32 rounded-full overflow-hidden border-4 ${
+                  formData.previewUrl ? 'border-[#5b2b84]' : 'border-slate-100 bg-slate-50'
+                }`}>
                   {formData.previewUrl ? (
                     <img src={formData.previewUrl} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
@@ -452,7 +459,7 @@ export default function FormWizard() {
                     </div>
                   )}
                 </div>
-
+                
                 <label className="absolute bottom-0 right-0 p-2 bg-[#5b2b84] rounded-full text-white shadow-lg cursor-pointer hover:bg-[#4a236b] transition-colors">
                   <Camera size={20} />
                   <input
@@ -484,7 +491,7 @@ export default function FormWizard() {
             <ChevronLeft size={24} />
           </button>
         ) : (
-          <div className="w-10" />
+          <div className="w-10" /> 
         )}
         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
           Step {currentStep} of {STEPS.length}
