@@ -1572,6 +1572,30 @@
         ]
       }
     },
+    "/api/v1/wallet/verify-apple-payment": {
+      "post": {
+        "operationId": "WalletController_verifyApplePayment",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyApplePaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Wallet"
+        ]
+      }
+    },
     "/api/v1/wallet/redeem-giftcard": {
       "post": {
         "operationId": "WalletController_redeemGiftCard",
@@ -1834,6 +1858,20 @@
     "/api/v1/webhooks/payment/razorpay": {
       "post": {
         "operationId": "PaymentWebhookController_handleRazorpayWebhook",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "PaymentWebhook"
+        ]
+      }
+    },
+    "/api/v1/webhooks/payment/apple": {
+      "post": {
+        "operationId": "PaymentWebhookController_handleAppleWebhook",
         "parameters": [],
         "responses": {
           "201": {
@@ -9304,6 +9342,10 @@
         "properties": {}
       },
       "VerifyPaymentDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "VerifyApplePaymentDto": {
         "type": "object",
         "properties": {}
       },

@@ -8,12 +8,13 @@ import { PaymentWebhookController } from './controllers/payment-webhook.controll
 import { WalletService } from './services/wallet.service';
 import { PayoutService } from './services/payout.service';
 import { RazorpayService } from './services/razorpay.service';
+import { AppleIapService } from './services/apple-iap.service';
 import { WalletTransaction, WalletTransactionSchema } from './schemas/wallet-transaction.schema';
 import { PayoutRequest, PayoutRequestSchema } from './schemas/payout-request.schema';
 import { WalletRefundRequest, WalletRefundRequestSchema } from './schemas/wallet-refund-request.schema'; // ADD THIS
 import { GiftCard, GiftCardSchema } from './schemas/gift-card.schema'; // ADD THIS
 import { StreamSession, StreamSessionSchema } from '../streaming/schemas/stream-session.schema';
-import { UsersModule } from '../users/users.module'; 
+import { UsersModule } from '../users/users.module';
 import { AstrologersModule } from '../astrologers/astrologers.module';
 import { GiftService } from './services/gift.service';
 import { RechargePack, RechargePackSchema } from './schemas/recharge-pack.schema';
@@ -43,12 +44,15 @@ import { RechargePack, RechargePackSchema } from './schemas/recharge-pack.schema
     PayoutService,
     RazorpayService,
     GiftService,
+    AppleIapService,
   ],
   exports: [
-    WalletService, 
-    PayoutService, 
+    WalletService,
+    PayoutService,
     GiftService,
+    RazorpayService,
+    AppleIapService,
     MongooseModule, // EXPORT THIS so AdminModule can access the models
   ],
 })
-export class PaymentsModule {}
+export class PaymentsModule { }
