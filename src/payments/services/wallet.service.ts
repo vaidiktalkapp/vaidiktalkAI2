@@ -82,7 +82,7 @@ export class WalletService {
     const totalAvailable = (wallet.cashBalance || 0) + (wallet.bonusBalance || 0);
     if (totalAvailable < amount) {
       throw new BadRequestException(
-        `Insufficient wallet balance. Required: ₹${amount}, Available: ₹${totalAvailable}`,
+        `Insufficient wallet balance. Required: ${amount} Cr, Available: ${totalAvailable} Cr`,
       );
     }
     const bonusAvailable = wallet.bonusBalance || 0;
@@ -282,7 +282,7 @@ export class WalletService {
 
         transaction.balanceBefore = initialBalance;
         transaction.balanceAfter = initialBalance + transaction.amount;
-        transaction.description = `Wallet recharge of ₹${transaction.amount}`;
+        transaction.description = `Wallet recharge of ${transaction.amount} Credits`;
 
         if (promotionId) (transaction as any).metadata = { ...transaction.metadata, promotionId };
         if (bonusAmount > 0) transaction.metadata = { ...transaction.metadata, hasBonus: true, bonusAmount };
@@ -302,7 +302,7 @@ export class WalletService {
             bonusAmount: bonusAmount,
             isBonus: true,
             status: 'completed',
-            description: `Bonus for recharge of ₹${transaction.amount} (${finalPercentage}%)`,
+            description: `Bonus for recharge of ${transaction.amount} Credits (${finalPercentage}%)`,
             linkedTransactionId: transactionId,
             balanceBefore: transaction.balanceAfter,
             balanceAfter: (transaction.balanceAfter || 0) + bonusAmount,
@@ -429,7 +429,7 @@ export class WalletService {
           amount: bonusAmount,
           isBonus: true,
           status: 'completed',
-          description: `Bonus for Apple recharge of ₹${rechargeAmount} (${percentage}%)`,
+          description: `Bonus for Apple recharge of ${rechargeAmount} Credits (${percentage}%)`,
           linkedTransactionId: transactionId,
           balanceBefore: transaction.balanceAfter,
           balanceAfter: (transaction.balanceAfter || 0) + bonusAmount,
@@ -626,7 +626,7 @@ export class WalletService {
       if (totalAvailable < amount) {
         return {
           success: false,
-          message: `Insufficient balance. Required: ₹${amount}, Available: ₹${totalAvailable}`
+          message: `Insufficient balance. Required: ${amount} Credits, Available: ${totalAvailable} Credits`
         };
       }
 

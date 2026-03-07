@@ -35,7 +35,7 @@ class BankDetails {
 
 export class RequestPayoutDto {
   @IsNumber({}, { message: 'Amount must be a number' })
-  @Min(500, { message: 'Minimum payout amount is ₹500' })
+  @Min(500, { message: 'Minimum payout amount is 500 Credits' })
   amount: number;
 
   @ValidateNested()

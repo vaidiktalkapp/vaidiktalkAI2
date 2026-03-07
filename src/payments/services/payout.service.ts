@@ -43,7 +43,7 @@ export class PayoutService {
 
     if (requestDto.amount > remainingLimit) {
       throw new BadRequestException(
-        `Requested amount exceeds maximum withdrawable based on 50% rule. You can withdraw up to ₹${remainingLimit.toFixed(2)} right now.`,
+        `Requested amount exceeds maximum withdrawable based on 50% rule. You can withdraw up to ${remainingLimit.toFixed(2)} Cr right now.`,
       );
     }
 
@@ -52,9 +52,9 @@ export class PayoutService {
       throw new BadRequestException('Insufficient withdrawable balance');
     }
 
-    // Check minimum payout amount (e.g., ₹500)
+    // Check minimum payout amount (e.g., 500 Credits)
     if (requestDto.amount < 500) {
-      throw new BadRequestException('Minimum payout amount is ₹500');
+      throw new BadRequestException('Minimum payout amount is 500 Credits');
     }
 
     // Check for pending payout requests
