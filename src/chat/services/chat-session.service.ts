@@ -444,12 +444,12 @@ export class ChatSessionService {
 
     const skip = (filters.page - 1) * filters.limit;
 
-    // ✅ FIXED: Added 'lastMessage', 'lastMessageAt' to select so list shows previews
+    // ✅ FIXED: Added 'lastMessage', 'lastMessageAt', and 'orderId' to select so list shows previews and navigation works
     const [sessions, total] = await Promise.all([
       this.sessionModel
         .find(query)
         .populate('userId', 'name profileImage phoneNumber')
-        .select('sessionId userId ratePerMinute status duration billedMinutes totalAmount startTime endTime createdAt messageCount lastMessage lastMessageAt')
+        .select('sessionId orderId userId ratePerMinute status duration billedMinutes totalAmount startTime endTime createdAt messageCount lastMessage lastMessageAt')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(filters.limit)
