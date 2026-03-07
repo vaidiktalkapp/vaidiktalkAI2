@@ -12,10 +12,10 @@ function PaymentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, fetchUserProfile } = useAuth();
-  
+
   const amount = Number(searchParams.get('amount')) || 0;
   const isBonusAvailable = searchParams.get('bonus') === 'true';
-  
+
   const [isProcessing, setIsProcessing] = useState(false);
 
   const baseAmount = amount;
@@ -28,7 +28,7 @@ function PaymentContent() {
     if (isProcessing) return;
 
     if (baseAmount < 50) {
-      alert('Minimum recharge is ₹50');
+      alert('Minimum recharge is 50 Credits');
       return;
     }
 
@@ -46,7 +46,7 @@ function PaymentContent() {
         async (newBalance) => {
           setIsProcessing(false);
           await fetchUserProfile();
-          alert(`Success! Added ₹${totalCredit.toLocaleString()}`);
+          alert(`Success! Added ${totalCredit.toLocaleString()} Credits`);
           router.push('/wallet');
         },
         (err) => {
@@ -95,7 +95,7 @@ function PaymentContent() {
             <div className="flex justify-between items-center">
               <span className="text-gray-700">Recharge Amount</span>
               <span className="font-semibold text-gray-900">
-                ₹{baseAmount.toLocaleString()}
+                {baseAmount.toLocaleString()} Cr
               </span>
             </div>
 
@@ -109,7 +109,7 @@ function PaymentContent() {
             {bonus.amount > 0 && (
               <div className="flex justify-between items-center text-green-600">
                 <span className="font-semibold">Bonus Applied ({bonus.percentage}%)</span>
-                <span className="font-bold">+ ₹{bonus.amount.toLocaleString()}</span>
+                <span className="font-bold">+ {bonus.amount.toLocaleString()} Cr</span>
               </div>
             )}
 
@@ -117,7 +117,7 @@ function PaymentContent() {
               <div className="flex justify-between items-center">
                 <span className="text-lg font-bold text-gray-900">Wallet Credit</span>
                 <span className="text-2xl font-bold text-gray-900">
-                  ₹{totalCredit.toLocaleString()}
+                  {totalCredit.toLocaleString()} Credits
                 </span>
               </div>
             </div>
@@ -129,7 +129,7 @@ function PaymentContent() {
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-yellow-900">Current Balance</span>
             <span className="text-lg font-bold text-yellow-900">
-              ₹{user?.wallet?.balance?.toFixed(2) || 0}
+              {user?.wallet?.balance?.toFixed(0) || 0} Credits
             </span>
           </div>
         </div>

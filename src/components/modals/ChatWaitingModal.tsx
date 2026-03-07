@@ -63,7 +63,7 @@ export default function ChatWaitingModal() {
                 {pendingChatSession.astrologer.name}
               </h3>
               <p className="text-sm text-gray-600">
-                ₹{pendingChatSession.ratePerMinute}/min
+                {pendingChatSession.ratePerMinute} Cr/min
               </p>
             </div>
 

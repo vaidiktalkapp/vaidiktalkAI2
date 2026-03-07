@@ -388,7 +388,7 @@ export default function CallScreen() {
 
         <div className="bg-white/10 backdrop-blur-md px-8 py-3 rounded-full text-base mb-16 z-10 border border-white/20 shadow-xl">
           <span className="text-blue-100">Rate: </span>
-          <span className="text-yellow-400 font-bold">₹{callRate}/min</span>
+          <span className="text-yellow-400 font-bold">{callRate} Cr/min</span>
         </div>
 
         {/* Controls */}
@@ -453,7 +453,7 @@ export default function CallScreen() {
             <span className="font-mono text-2xl font-semibold tracking-wide text-yellow-300">{formatTime(remainingTime)}</span>
           </div>
           <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-blue-950 px-6 py-2.5 rounded-full text-base font-bold shadow-lg shadow-yellow-500/30">
-            ₹{callRate}/min
+            {callRate} Cr/min
           </div>
         </div>
       </div>

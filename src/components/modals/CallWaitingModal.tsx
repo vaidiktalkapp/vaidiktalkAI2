@@ -65,7 +65,7 @@ export default function CallWaitingModal() {
               </h3>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">
-                  ₹{pendingCallSession.ratePerMinute}/min
+                  {pendingCallSession.ratePerMinute} Cr/min
                 </span>
                 <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
                   {isVideo ? 'Video' : 'Audio'} Call

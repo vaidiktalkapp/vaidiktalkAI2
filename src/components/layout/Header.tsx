@@ -177,7 +177,7 @@ export default function Header() {
                         <span className="flex items-center gap-3">
                           <span className="font-semibold">Wallet</span>
                         </span>
-                        <span className="font-bold text-green-600 text-lg">₹{user?.wallet?.balance || 0}</span>
+                        <span className="font-bold text-green-600 text-lg">{user?.wallet?.balance || 0} Cr</span>
                       </Link>
                       <Link href="/orders" className="w-full px-6 py-3.5 hover:from-blue-50 hover:to-indigo-50 text-gray-700 font-medium transition-all flex items-center gap-3 group" onClick={() => setIsProfileOpen(false)}>
                         <span className="font-semibold">Order History</span>

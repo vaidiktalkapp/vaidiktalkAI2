@@ -27,7 +27,7 @@ const CACHE_DURATION = 60 * 60 * 1000; // 1 Hour in milliseconds
 export default function RechargePage() {
   const { user } = useAuth();
   const router = useRouter();
-  
+
   // State
   const [amount, setAmount] = useState('');
   const [rechargePacks, setRechargePacks] = useState<RechargePack[]>([]);
@@ -46,7 +46,7 @@ export default function RechargePage() {
 
       // 1. Check Local Storage Cache
       const cachedRaw = localStorage.getItem(CACHE_KEY);
-      
+
       if (cachedRaw) {
         const cached: CachedData = JSON.parse(cachedRaw);
         const now = Date.now();
@@ -64,7 +64,7 @@ export default function RechargePage() {
 
       // 2. Fetch from Server (if cache is missing, expired, or wrong user)
       console.log('Cache expired or missing. Fetching from server...');
-      
+
       const [logsResponse, packsResponse] = await Promise.all([
         walletService.getPaymentLogs({
           page: 1,
@@ -100,7 +100,7 @@ export default function RechargePage() {
         packs: newPacks,
         claimedHistory: Array.from(newClaimedHistory), // Convert Set to Array for JSON
       };
-      
+
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
 
     } catch (error) {
@@ -118,7 +118,7 @@ export default function RechargePage() {
     }
 
     if (numericAmount < 50) {
-      alert('Minimum recharge amount is ₹50');
+      alert('Minimum recharge amount is 50 Credits');
       return;
     }
 
@@ -127,10 +127,10 @@ export default function RechargePage() {
 
   const navigateToPayment = (value: number) => {
     const isBonusAvailable = !claimedAmounts.has(value);
-    
+
     // Optional: Clear cache on navigation so next visit fetches fresh data
     // localStorage.removeItem(CACHE_KEY); 
-    
+
     router.push(`/wallet/payment?amount=${value}&bonus=${isBonusAvailable}`);
   };
 
@@ -150,12 +150,12 @@ export default function RechargePage() {
             </button>
             <h1 className="text-xl font-bold text-gray-900">Add Money to Wallet</h1>
           </div>
-          
+
           <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
             </svg>
-            <span className="font-bold text-sm">₹{user?.wallet?.balance?.toFixed(2) || 0}</span>
+            <span className="font-bold text-sm">{user?.wallet?.balance?.toFixed(0) || 0} Cr</span>
           </div>
         </div>
       </div>
@@ -182,7 +182,7 @@ export default function RechargePage() {
 
         {/* Dynamic Predefined Amounts */}
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Recharge</h2>
-        
+
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="h-8 w-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
@@ -191,27 +191,26 @@ export default function RechargePage() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {rechargePacks.map((pack) => {
               const isBonusAvailable = !claimedAmounts.has(pack.amount);
-              
+
               return (
                 <button
                   key={pack._id}
                   onClick={() => navigateToPayment(pack.amount)}
-                  className={`relative bg-white rounded-xl border-2 p-6 text-center transition-all hover:shadow-lg ${
-                    isBonusAvailable && pack.bonusPercentage > 0
+                  className={`relative bg-white rounded-xl border-2 p-6 text-center transition-all hover:shadow-lg ${isBonusAvailable && pack.bonusPercentage > 0
                       ? 'border-yellow-400 shadow-yellow-100'
                       : 'border-gray-300 bg-gray-50'
-                  }`}
+                    }`}
                 >
                   {pack.isPopular && (
                     <span className="absolute -top-2 -left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-tl-lg rounded-br-lg">
                       ★ POPULAR
                     </span>
                   )}
-                  
+
                   <p className="text-2xl font-bold text-gray-900 mb-2">
-                    ₹{pack.amount.toLocaleString()}
+                    {pack.amount.toLocaleString()} Cr
                   </p>
-                  
+
                   {isBonusAvailable && pack.bonusPercentage > 0 ? (
                     <p className="text-sm font-semibold text-green-600">
                       {pack.bonusPercentage}% Extra
