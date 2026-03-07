@@ -16,6 +16,9 @@ export class ChatSession {
   @Prop({ required: true, type: Types.ObjectId, ref: 'Astrologer' })
   astrologerId: Types.ObjectId;
 
+  @Prop({ default: 'Astrologer' })
+  astrologerModel: string; // 'Astrologer' or 'AiAstrologerProfile'
+
   @Prop({ required: true })
   orderId: string;
 
@@ -69,6 +72,9 @@ export class ChatSession {
 
   @Prop({ default: 0 })
   totalAmount: number;
+
+  @Prop({ default: 0 })
+  totalCost: number; // For backward compatibility/unified analytics
 
   @Prop({ default: 0 })
   platformCommission: number;
@@ -176,6 +182,9 @@ export class ChatSession {
 
   @Prop()
   endReason?: string;
+
+  @Prop({ min: 1, max: 5 })
+  userSatisfactionRating?: number;
 
   // ===== METADATA =====
   @Prop({ default: Date.now })

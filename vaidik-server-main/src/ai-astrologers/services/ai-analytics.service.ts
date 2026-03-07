@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AiAstrologerProfile, AiAstrologerProfileDocument } from '../schemas/ai-astrologers-profile.schema';
 import { ChatSession, ChatSessionDocument } from '../../chat/schemas/chat-session.schema';
-import { WalletTransaction, WalletTransactionDocument } from '../../payments/schemas/wallet-transaction.schema';
 
 @Injectable()
 export class AiAnalyticsService {
@@ -12,7 +11,6 @@ export class AiAnalyticsService {
     constructor(
         @InjectModel(AiAstrologerProfile.name) private aiAstrologerModel: Model<AiAstrologerProfileDocument>,
         @InjectModel(ChatSession.name) private chatSessionModel: Model<ChatSessionDocument>,
-        @InjectModel(WalletTransaction.name) private transactionModel: Model<WalletTransactionDocument>,
     ) { }
 
     /**
@@ -34,7 +32,7 @@ export class AiAnalyticsService {
                 {
                     $group: {
                         _id: { $dateToString: { format: groupByFormat, date: '$endTime', timezone: 'Asia/Kolkata' } },
-                        totalRevenue: { $sum: '$totalCost' },
+                        totalRevenue: { $sum: '$totalAmount' },
                         totalSessions: { $sum: 1 },
                         avgDuration: { $avg: '$duration' },
                         totalMinutes: { $sum: '$billedMinutes' },
@@ -195,7 +193,7 @@ export class AiAnalyticsService {
                             : 0;
 
                     // Calculate total revenue
-                    const totalRevenue = completedSessions.reduce((sum, s) => sum + (s.totalCost || 0), 0);
+                    const totalRevenue = completedSessions.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
 
                     // Calculate average session duration
                     const avgSessionDuration =
