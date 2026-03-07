@@ -69,7 +69,7 @@ export default function ShopifyOrdersPage() {
     },
     {
       header: 'Amount',
-      cell: (order) => <span className="font-semibold text-gray-900">₹{parseFloat(order.totalPrice).toLocaleString()}</span>
+      cell: (order) => <span className="font-semibold text-gray-900">{parseFloat(order.totalPrice).toLocaleString()} Cr</span>
     },
     {
       header: 'Payment',
@@ -104,10 +104,10 @@ export default function ShopifyOrdersPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatBox label="Total Orders" value={stats?.summary?.totalOrders || 0} icon={Package} color="text-blue-600" />
         <StatBox label="Paid Orders" value={stats?.summary?.paidOrders || 0} icon={TrendingUp} color="text-green-600" />
-        <StatBox label="Total Revenue" value={`₹${(stats?.summary?.totalRevenue || 0).toLocaleString()}`} icon={TrendingUp} color="text-purple-600" />
+        <StatBox label="Total Revenue" value={`${(stats?.summary?.totalRevenue || 0).toLocaleString()} Cr`} icon={TrendingUp} color="text-purple-600" />
       </div>
 
-      <FilterBar 
+      <FilterBar
         search={{
           value: search,
           onChange: (val) => { setSearch(val); setPage(1); },

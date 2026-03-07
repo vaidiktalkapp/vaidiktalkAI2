@@ -83,11 +83,11 @@ export default function UserOrdersPage() {
     {
       header: 'Amount',
       accessorKey: 'totalAmount',
-      cell: (order) => <span className="font-bold">₹{order.totalAmount}</span>,
+      cell: (order) => <span className="font-bold">{order.totalAmount} Cr</span>,
     },
     {
       header: 'Date',
-      cell: (order) => new Date(order.createdAt).toLocaleDateString() + ' ' + new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' }),
+      cell: (order) => new Date(order.createdAt).toLocaleDateString() + ' ' + new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
     {
       header: 'Status',
@@ -110,8 +110,8 @@ export default function UserOrdersPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <button 
-          onClick={() => router.back()} 
+        <button
+          onClick={() => router.back()}
           className="p-2 hover:bg-gray-100 rounded-full transition-colors"
         >
           <ArrowLeft size={20} />

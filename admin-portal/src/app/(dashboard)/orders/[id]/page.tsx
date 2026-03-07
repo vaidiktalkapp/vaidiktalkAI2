@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  ArrowLeft, User, Star, Clock, IndianRupee, RefreshCw, XCircle, X,
+  ArrowLeft, User, Star, Clock, Coins, RefreshCw, XCircle, X,
   Video, MessageCircle, Phone, FileText, CheckCircle, AlertCircle, PlayCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -152,8 +152,8 @@ export default function OrderDetailPage() {
               <StatusBadge status={order.status} />
               {order.refundRequest && (
                 <span className={`px-2 py-1 rounded text-xs font-medium ${order.refundRequest.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                    order.refundRequest.status === 'approved' ? 'bg-green-100 text-green-800' :
-                      'bg-red-100 text-red-800'
+                  order.refundRequest.status === 'approved' ? 'bg-green-100 text-green-800' :
+                    'bg-red-100 text-red-800'
                   }`}>
                   Refund {order.refundRequest.status}
                 </span>
@@ -169,8 +169,8 @@ export default function OrderDetailPage() {
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard label="Total Amount" value={`₹${order.totalAmount.toLocaleString()}`} icon={IndianRupee} color="text-green-600" />
-          <StatCard label="Rate/Min" value={`₹${order.ratePerMinute}`} icon={Clock} />
+          <StatCard label="Total Amount (1 Cr = 1 ₹)" value={`${order.totalAmount.toLocaleString()} Cr`} icon={Coins} color="text-green-600" />
+          <StatCard label="Rate/Min" value={`${order.ratePerMinute} Cr`} icon={Clock} />
           <StatCard label="Duration" value={formatDuration(order.actualDurationSeconds)} icon={Clock} />
           <StatCard label="Payment" value={order.payment.status} icon={CheckCircle} color={getPaymentStatusColor(order.payment.status)} />
         </div>
@@ -179,12 +179,12 @@ export default function OrderDetailPage() {
       {/* Payment Breakdown */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <IndianRupee size={20} /> Payment Breakdown
+          <Coins size={20} /> Payment Breakdown
         </h3>
         <div className="grid md:grid-cols-3 gap-6">
-          <PaymentDetail label="Held Amount" value={`₹${order.payment.heldAmount}`} timestamp={order.payment.heldAt} />
-          <PaymentDetail label="Charged Amount" value={`₹${order.payment.chargedAmount}`} timestamp={order.payment.chargedAt} />
-          <PaymentDetail label="Refunded Amount" value={`₹${order.payment.refundedAmount}`} timestamp={order.payment.refundedAt} />
+          <PaymentDetail label="Held Amount" value={`${order.payment.heldAmount} Cr`} timestamp={order.payment.heldAt} />
+          <PaymentDetail label="Charged Amount" value={`${order.payment.chargedAmount} Cr`} timestamp={order.payment.chargedAt} />
+          <PaymentDetail label="Refunded Amount" value={`${order.payment.refundedAmount} Cr`} timestamp={order.payment.refundedAt} />
         </div>
         {order.payment.transactionId && (
           <div className="mt-4 p-3 bg-gray-50 rounded text-xs text-gray-600">
@@ -220,7 +220,7 @@ export default function OrderDetailPage() {
                     <td className="px-4 py-3">{new Date(session.endedAt).toLocaleTimeString()}</td>
                     <td className="px-4 py-3">{formatDuration(session.durationSeconds)}</td>
                     <td className="px-4 py-3">{session.billedMinutes} min</td>
-                    <td className="px-4 py-3">₹{session.chargedAmount}</td>
+                    <td className="px-4 py-3">{session.chargedAmount} Cr</td>
                     <td className="px-4 py-3">
                       {session.sessionType === 'chat' ? (
                         <button
@@ -284,7 +284,7 @@ export default function OrderDetailPage() {
             <div><span className="font-medium">Status:</span> <span className="capitalize">{order.refundRequest.status}</span></div>
             <div><span className="font-medium">Requested:</span> {new Date(order.refundRequest.requestedAt).toLocaleString()}</div>
             <div><span className="font-medium">Reason:</span> {order.refundRequest.reason}</div>
-            {order.refundRequest.refundAmount && <div><span className="font-medium">Amount:</span> ₹{order.refundRequest.refundAmount}</div>}
+            {order.refundRequest.refundAmount && <div><span className="font-medium">Amount:</span> {order.refundRequest.refundAmount} Cr</div>}
             {order.refundRequest.adminNotes && <div className="col-span-2"><span className="font-medium">Admin Notes:</span> {order.refundRequest.adminNotes}</div>}
             {order.refundRequest.rejectionReason && <div className="col-span-2 text-red-700"><span className="font-medium">Rejection:</span> {order.refundRequest.rejectionReason}</div>}
           </div>
@@ -348,7 +348,7 @@ export default function OrderDetailPage() {
                 max={order.totalAmount}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-500 mt-1">Max: ₹{order.totalAmount.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 mt-1">Max: {order.totalAmount.toLocaleString()} Cr</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Zoho Ticket Reference</label>
@@ -478,8 +478,8 @@ function ChatViewerModal({ sessionId, onClose }: { sessionId: string; onClose: (
               return (
                 <div key={msg._id || msg.id} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
                   <div className={`p-3 rounded-2xl max-w-[80%] ${isUser
-                      ? 'bg-blue-600 text-white rounded-tr-sm shadow-sm'
-                      : 'bg-white border shadow-sm rounded-tl-sm text-gray-800'
+                    ? 'bg-blue-600 text-white rounded-tr-sm shadow-sm'
+                    : 'bg-white border shadow-sm rounded-tl-sm text-gray-800'
                     }`}>
                     <p className="text-sm whitespace-pre-wrap">{msg.content || msg.message}</p>
                     <span className={`text-[10px] mt-1 block font-medium ${isUser ? 'text-blue-200' : 'text-gray-400'}`}>

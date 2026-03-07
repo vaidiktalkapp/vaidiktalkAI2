@@ -10,7 +10,7 @@ export default function DirectOrderRefundPage() {
   const [searchId, setSearchId] = useState('');
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  
+
   // Refund Form State
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
@@ -21,7 +21,7 @@ export default function DirectOrderRefundPage() {
     setOrder(null);
     try {
       // Assuming getOrderDetails supports searching by readable OrderID
-      const res = await adminApi.getOrderDetails(searchId); 
+      const res = await adminApi.getOrderDetails(searchId);
       setOrder(res.data.data);
       setAmount(res.data.data.totalAmount.toString()); // Default to full refund
     } catch (err) {
@@ -32,9 +32,9 @@ export default function DirectOrderRefundPage() {
   };
 
   const refundMutation = useMutation({
-    mutationFn: () => adminApi.refundOrderDirect(order.orderId, { 
-      amount: parseFloat(amount), 
-      reason 
+    mutationFn: () => adminApi.refundOrderDirect(order.orderId, {
+      amount: parseFloat(amount),
+      reason
     }),
     onSuccess: () => {
       toast.success('Refund processed successfully');
@@ -59,15 +59,15 @@ export default function DirectOrderRefundPage() {
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
         <label className="block text-sm font-medium text-gray-700 mb-2">Order ID</label>
         <div className="flex gap-2">
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={searchId}
             onChange={(e) => setSearchId(e.target.value)}
             placeholder="e.g. ORD-123456"
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           />
-          <button 
+          <button
             onClick={handleSearch}
             disabled={loading}
             className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
@@ -87,9 +87,8 @@ export default function DirectOrderRefundPage() {
                 {new Date(order.createdAt).toLocaleString()}
               </p>
             </div>
-            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
-              order.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-            }`}>
+            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${order.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+              }`}>
               {order.status}
             </span>
           </div>
@@ -104,7 +103,7 @@ export default function DirectOrderRefundPage() {
               </div>
               <div>
                 <p className="text-gray-500">Original Amount</p>
-                <p className="font-bold text-lg text-gray-900">₹{order.totalAmount}</p>
+                <p className="font-bold text-lg text-gray-900">{order.totalAmount} Cr</p>
               </div>
             </div>
 
@@ -112,25 +111,25 @@ export default function DirectOrderRefundPage() {
               <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <RefreshCcw size={18} className="text-indigo-600" /> Refund Details
               </h3>
-              
+
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Refund Amount (₹)</label>
-                  <input 
-                    type="number" 
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Refund Amount (Credits)</label>
+                  <input
+                    type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     max={order.totalAmount}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Max refundable: ₹{order.totalAmount}
+                    Max refundable: {order.totalAmount} Cr
                   </p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
-                  <textarea 
+                  <textarea
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     rows={3}
@@ -146,7 +145,7 @@ export default function DirectOrderRefundPage() {
                   </p>
                 </div>
 
-                <button 
+                <button
                   onClick={() => refundMutation.mutate()}
                   disabled={!amount || !reason || refundMutation.isPending}
                   className="w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium disabled:opacity-50 flex justify-center items-center gap-2"

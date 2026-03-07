@@ -36,12 +36,12 @@ export default function LiveStreamsPage() {
     const start = new Date(startedAt).getTime();
     const now = Date.now();
     const diff = Math.max(0, Math.floor((now - start) / 1000));
-    
+
     const hours = Math.floor(diff / 3600);
     const minutes = Math.floor((diff % 3600) / 60);
     const seconds = diff % 60;
-    
-    return hours > 0 
+
+    return hours > 0
       ? `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
       : `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
@@ -111,7 +111,7 @@ export default function LiveStreamsPage() {
                     <span className="text-xs font-medium uppercase tracking-wider">No Thumbnail</span>
                   </div>
                 )}
-                
+
                 {/* Live Badge */}
                 <div className="absolute top-3 left-3 px-2.5 py-1 bg-red-600 text-white text-[10px] font-bold uppercase tracking-wider rounded-md shadow-sm flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
@@ -132,7 +132,7 @@ export default function LiveStreamsPage() {
                     {stream.title || 'Untitled Stream'}
                   </h3>
                 </div>
-                
+
                 {/* Host Info */}
                 <div className="flex items-center gap-3 mb-4 p-2 bg-gray-50 rounded-lg">
                   <div className="w-8 h-8 rounded-full bg-indigo-100 flex-shrink-0 flex items-center justify-center overflow-hidden border border-indigo-200">
@@ -166,7 +166,7 @@ export default function LiveStreamsPage() {
                   </div>
                   <div className="bg-green-50 rounded p-2 text-center border border-green-100">
                     <p className="text-[10px] uppercase tracking-wide text-green-600 font-semibold">Revenue</p>
-                    <p className="text-sm font-bold text-green-700">₹{stream.totalRevenue || 0}</p>
+                    <p className="text-sm font-bold text-green-700">{stream.totalRevenue || 0} Cr</p>
                   </div>
                 </div>
 
@@ -176,7 +176,7 @@ export default function LiveStreamsPage() {
                     <Clock size={12} className="mr-1.5" />
                     {formatDuration(stream.startedAt)}
                   </div>
-                  
+
                   <Link
                     href={`/livestreams/${stream.streamId || stream._id}`}
                     className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-3 py-1.5 rounded transition-colors"

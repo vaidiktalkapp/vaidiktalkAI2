@@ -46,7 +46,7 @@ export default function TransactionsList({ userId, limit = 5 }: TransactionsList
             </div>
           </div>
           <span className={`font-bold ${txn.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
-            {txn.type === 'credit' ? '+' : '-'}₹{txn.amount}
+            {txn.type === 'credit' ? '+' : '-'}{txn.amount} Cr
           </span>
         </div>
       ))}

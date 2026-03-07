@@ -32,8 +32,8 @@ export default function OrdersList({ userId, limit = 5 }: OrdersListProps) {
   return (
     <div className="space-y-2">
       {data.orders.map((order: any) => (
-        <Link 
-          key={order._id} 
+        <Link
+          key={order._id}
           href={`/orders/${order.orderId}`}
           className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition-colors group"
         >
@@ -42,7 +42,7 @@ export default function OrdersList({ userId, limit = 5 }: OrdersListProps) {
             <p className="text-xs text-gray-500">{order.type} • {new Date(order.createdAt).toLocaleDateString()}</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-bold text-gray-900">₹{order.totalAmount}</span>
+            <span className="font-bold text-gray-900">{order.totalAmount} Cr</span>
             <ExternalLink size={14} className="text-gray-400 group-hover:text-indigo-600" />
           </div>
         </Link>

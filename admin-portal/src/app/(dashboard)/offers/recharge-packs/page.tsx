@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 export default function RechargePacksPage() {
   const queryClient = useQueryClient();
   const [editingPack, setEditingPack] = useState<any>(null);
-  
+
   // Form State
   const [amount, setAmount] = useState('');
   const [bonus, setBonus] = useState('');
@@ -61,7 +61,7 @@ export default function RechargePacksPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || !bonus) return;
-    
+
     saveMutation.mutate({
       amount: Number(amount),
       bonusPercentage: Number(bonus),
@@ -74,7 +74,7 @@ export default function RechargePacksPage() {
     <div className="max-w-5xl mx-auto space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Recharge Packs & Bonuses</h1>
-        <p className="text-gray-500">Configure recharge amounts and their bonus percentages dynamically.</p>
+        <p className="text-gray-500">Configure recharge amounts and their bonus percentages dynamically (1 Credit = 1 ₹).</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -84,10 +84,10 @@ export default function RechargePacksPage() {
             <h2 className="text-lg font-bold text-gray-900 mb-4">
               {editingPack ? 'Edit Pack' : 'Create New Pack'}
             </h2>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Recharge Amount (₹)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Recharge Amount (Credits) - 1 Cr = 1 ₹</label>
                 <input
                   type="number"
                   value={amount}
@@ -108,7 +108,7 @@ export default function RechargePacksPage() {
                   placeholder="e.g. 100"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  User gets ₹{amount ? Math.floor(Number(amount) * (Number(bonus)/100)) : 0} bonus
+                  User gets {amount ? Math.floor(Number(amount) * (Number(bonus) / 100)) : 0} Cr bonus
                 </p>
               </div>
 
@@ -158,67 +158,67 @@ export default function RechargePacksPage() {
 
         {/* List Section */}
         <div className="lg:col-span-2">
-           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-             <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-               <h3 className="font-semibold text-gray-900">Active Packs</h3>
-               <span className="text-sm text-gray-500">{packs?.length || 0} packs found</span>
-             </div>
-             
-             {isLoading ? (
-               <div className="p-8 text-center">Loading...</div>
-             ) : (
-               <div className="divide-y divide-gray-100">
-                 {packs?.map((pack: any) => (
-                   <div key={pack._id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                     <div className="flex items-center gap-4">
-                       <div className="h-12 w-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold">
-                         {pack.bonusPercentage}%
-                       </div>
-                       <div>
-                         <div className="flex items-center gap-2">
-                           <h4 className="font-bold text-gray-900">₹{pack.amount}</h4>
-                           {pack.isPopular && (
-                             <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded-full font-medium flex items-center gap-1">
-                               <Star size={10} fill="currentColor" /> Popular
-                             </span>
-                           )}
-                           {!pack.isActive && (
-                             <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">Inactive</span>
-                           )}
-                         </div>
-                         <p className="text-sm text-gray-500">
-                           User gets <span className="text-green-600 font-medium">₹{Math.floor(pack.amount * (pack.bonusPercentage/100))}</span> bonus
-                         </p>
-                       </div>
-                     </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+              <h3 className="font-semibold text-gray-900">Active Packs</h3>
+              <span className="text-sm text-gray-500">{packs?.length || 0} packs found</span>
+            </div>
 
-                     <div className="flex gap-2">
-                       <button
-                         onClick={() => handleEdit(pack)}
-                         className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                       >
-                         <Edit2 size={18} />
-                       </button>
-                       <button
-                         onClick={() => {
-                           if(confirm('Delete this pack?')) deleteMutation.mutate(pack.amount);
-                         }}
-                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                       >
-                         <Trash2 size={18} />
-                       </button>
-                     </div>
-                   </div>
-                 ))}
-                 
-                 {packs?.length === 0 && (
-                   <div className="p-8 text-center text-gray-500">
-                     No recharge packs configured. Add one to start.
-                   </div>
-                 )}
-               </div>
-             )}
-           </div>
+            {isLoading ? (
+              <div className="p-8 text-center">Loading...</div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {packs?.map((pack: any) => (
+                  <div key={pack._id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold">
+                        {pack.bonusPercentage}%
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-gray-900">{pack.amount} Cr</h4>
+                          {pack.isPopular && (
+                            <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded-full font-medium flex items-center gap-1">
+                              <Star size={10} fill="currentColor" /> Popular
+                            </span>
+                          )}
+                          {!pack.isActive && (
+                            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">Inactive</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500">
+                          User gets <span className="text-green-600 font-medium">{Math.floor(pack.amount * (pack.bonusPercentage / 100))} Cr</span> bonus
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEdit(pack)}
+                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm('Delete this pack?')) deleteMutation.mutate(pack.amount);
+                        }}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {packs?.length === 0 && (
+                  <div className="p-8 text-center text-gray-500">
+                    No recharge packs configured. Add one to start.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

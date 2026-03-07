@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
-import { 
-  ArrowLeft, User as UserIcon, Wallet, Activity, ShoppingCart, 
-  IndianRupee, Wifi, WifiOff, Trash2
+import {
+  ArrowLeft, User as UserIcon, Wallet, Activity, ShoppingCart,
+  Coins, Wifi, WifiOff, Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePermission } from '@/hooks/use-permission';
@@ -35,12 +35,12 @@ export default function UserDetailPage() {
     queryFn: async () => {
       const response = await adminApi.getUserDetails(userId);
       // 🔍 DEBUG LOG: Check exactly what the API returns
-      console.log('🔍 [API DEBUG] Raw Response:', response.data); 
+      console.log('🔍 [API DEBUG] Raw Response:', response.data);
       console.log('🔍 [API DEBUG] User Data:', response.data.data);
       console.log('🔍 [API DEBUG] isOnline Flag:', response.data.data?.isOnline);
       return response.data.data;
     },
-    refetchInterval: 5000, 
+    refetchInterval: 5000,
   });
 
   // Fetch Transactions
@@ -144,10 +144,9 @@ export default function UserDetailPage() {
               )}
             </div>
             {/* ✅ Online Status Dot */}
-            <div 
-              className={`absolute bottom-1 right-1 w-6 h-6 rounded-full border-4 border-white flex items-center justify-center ${
-                user.isOnline ? 'bg-green-500' : 'bg-gray-300'
-              }`} 
+            <div
+              className={`absolute bottom-1 right-1 w-6 h-6 rounded-full border-4 border-white flex items-center justify-center ${user.isOnline ? 'bg-green-500' : 'bg-gray-300'
+                }`}
               title={user.isOnline ? 'Online' : 'Offline'}
             />
           </div>
@@ -159,11 +158,10 @@ export default function UserDetailPage() {
                 <div className="flex items-center gap-3">
                   <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
                   {/* ✅ Online Status Badge */}
-                  <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                    user.isOnline 
-                      ? 'bg-green-50 text-green-700 border-green-200' 
-                      : 'bg-gray-50 text-gray-600 border-gray-200'
-                  }`}>
+                  <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${user.isOnline
+                    ? 'bg-green-50 text-green-700 border-green-200'
+                    : 'bg-gray-50 text-gray-600 border-gray-200'
+                    }`}>
                     {user.isOnline ? <Wifi size={12} /> : <WifiOff size={12} />}
                     {user.isOnline ? 'Online' : 'Offline'}
                   </div>
@@ -176,23 +174,23 @@ export default function UserDetailPage() {
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <QuickStat 
-                label="Wallet Balance" 
-                value={`₹${user.wallet?.balance?.toLocaleString() ?? 0}`} 
-                color="text-green-600" 
+              <QuickStat
+                label="Wallet Balance (1 Cr = 1 ₹)"
+                value={`${user.wallet?.balance?.toLocaleString() ?? 0} Cr`}
+                color="text-green-600"
               />
-              <QuickStat 
-                label="Total Spent" 
-                value={`₹${user.stats?.totalSpent?.toLocaleString() ?? 0}`} 
-                color="text-purple-600" 
+              <QuickStat
+                label="Total Spent"
+                value={`${user.stats?.totalSpent?.toLocaleString() ?? 0} Cr`}
+                color="text-purple-600"
               />
-              <QuickStat 
-                label="Total Orders" 
-                value={user.stats?.orderCount ?? 0} 
+              <QuickStat
+                label="Total Orders"
+                value={user.stats?.orderCount ?? 0}
               />
-              <QuickStat 
-                label="Joined" 
-                value={new Date(user.createdAt).toLocaleDateString()} 
+              <QuickStat
+                label="Joined"
+                value={new Date(user.createdAt).toLocaleDateString()}
               />
             </div>
           </div>
@@ -228,23 +226,23 @@ export default function UserDetailPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <StatsCard 
-          icon={Wallet} 
-          title="Wallet Details" 
+        <StatsCard
+          icon={Wallet}
+          title="Wallet Details"
           items={[
-            { label: 'Current Balance', value: `₹${user.wallet?.balance ?? 0}` },
-            { label: 'Total Spent', value: `₹${user.stats?.totalSpent ?? 0}` },
+            { label: 'Current Balance', value: `${user.wallet?.balance ?? 0} Cr` },
+            { label: 'Total Spent', value: `${user.stats?.totalSpent ?? 0} Cr` },
           ]}
         />
-        <StatsCard 
-          icon={UserIcon} 
-          title="Account Details" 
+        <StatsCard
+          icon={UserIcon}
+          title="Account Details"
           items={[
             // ✅ Connection Status Line
-            { 
-              label: 'Connection Status', 
-              value: user.isOnline ? 'Online Now' : 'Offline', 
-              valueClass: user.isOnline ? 'text-green-600 font-bold' : 'text-gray-500' 
+            {
+              label: 'Connection Status',
+              value: user.isOnline ? 'Online Now' : 'Offline',
+              valueClass: user.isOnline ? 'text-green-600 font-bold' : 'text-gray-500'
             },
             { label: 'Status', value: user.status, valueClass: getStatusColor(user.status) },
             { label: 'Verified', value: user.isPhoneVerified ? 'Yes' : 'No' },
@@ -258,7 +256,7 @@ export default function UserDetailPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <IndianRupee size={20} /> Recent Transactions
+            <Coins size={20} /> Recent Transactions
           </h3>
           <Link href={`/users/${userId}/transactions`} className="text-indigo-600 hover:underline text-sm">
             View All
@@ -273,7 +271,7 @@ export default function UserDetailPage() {
                   <p className="text-xs text-gray-500">{new Date(txn.createdAt).toLocaleString()}</p>
                 </div>
                 <span className={`font-bold ${txn.type?.includes('credit') || txn.type?.includes('recharge') ? 'text-green-600' : 'text-red-600'}`}>
-                  {txn.type?.includes('credit') || txn.type?.includes('recharge') ? '+' : '-'}₹{txn.amount}
+                  {txn.type?.includes('credit') || txn.type?.includes('recharge') ? '+' : '-'}{txn.amount} Cr
                 </span>
               </div>
             ))}
@@ -296,8 +294,8 @@ export default function UserDetailPage() {
         {orders?.orders?.length ? (
           <div className="space-y-2">
             {orders.orders.map((order: any) => (
-              <Link 
-                key={order._id} 
+              <Link
+                key={order._id}
                 href={`/orders/${order.orderId}`}
                 className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-indigo-50 transition-colors group"
               >
@@ -307,7 +305,7 @@ export default function UserDetailPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <StatusBadge status={order.status} />
-                  <span className="font-bold text-gray-900">₹{order.totalAmount}</span>
+                  <span className="font-bold text-gray-900">{order.totalAmount} Cr</span>
                 </div>
               </Link>
             ))}

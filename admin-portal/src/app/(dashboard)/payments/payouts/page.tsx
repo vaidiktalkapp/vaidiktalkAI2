@@ -21,7 +21,7 @@ import {
   Building2,
   User,
   Calendar,
-  IndianRupee,
+  Coins,
   TrendingUp,
   CheckCheck,
   Ban
@@ -230,7 +230,7 @@ export default function PayoutsPage() {
       cell: (payout) => (
         <div className="text-right">
           <p className="text-lg font-bold text-green-600">
-            ₹{payout.amount.toLocaleString('en-IN')}
+            {payout.amount.toLocaleString('en-IN')} Cr
           </p>
         </div>
       ),
@@ -329,7 +329,7 @@ export default function PayoutsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Payout Management</h1>
-          <p className="text-gray-600 mt-1">Review and process astrologer withdrawal requests</p>
+          <p className="text-gray-600 mt-1">Review and process astrologer withdrawal requests (1 Credit = 1 ₹)</p>
         </div>
         <button
           onClick={() => refetch()}
@@ -367,8 +367,8 @@ export default function PayoutsPage() {
           color="red"
         />
         <StatCard
-          label="Total Amount"
-          value={`₹${((stats?.totalAmount || 0) / 1000).toFixed(1)}K`}
+          label="Total Amount (1 Cr = 1 ₹)"
+          value={`${((stats?.totalAmount || 0) / 1000).toFixed(1)}K Cr`}
           icon={TrendingUp}
           color="purple"
         />
@@ -540,7 +540,7 @@ export default function PayoutsPage() {
           <div className="space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-800">
-                <strong>⚠️ Important:</strong> This will deduct ₹{selectedPayout.amount.toLocaleString()} from the astrologer's withdrawable balance.
+                <strong>⚠️ Important:</strong> This will deduct {selectedPayout.amount.toLocaleString()} Cr from the astrologer's withdrawable balance.
               </p>
             </div>
             <div>
@@ -696,7 +696,7 @@ function PayoutDetailsModal({ payout, onClose, onApprove, onProcess, onComplete,
             {/* Amount Card */}
             <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
               <p className="text-sm opacity-90">Payout Amount</p>
-              <p className="text-4xl font-bold mt-2">₹{payout.amount.toLocaleString('en-IN')}</p>
+              <p className="text-4xl font-bold mt-2">{payout.amount.toLocaleString('en-IN')} Cr</p>
               <div className="mt-4">
                 <StatusBadge status={payout.status} />
               </div>
@@ -881,15 +881,15 @@ function PayoutDetailsModal({ payout, onClose, onApprove, onProcess, onComplete,
                 <div className="grid grid-cols-3 gap-4">
                   <div className="bg-green-50 p-4 rounded-lg border border-green-100">
                     <p className="text-sm text-green-700 font-medium">Earned (Orders)</p>
-                    <p className="text-2xl font-bold text-green-900 mt-1">₹{audit.summary.totalOrderRevenue}</p>
+                    <p className="text-2xl font-bold text-green-900 mt-1">{audit.summary.totalOrderRevenue} Cr</p>
                   </div>
                   <div className="bg-red-50 p-4 rounded-lg border border-red-100">
                     <p className="text-sm text-red-700 font-medium">Refund Loss</p>
-                    <p className="text-2xl font-bold text-red-900 mt-1">₹{audit.summary.totalRefundLoss}</p>
+                    <p className="text-2xl font-bold text-red-900 mt-1">{audit.summary.totalRefundLoss} Cr</p>
                   </div>
                   <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
                     <p className="text-sm text-yellow-700 font-medium">Penalty Loss</p>
-                    <p className="text-2xl font-bold text-yellow-900 mt-1">₹{audit.summary.totalPenaltyLoss}</p>
+                    <p className="text-2xl font-bold text-yellow-900 mt-1">{audit.summary.totalPenaltyLoss} Cr</p>
                   </div>
                 </div>
 
@@ -921,7 +921,7 @@ function PayoutDetailsModal({ payout, onClose, onApprove, onProcess, onComplete,
                                 <td className="px-4 py-2 font-mono text-xs">{order.orderId}</td>
                                 <td className="px-4 py-2">{new Date(order.createdAt).toLocaleDateString()}</td>
                                 <td className="px-4 py-2 capitalize">{order.type}</td>
-                                <td className="px-4 py-2 text-right font-medium text-green-600">₹{order.totalAmount}</td>
+                                <td className="px-4 py-2 text-right font-medium text-green-600">{order.totalAmount} Cr</td>
                               </tr>
                             ))}
                           </tbody>
@@ -950,7 +950,7 @@ function PayoutDetailsModal({ payout, onClose, onApprove, onProcess, onComplete,
                               <tr key={order.orderId}>
                                 <td className="px-4 py-2 font-mono text-xs">{order.orderId}</td>
                                 <td className="px-4 py-2">{new Date(order.createdAt).toLocaleDateString()}</td>
-                                <td className="px-4 py-2 text-right font-medium text-red-600">-₹{order.refundRequest?.refundAmount}</td>
+                                <td className="px-4 py-2 text-right font-medium text-red-600">-{order.refundRequest?.refundAmount} Cr</td>
                               </tr>
                             ))}
                           </tbody>
@@ -979,7 +979,7 @@ function PayoutDetailsModal({ payout, onClose, onApprove, onProcess, onComplete,
                               <tr key={penalty._id}>
                                 <td className="px-4 py-2">{new Date(penalty.appliedAt).toLocaleDateString()}</td>
                                 <td className="px-4 py-2 text-gray-600">{penalty.reason}</td>
-                                <td className="px-4 py-2 text-right font-medium text-yellow-600">-₹{penalty.amount}</td>
+                                <td className="px-4 py-2 text-right font-medium text-yellow-600">-{penalty.amount} Cr</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1055,7 +1055,7 @@ function ActionModal({ title, icon, payout, children, onClose, onConfirm, isLoad
           {icon}
           <div>
             <p className="text-sm text-gray-600">Payout ID: <span className="font-mono font-medium">{payout.payoutId}</span></p>
-            <p className="text-lg font-bold text-gray-900">₹{payout.amount.toLocaleString('en-IN')}</p>
+            <p className="text-lg font-bold text-gray-900">{payout.amount.toLocaleString('en-IN')} Cr</p>
             <p className="text-sm text-gray-600">{payout.astrologerId?.name}</p>
           </div>
         </div>

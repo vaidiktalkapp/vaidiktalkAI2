@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
-import { Search, Filter, Eye, Video, TrendingUp, Users, IndianRupee, Clock, Play } from 'lucide-react';
+import { Search, Filter, Eye, Video, TrendingUp, Users, Coins, Clock, Play } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation'; 
+import { usePathname } from 'next/navigation';
 import { BarChart3 } from 'lucide-react';
 
 export default function LivestreamsPage() {
@@ -15,11 +15,11 @@ export default function LivestreamsPage() {
 
   const pathname = usePathname();
 
-const analyticsHref = (() => {
-  const base = pathname?.endsWith('/') ? pathname.slice(0, -1) : pathname;
-  if (!base) return '/analytics';
-  return base.endsWith('/analytics') ? base : `${base}/analytics`;
-})();
+  const analyticsHref = (() => {
+    const base = pathname?.endsWith('/') ? pathname.slice(0, -1) : pathname;
+    if (!base) return '/analytics';
+    return base.endsWith('/analytics') ? base : `${base}/analytics`;
+  })();
 
   // Fetch streams
   const { data, isLoading } = useQuery({
@@ -75,28 +75,28 @@ const analyticsHref = (() => {
           <p className="text-gray-600 mt-1">Monitor and manage all livestreams</p>
         </div>
         <div className="flex items-center gap-3">
-  <Link
-    href={analyticsHref}
-    className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-  >
-    <BarChart3 size={18} className="mr-2" />
-    Analytics
-  </Link>
+          <Link
+            href={analyticsHref}
+            className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <BarChart3 size={18} className="mr-2" />
+            Analytics
+          </Link>
 
-  <Link
-    href="/livestreams/live"
-    className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-  >
-    <Video size={18} className="mr-2" />
-    <span className="relative flex items-center">
-      <span className="relative flex h-2 w-2 mr-2">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-        <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-      </span>
-      Live Now ({stats?.liveStreams || 0})
-    </span>
-  </Link>
-</div>
+          <Link
+            href="/livestreams/live"
+            className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            <Video size={18} className="mr-2" />
+            <span className="relative flex items-center">
+              <span className="relative flex h-2 w-2 mr-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+              </span>
+              Live Now ({stats?.liveStreams || 0})
+            </span>
+          </Link>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -135,10 +135,10 @@ const analyticsHref = (() => {
             <div>
               <p className="text-sm text-gray-600">Total Revenue</p>
               <p className="text-2xl font-bold text-blue-600">
-                ₹{(stats?.totalRevenue || 0).toLocaleString()}
+                {(stats?.totalRevenue || 0).toLocaleString()} Cr
               </p>
             </div>
-            <IndianRupee className="text-blue-600" size={32} />
+            <Coins className="text-blue-600" size={32} />
           </div>
         </div>
       </div>
@@ -259,7 +259,7 @@ const analyticsHref = (() => {
                       {stream.duration > 0 ? formatDuration(stream.duration) : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₹{stream.totalRevenue?.toLocaleString() || 0}
+                      {stream.totalRevenue?.toLocaleString() || 0} Cr
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
@@ -277,7 +277,7 @@ const analyticsHref = (() => {
                             </span>
                           </Link>
                         )}
-                        
+
                         {/* View Details Button */}
                         <Link
                           href={`/livestreams/${stream.streamId}`}

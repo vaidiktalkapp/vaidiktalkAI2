@@ -46,9 +46,8 @@ export default function UserTransactionsPage() {
       cell: (txn) => (
         <div>
           <div className="flex items-center gap-2">
-            <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-              txn.type.includes('credit') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-            }`}>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded ${txn.type.includes('credit') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}>
               {txn.type.replace(/_/g, ' ').toUpperCase()}
             </span>
           </div>
@@ -63,14 +62,14 @@ export default function UserTransactionsPage() {
         return (
           <div className={`font-bold flex items-center gap-1 ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
             {isCredit ? <ArrowDown size={14} /> : <ArrowUp size={14} />}
-            ₹{txn.amount}
+            {txn.amount} Cr
           </div>
         );
       },
     },
     {
       header: 'Balance After',
-      cell: (txn) => txn.balanceAfter ? `₹${txn.balanceAfter}` : '-',
+      cell: (txn) => txn.balanceAfter ? `${txn.balanceAfter} Cr` : '-',
     },
     {
       header: 'Date',
@@ -79,9 +78,8 @@ export default function UserTransactionsPage() {
     {
       header: 'Status',
       cell: (txn) => (
-        <span className={`text-xs capitalize ${
-          txn.status === 'completed' ? 'text-green-600' : 'text-yellow-600'
-        }`}>
+        <span className={`text-xs capitalize ${txn.status === 'completed' ? 'text-green-600' : 'text-yellow-600'
+          }`}>
           {txn.status}
         </span>
       ),
@@ -91,8 +89,8 @@ export default function UserTransactionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <button 
-          onClick={() => router.back()} 
+        <button
+          onClick={() => router.back()}
           className="p-2 hover:bg-gray-100 rounded-full transition-colors"
         >
           <ArrowLeft size={20} />
