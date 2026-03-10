@@ -1,6 +1,6 @@
 // src/calls/services/call-billing.service.ts
 
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, forwardRef, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CallSession, CallSessionDocument } from '../schemas/call-session.schema';
@@ -13,6 +13,7 @@ export class CallBillingService {
 
   constructor(
     @InjectModel(CallSession.name) private sessionModel: Model<CallSessionDocument>,
+    @Inject(forwardRef(() => WalletService))
     private walletService: WalletService,
     private orderPaymentService: OrderPaymentService
   ) { }

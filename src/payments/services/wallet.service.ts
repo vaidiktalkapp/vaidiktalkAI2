@@ -5,6 +5,7 @@ import {
   Logger,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, ClientSession } from 'mongoose';
 import { WalletTransaction, WalletTransactionDocument } from '../schemas/wallet-transaction.schema';
@@ -15,6 +16,8 @@ import { WalletRefundRequest, WalletRefundRequestDocument } from '../schemas/wal
 import { RechargePack, RechargePackDocument } from '../schemas/recharge-pack.schema';
 import { AppleIapService } from './apple-iap.service';
 import { VerifyApplePaymentDto } from '../dto/verify-apple-payment.dto';
+import { ChatSessionService } from '../../chat/services/chat-session.service';
+import { CallSessionService } from '../../calls/services/call-session.service';
 
 const GST_PERCENTAGE = 18;
 
@@ -35,6 +38,7 @@ export class WalletService {
     private rechargePackModel: Model<RechargePackDocument>,
     private razorpayService: RazorpayService,
     private appleIapService: AppleIapService, // ✅ Added Apple IAP
+    private moduleRef: ModuleRef,
   ) { }
 
   // ===== UTILITY METHODS =====
@@ -321,6 +325,11 @@ export class WalletService {
       await transaction.save({ session });
       if (bonusTransaction) await bonusTransaction.save({ session });
       await session.commitTransaction();
+
+      // ✅ Dynamically extend active sessions after recharge
+      if (status === 'completed') {
+        this.triggerSessionExtension(transaction.userId.toString());
+      }
 
       return {
         success: true,
@@ -1971,6 +1980,29 @@ export class WalletService {
       throw error;
     } finally {
       session.endSession();
+    }
+  }
+
+  /**
+   * ✅ NEW: Trigger session extensions for any active sessions the user might have
+   */
+  private async triggerSessionExtension(userId: string) {
+    try {
+      this.logger.log(`🔄 Checking for active sessions to extend for user: ${userId}`);
+
+      // Defer resolution to break circular dependencies
+      const chatSessionService = this.moduleRef.get(ChatSessionService, { strict: false });
+      const callSessionService = this.moduleRef.get(CallSessionService, { strict: false });
+
+      // We don't wait for these to complete to avoid blocking the payment response
+      Promise.all([
+        chatSessionService.extendActiveSessionForUser(userId),
+        callSessionService.extendActiveSessionForUser(userId)
+      ]).catch(err => {
+        this.logger.error(`❌ Session extension background task failed: ${err.message}`);
+      });
+    } catch (error) {
+      this.logger.error(`Error triggering session extension: ${error.message}`);
     }
   }
 }

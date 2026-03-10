@@ -56,6 +56,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(ChatGateway.name);
   private activeUsers = new Map<string, { socketId: string; userId: string; role: string; sessionId?: string }>();
   private sessionTimers = new Map<string, NodeJS.Timeout>();
+  private sessionTimerData = new Map<string, { maxDurationSeconds: number; secondsElapsed: number }>();
   private astrologerSockets = new Map<string, string>(); // astrologerId → socketId mapping
   private userSockets = new Map<string, string>();
 
@@ -418,16 +419,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   // ===== REAL-TIME TIMER TICKER =====
   private startTimerTicker(sessionId: string, maxDurationSeconds: number) {
-    let secondsElapsed = 0;
-
     if (this.sessionTimers.has(sessionId)) {
       clearInterval(this.sessionTimers.get(sessionId)!);
     }
 
+    this.sessionTimerData.set(sessionId, { maxDurationSeconds, secondsElapsed: 0 });
+
     const ticker = setInterval(async () => {
-      if (secondsElapsed >= maxDurationSeconds) {
+      const data = this.sessionTimerData.get(sessionId);
+      if (!data) {
         clearInterval(ticker);
         this.sessionTimers.delete(sessionId);
+        return;
+      }
+
+      const { maxDurationSeconds: currentMax, secondsElapsed } = data;
+
+      if (secondsElapsed >= currentMax) {
+        clearInterval(ticker);
+        this.sessionTimers.delete(sessionId);
+        this.sessionTimerData.delete(sessionId);
 
         try {
           await this.chatSessionService.endSession(sessionId, 'system', 'timeout');
@@ -442,14 +453,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      const remainingSeconds = maxDurationSeconds - secondsElapsed;
+      const remainingSeconds = currentMax - secondsElapsed;
 
       this.server.to(sessionId).emit('timer_tick', {
         elapsedSeconds: secondsElapsed,
         remainingSeconds: remainingSeconds,
-        maxDuration: maxDurationSeconds,
+        maxDuration: currentMax,
         formattedTime: this.formatTime(remainingSeconds),
-        percentage: (secondsElapsed / maxDurationSeconds) * 100
+        percentage: (secondsElapsed / currentMax) * 100
       });
 
       if (remainingSeconds === 60) {
@@ -460,10 +471,30 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         });
       }
 
-      secondsElapsed++;
+      this.sessionTimerData.set(sessionId, { ...data, secondsElapsed: secondsElapsed + 1 });
     }, 1000);
 
     this.sessionTimers.set(sessionId, ticker);
+  }
+
+  /**
+   * Dynamically update the session timer (e.g., after recharge)
+   */
+  public updateSessionTimer(sessionId: string, newMaxDurationSeconds: number) {
+    const data = this.sessionTimerData.get(sessionId);
+    if (data) {
+      this.sessionTimerData.set(sessionId, { ...data, maxDurationSeconds: newMaxDurationSeconds });
+      this.logger.log(`⏲️ Updated timer for session ${sessionId}: New Max Duration = ${newMaxDurationSeconds}s`);
+
+      // Notify clients immediately
+      const remainingSeconds = newMaxDurationSeconds - data.secondsElapsed;
+      this.server.to(sessionId).emit('timer_updated', {
+        sessionId,
+        newMaxSeconds: newMaxDurationSeconds,
+        newSecondsLeft: remainingSeconds,
+        timestamp: new Date()
+      });
+    }
   }
 
   private formatTime(seconds: number): string {

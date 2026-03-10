@@ -31,6 +31,7 @@ export class ChatSessionService {
     private orderPaymentService: OrderPaymentService,
     @Inject(forwardRef(() => ChatGateway))
     private chatGateway: ChatGateway,
+    @Inject(forwardRef(() => WalletService))
     private walletService: WalletService,
     private notificationService: NotificationService,
     private earningsService: EarningsService,
@@ -716,6 +717,46 @@ export class ChatSessionService {
     this.sessionTimers.set(sessionId, timeout);
   }
 
+  /**
+   * Extend an active session (e.g., after recharge)
+   */
+  async extendActiveSession(sessionId: string): Promise<any> {
+    const session = await this.sessionModel.findOne({ sessionId });
+    if (!session || session.status !== 'active') return;
+
+    const user = await this.userModel.findById(session.userId).select('wallet').lean();
+    if (!user) return;
+
+    const currentBalance = user.wallet.balance || 0;
+    const newMaxDurationMinutes = Math.floor(currentBalance / session.ratePerMinute);
+    const newMaxDurationSeconds = newMaxDurationMinutes * 60;
+
+    if (newMaxDurationSeconds > session.maxDurationSeconds) {
+      this.logger.log(`📈 Extending session ${sessionId}: ${session.maxDurationSeconds}s -> ${newMaxDurationSeconds}s`);
+
+      session.maxDurationSeconds = newMaxDurationSeconds;
+      await session.save();
+
+      // 1. Update the Service-level auto-end timeout
+      if (this.sessionTimers.has(sessionId)) {
+        clearTimeout(this.sessionTimers.get(sessionId)!);
+      }
+      this.setAutoEndTimer(sessionId, newMaxDurationSeconds);
+
+      // 2. Update the Gateway-level ticker
+      this.chatGateway.updateSessionTimer(sessionId, newMaxDurationSeconds);
+
+      // 3. Update Busy status
+      const busyUntil = new Date(Date.now() + newMaxDurationSeconds * 1000);
+      await this.availabilityService.setBusy(session.astrologerId.toString(), busyUntil);
+
+      return {
+        success: true,
+        newMaxDurationSeconds
+      };
+    }
+  }
+
   // ===== USER JOIN TIMEOUT (60 sec after astrologer accepts) =====
   private setUserJoinTimeout(sessionId: string) {
     if (this.joinTimers.has(sessionId)) {
@@ -1006,6 +1047,20 @@ export class ChatSessionService {
         totalSpent: conversationThread.totalAmount,
       }
     };
+  }
+
+  /**
+   * Find and extend any active session for a specific user
+   */
+  async extendActiveSessionForUser(userId: string): Promise<any> {
+    const activeSession = await this.sessionModel.findOne({
+      userId: this.toObjectId(userId),
+      status: 'active'
+    });
+
+    if (activeSession) {
+      return this.extendActiveSession(activeSession.sessionId);
+    }
   }
 
 }

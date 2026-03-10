@@ -1,6 +1,6 @@
 // src/orders/services/orders.service.ts
 
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger, forwardRef, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Order, OrderDocument } from '../schemas/orders.schema';
@@ -20,6 +20,7 @@ export class OrdersService {
     @InjectModel(Astrologer.name) private astrologerModel: Model<AstrologerDocument>,
     // OrderPaymentService is now only for legacy/other order types, not chat/call conversation threads
     private orderPaymentService: OrderPaymentService,
+    @Inject(forwardRef(() => WalletService))
     private walletService: WalletService,
     private notificationService: NotificationService,
     private earningsService: EarningsService,

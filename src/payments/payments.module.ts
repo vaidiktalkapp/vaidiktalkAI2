@@ -18,6 +18,8 @@ import { UsersModule } from '../users/users.module';
 import { AstrologersModule } from '../astrologers/astrologers.module';
 import { GiftService } from './services/gift.service';
 import { RechargePack, RechargePackSchema } from './schemas/recharge-pack.schema';
+import { ChatModule } from '../chat/chat.module';
+import { CallsModule } from '../calls/calls.module';
 
 
 @Module({
@@ -33,6 +35,8 @@ import { RechargePack, RechargePackSchema } from './schemas/recharge-pack.schema
     ]),
     UsersModule,
     forwardRef(() => AstrologersModule),
+    forwardRef(() => ChatModule),
+    forwardRef(() => CallsModule),
   ],
   controllers: [
     WalletController,

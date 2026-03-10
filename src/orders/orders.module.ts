@@ -1,6 +1,6 @@
 // src/orders/orders.module.ts
 
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Order, OrderSchema } from './schemas/orders.schema';
 import { OrdersService } from './services/orders.service';
@@ -21,13 +21,13 @@ import { NotificationsModule } from '../notifications/notifications.module';
       { name: WalletTransaction.name, schema: WalletTransactionSchema },
       { name: User.name, schema: UserSchema },
     ]),
-    PaymentsModule, // ✅ IMPORT PAYMENTS MODULE
+    forwardRef(() => PaymentsModule), // ✅ IMPORT PAYMENTS MODULE
     UsersModule, // ✅ IMPORT USERS MODULE
-    AstrologersModule, // ✅ IMPORT ASTROLOGERS MODULE
-    NotificationsModule, // ✅ IMPORT NOTIFICATIONS MODULE
+    forwardRef(() => AstrologersModule), // ✅ IMPORT ASTROLOGERS MODULE
+    forwardRef(() => NotificationsModule), // ✅ IMPORT NOTIFICATIONS MODULE
   ],
   controllers: [OrdersController],
   providers: [OrdersService, OrderPaymentService],
   exports: [OrdersService, OrderPaymentService],
 })
-export class OrdersModule {}
+export class OrdersModule { }

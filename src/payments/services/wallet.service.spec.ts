@@ -7,24 +7,32 @@ const mockFindByIdChain = (wallet: any) => ({
 });
 
 const createWalletService = (overrides: Partial<Record<string, any>> = {}) => {
-  const transactionModel = {
+  const transactionModel = overrides.transactionModel ?? ({
     db: { startSession: jest.fn() },
-  } as any;
+  } as any);
 
-  const userModel =
-    overrides.userModel ??
-    ({
-      findById: jest.fn(),
-    } as any);
+  const userModel = overrides.userModel ?? ({
+    findById: jest.fn(),
+  } as any);
 
-  const razorpayService = {} as any;
+  const giftCardModel = overrides.giftCardModel ?? {} as any;
+  const walletRefundModel = overrides.walletRefundModel ?? {} as any;
+  const rechargePackModel = overrides.rechargePackModel ?? {} as any;
+  const razorpayService = overrides.razorpayService ?? {} as any;
+  const appleIapService = overrides.appleIapService ?? {} as any;
+  const moduleRef = overrides.moduleRef ?? ({ get: jest.fn() } as any);
 
-  const walletRefundModel = {} as any;
-
-  const configService = {} as any;
-
-  const service = new WalletService(transactionModel, userModel, razorpayService, walletRefundModel, configService);
-  return { service, userModel };
+  const service = new WalletService(
+    transactionModel,
+    userModel,
+    giftCardModel,
+    walletRefundModel,
+    rechargePackModel,
+    razorpayService,
+    appleIapService,
+    moduleRef
+  );
+  return { service, userModel, moduleRef };
 };
 
 describe('WalletService (behavior)', () => {
