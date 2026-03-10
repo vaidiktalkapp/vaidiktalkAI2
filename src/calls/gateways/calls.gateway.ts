@@ -419,6 +419,16 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       if (secondsElapsed >= currentMax) {
         this.stopSessionTimer(sessionId);
+
+        // Emit final 0 tick so apps don't get stuck at 1 second
+        this.server.to(sessionId).emit('timer_tick', {
+          elapsedSeconds: currentMax,
+          remainingSeconds: 0,
+          maxDuration: currentMax,
+          formattedTime: '00:00',
+          percentage: 100
+        });
+
         await this.endCallInternal(sessionId, 'system', 'timeout');
         return;
       }
