@@ -440,12 +440,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.sessionTimers.delete(sessionId);
         this.sessionTimerData.delete(sessionId);
 
+        // Emit final 0 tick so apps don't get stuck at 1 second
+        this.server.to(sessionId).emit('timer_tick', {
+          elapsedSeconds: currentMax,
+          remainingSeconds: 0,
+          maxDuration: currentMax,
+          formattedTime: '00:00',
+          percentage: 100
+        });
+
         try {
           await this.chatSessionService.endSession(sessionId, 'system', 'timeout');
           this.server.to(sessionId).emit('timer_ended', {
             sessionId,
             reason: 'max_duration_reached',
             timestamp: new Date()
+          });
+          // CRITICAL: Emit chat_ended so mobile apps close the screen
+          this.server.to(sessionId).emit('chat_ended', {
+            sessionId,
+            reason: 'timeout'
           });
         } catch (error) {
           this.logger.error(`Auto-end chat error: ${error}`);
