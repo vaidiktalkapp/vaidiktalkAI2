@@ -12,7 +12,16 @@ import { Logger } from '@nestjs/common';
 @WebSocketGateway({
   namespace: '/admin-notifications',
   cors: {
-    origin: '*',
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3005',
+      'https://vaidiktalk-ai-2.vercel.app',
+      'https://vaidiktalk-ai-2-1a2t.vercel.app',
+      'https://vaidiktalkweb.vercel.app',
+      'https://admin.vaidiktalk.com',
+      'https://app.vaidiktalk.com'
+    ],
     credentials: true,
   },
 })

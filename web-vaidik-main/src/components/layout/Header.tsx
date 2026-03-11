@@ -48,6 +48,12 @@ const PhoneIcon = () => (
   </svg>
 );
 
+const SparklesIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4M4 19h4m9-15v4m-2-2h4m-5 15v4m-2-2h4m-7-4l2-2 2 2-2 2-2-2z" />
+  </svg>
+);
+
 export default function Header() {
   const {
     user,
@@ -109,6 +115,9 @@ export default function Header() {
             </Link>
             <Link href="/astrologers-call" className="flex items-center gap-2 px-5 py-2.5 text-[15px] font-semibold text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 rounded-xl transition-all whitespace-nowrap border border-transparent hover:border-yellow-200">
               Talk to Astrologer
+            </Link>
+            <Link href="/ai-astrologer-chat" className="flex items-center gap-2 px-5 py-2.5 text-[15px] font-semibold text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all whitespace-nowrap border border-transparent hover:border-orange-200">
+              <span className="text-orange-500">✨</span> AI Astrologer
             </Link>
           </nav>
 
@@ -181,6 +190,11 @@ export default function Header() {
                       </Link>
                       <Link href="/orders" className="w-full px-6 py-3.5 hover:from-blue-50 hover:to-indigo-50 text-gray-700 font-medium transition-all flex items-center gap-3 group" onClick={() => setIsProfileOpen(false)}>
                         <span className="font-semibold">Order History</span>
+                      </Link>
+                      <Link href="/ai-chat-history" className="w-full px-6 py-3.5 hover:from-orange-50 hover:to-amber-50 text-gray-700 font-medium transition-all flex items-center gap-3 group" onClick={() => setIsProfileOpen(false)}>
+                        <span className="font-semibold text-orange-600 flex items-center gap-2">
+                          <span>✨</span> AI Chat History
+                        </span>
                       </Link>
                       <div className="border-t border-gray-200 my-2 mx-4"></div>
                       <button onClick={handleLogout} className="w-full px-6 py-3.5 hover:from-red-50 hover:to-pink-50 text-gray-700 hover:text-red-600 font-medium transition-all flex items-center gap-3 group">

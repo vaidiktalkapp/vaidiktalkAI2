@@ -18,7 +18,19 @@ import { CallBillingService } from '../services/call-billing.service';
 import { forwardRef, Inject } from '@nestjs/common';
 
 @WebSocketGateway({
-  cors: { origin: '*', credentials: true },
+  cors: { 
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3005',
+      'https://vaidiktalk-ai-2.vercel.app',
+      'https://vaidiktalk-ai-2-1a2t.vercel.app',
+      'https://vaidiktalkweb.vercel.app',
+      'https://admin.vaidiktalk.com',
+      'https://app.vaidiktalk.com'
+    ], 
+    credentials: true 
+  },
   namespace: '/calls',
 })
 export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {

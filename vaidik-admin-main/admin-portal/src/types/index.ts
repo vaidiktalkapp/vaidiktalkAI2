@@ -80,3 +80,17 @@ export interface PayoutRequest {
   status: string;
   createdAt: Date;
 }
+
+export interface AIAstrologerChatLog {
+  _id: string;
+  id: string;
+  userName: string;
+  aiAstrologerName: string;
+  duration: number;
+  messages: number;
+  earnings: number;
+  status: string;
+  resolution: string;
+  createdAt: string;
+}
+

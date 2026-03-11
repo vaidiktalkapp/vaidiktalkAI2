@@ -1084,4 +1084,37 @@ Send full-screen notification to a single User or Astrologer
   // // Block/Unblock Astrologer
   // updateAstrologerStatus: (astrologerId: string, status: 'active' | 'blocked', reason?: string) =>
   //   apiClient.patch(`/admin/astrologers/${astrologerId}/status`, { status, reason }),
+
+  // ==================== AI ASTROLOGERS ====================
+  getAIAstrologerDetails: (id: string) =>
+    apiClient.get(`/admin/ai-astrologers/${id}`),
+
+  updateAIAstrologer: (id: string, data: any) =>
+    apiClient.patch(`/admin/ai-astrologers/${id}`, data),
+
+  uploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return apiClient.post('/admin/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  // ==================== AI CHAT LOGS & ANALYTICS ====================
+  getAIAstrologerChatLogs: (params: any) =>
+    apiClient.get('/admin/ai-astrologers/chat-logs', { params }),
+
+  getAIAstrologerChatStats: () =>
+    apiClient.get('/admin/ai-astrologers/chat-stats'),
+
+  getAIRevenueAnalytics: (params: { timeRange: string }) =>
+    apiClient.get('/admin/ai-astrologers/revenue-analytics', { params }),
+
+  getAIAstrologerChatLogDetails: (id: string) =>
+    apiClient.get(`/admin/ai-astrologers/chat-logs/${id}`),
+
+  createAIAstrologer: (data: any) =>
+    apiClient.post('/admin/ai-astrologers', data),
 };

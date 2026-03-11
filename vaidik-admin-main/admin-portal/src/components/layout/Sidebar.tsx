@@ -27,6 +27,8 @@ import {
   RotateCcw,
   Flag,      // For Reports
   Ban,       // For Blocked Users
+  Sparkles,  // For AI Services
+  Database,  // For AI Logs
 } from 'lucide-react';
 
 // Define interface for menu items
@@ -189,6 +191,23 @@ export default function Sidebar() {
           label: 'Notifications', 
           href: '/notifications/manage', 
           requiredPermission: 'manage_notifications' 
+        },
+      ],
+    },
+    {
+      category: 'AI Services',
+      items: [
+        {
+          icon: Sparkles,
+          label: 'AI Astrologers',
+          href: '/ai-astrologers',
+          requiredPermission: 'view_astrologers',
+        },
+        {
+          icon: Database,
+          label: 'AI Chat Logs',
+          href: '/ai-chat-logs',
+          requiredPermission: 'view_orders',
         },
       ],
     },
