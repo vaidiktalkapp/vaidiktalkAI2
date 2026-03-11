@@ -5,6 +5,8 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../../../context/AuthContext';
 import callService from '../../../../lib/callService';
 import { Mic, MicOff, Video, VideoOff, PhoneOff } from 'lucide-react';
+import LowBalanceBanner from '../../../../components/chat/LowBalanceBanner';
+import QuickRechargeModal from '../../../../components/chat/QuickRechargeModal';
 
 export default function CallScreen() {
   const params = useParams();
@@ -30,6 +32,7 @@ export default function CallScreen() {
   const [isVideoOn, setIsVideoOn] = useState(false);
   const [remoteUserJoined, setRemoteUserJoined] = useState(false);
   const [isEngineReady, setIsEngineReady] = useState(false);
+  const [showRechargeModal, setShowRechargeModal] = useState(false);
 
   // Refs
   const localVideoRef = useRef<HTMLDivElement>(null);
@@ -368,6 +371,14 @@ export default function CallScreen() {
           </div>
         )}
 
+        {/* Low Balance Banner */}
+        <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-20 w-full max-w-sm px-4">
+          <LowBalanceBanner
+            remainingTime={remainingTime}
+            onRechargeClick={() => setShowRechargeModal(true)}
+          />
+        </div>
+
         {/* Avatar with Pulse */}
         <div className="relative mb-10 z-10">
           <div className="absolute inset-0 bg-yellow-400 rounded-full opacity-30 animate-ping"></div>
@@ -458,6 +469,14 @@ export default function CallScreen() {
         </div>
       </div>
 
+      {/* Low Balance Banner */}
+      <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-20 w-full max-w-sm px-4">
+        <LowBalanceBanner
+          remainingTime={remainingTime}
+          onRechargeClick={() => setShowRechargeModal(true)}
+        />
+      </div>
+
       {/* Bottom Controls */}
       <div className="absolute bottom-12 left-0 right-0 z-20 flex justify-center gap-6">
         <button
@@ -486,6 +505,13 @@ export default function CallScreen() {
           <PhoneOff className="w-8 h-8 text-white" strokeWidth={2.5} />
         </button>
       </div>
+
+      <QuickRechargeModal
+        isOpen={showRechargeModal}
+        onClose={() => setShowRechargeModal(false)}
+        ratePerMinute={callRate}
+        astrologerName={astrologerName}
+      />
     </div>
   );
 }
