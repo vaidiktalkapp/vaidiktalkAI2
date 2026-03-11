@@ -252,6 +252,7 @@ export default function ChatScreen() {
   const [showRechargeModal, setShowRechargeModal] = useState(false);
 
   const [kundliData, setKundliData] = useState<any>(null);
+  const [suggestedRemedy, setSuggestedRemedy] = useState<any>(null);
 
   // --- Refs ---
   const activeSessionRef = useRef<ActiveSession | null>(null);
@@ -431,6 +432,12 @@ export default function ChatScreen() {
       setShowContinueModal(true);
       alert('Chat has ended.');
     });
+
+    // Remedy Suggested
+    chatService.on('remedy_suggested', (data: any) => {
+      console.log('🎁 Remedy Suggested:', data);
+      setSuggestedRemedy(data);
+    });
   };
 
   const cleanup = () => {
@@ -439,6 +446,7 @@ export default function ChatScreen() {
     chatService.off('new_message');
     chatService.off('timer_tick');
     chatService.off('chat_ended');
+    chatService.off('remedy_suggested');
     listenersAttached.current = false;
   };
 
@@ -605,6 +613,31 @@ export default function ChatScreen() {
             remainingTime={elapsedTime}
             onRechargeClick={() => setShowRechargeModal(true)}
           />
+        )}
+
+        {/* Remedy Notification */}
+        {suggestedRemedy && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-center justify-between animate-in slide-in-from-top duration-300">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
+                <span className="text-xl">🎁</span>
+              </div>
+              <div>
+                <h4 className="text-amber-900 font-bold text-sm">New Remedy Suggested</h4>
+                <p className="text-amber-700 text-xs">{suggestedRemedy.name || 'View the suggested remedy for you.'}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSuggestedRemedy(null)}
+                className="text-amber-500 hover:text-amber-700 p-1"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
         )}
 
         {/* Messages List */}
