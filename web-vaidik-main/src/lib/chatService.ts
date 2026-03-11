@@ -92,6 +92,9 @@ class ChatService {
         clearTimeout(timeout);
         console.log('✅ [Chat] Socket connected:', this.socket?.id);
         this.isSocketConnected = true;
+        if (userId) {
+          this.socket?.emit('register_user', { userId });
+        }
         this._reattachListeners(); // Re-attach listeners if reconnected
         resolve(this.socket!);
       });

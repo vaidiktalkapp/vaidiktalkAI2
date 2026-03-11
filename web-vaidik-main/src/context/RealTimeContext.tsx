@@ -354,7 +354,7 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         });
 
         // --- B. Chat Socket ---
-        await chatService.connect(token);
+        await chatService.connect(token, userId);
         chatService.on('chat_accepted', (payload: any) => {
           console.log('💬 [Socket-Chat] Chat Accepted:', payload);
           processAcceptance(payload, 'chat_accepted', 'ChatSocket');
@@ -467,7 +467,7 @@ export const RealTimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (user?._id) {
           const token = localStorage.getItem('accessToken');
           if (token) {
-            await chatService.connect(token);
+            await chatService.connect(token, user._id);
             chatService.joinSession(data.sessionId, user._id);
           }
         }
