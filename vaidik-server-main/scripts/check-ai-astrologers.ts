@@ -16,6 +16,10 @@ async function checkAiAstrologers() {
     console.log('Connected to MongoDB');
 
     const db = mongoose.connection.db;
+    if (!db) {
+      throw new Error('Database connection failed - db is undefined');
+    }
+
     const collections = await db.listCollections().toArray();
     console.log('Collections present:', collections.map(c => c.name));
 
