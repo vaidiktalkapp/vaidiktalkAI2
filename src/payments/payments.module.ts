@@ -20,6 +20,7 @@ import { GiftService } from './services/gift.service';
 import { RechargePack, RechargePackSchema } from './schemas/recharge-pack.schema';
 import { ChatModule } from '../chat/chat.module';
 import { CallsModule } from '../calls/calls.module';
+import { StreamingModule } from '../streaming/streaming.module';
 
 
 @Module({
@@ -37,6 +38,7 @@ import { CallsModule } from '../calls/calls.module';
     forwardRef(() => AstrologersModule),
     forwardRef(() => ChatModule),
     forwardRef(() => CallsModule),
+    forwardRef(() => StreamingModule),
   ],
   controllers: [
     WalletController,

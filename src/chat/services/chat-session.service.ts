@@ -368,6 +368,42 @@ export class ChatSessionService {
     };
   }
 
+  // ===== CANCEL CHAT (USER INITIATED) =====
+  async cancelChat(sessionId: string, userId: string, reason: string): Promise<any> {
+    const session = await this.sessionModel.findOne({ sessionId });
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+
+    if (session.status !== 'initiated' && session.status !== 'waiting') {
+      // If already active or ended, use endSession instead
+      return { success: false, message: `Session cannot be cancelled at stage: ${session.status}` };
+    }
+
+    if (this.sessionTimers.has(sessionId)) {
+      clearTimeout(this.sessionTimers.get(sessionId)!);
+      this.sessionTimers.delete(sessionId);
+    }
+
+    session.status = 'cancelled';
+    session.endedBy = userId;
+    session.endReason = reason || 'user_cancelled';
+    session.endTime = new Date();
+    await session.save();
+
+    // ✅ RESET AVAILABILITY
+    await this.availabilityService.setAvailable(session.astrologerId.toString());
+
+    try {
+      await this.ordersService.cancelOrder(session.orderId, session.userId.toString(), reason, 'user');
+    } catch (e: any) {
+      this.logger.error(`❌ Failed to cancel order during chat cancellation: ${e.message}`);
+    }
+
+    this.logger.log(`Chat request cancelled by user: ${sessionId}`);
+    return { success: true, message: 'Chat request cancelled' };
+  }
+
   // ===== START SESSION (with Kundli message) =====
   async startSession(sessionId: string, userId?: string): Promise<any> {
     const session = await this.sessionModel.findOne({ sessionId });

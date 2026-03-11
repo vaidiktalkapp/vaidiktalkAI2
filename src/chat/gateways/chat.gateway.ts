@@ -257,6 +257,42 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  // ===== CANCEL CHAT =====
+  @SubscribeMessage('cancel_chat')
+  async handleCancelChat(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: {
+      sessionId: string;
+      userId: string;
+      reason?: string;
+    }
+  ) {
+    try {
+      const result = await this.chatSessionService.cancelChat(
+        data.sessionId,
+        data.userId,
+        data.reason || 'user_cancelled'
+      );
+
+      // Notify the astrologer that the request was cancelled
+      const session = await this.chatSessionService.getSession(data.sessionId);
+      if (session) {
+        const astrologerSocketId = this.astrologerSockets.get(session.astrologerId.toString());
+        if (astrologerSocketId) {
+          this.server.to(astrologerSocketId).emit('chat_request_cancelled', {
+            sessionId: data.sessionId,
+            reason: data.reason || 'User cancelled the request',
+            timestamp: new Date()
+          });
+        }
+      }
+
+      return result;
+    } catch (error: any) {
+      return { success: false, message: error.message };
+    }
+  }
+
   // ===== CONTINUE CHAT (behaves like new chat request) =====
   @SubscribeMessage('continue_chat')
   async handleContinueChat(

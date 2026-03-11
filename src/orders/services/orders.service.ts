@@ -10,6 +10,7 @@ import { NotificationService } from '../../notifications/services/notification.s
 import { Astrologer, AstrologerDocument } from '../../astrologers/schemas/astrologer.schema';
 import { EarningsService } from '../../astrologers/services/earnings.service';
 import { UserBlockingService } from 'src/users/services/user-blocking.service';
+import { AvailabilityService } from '../../astrologers/services/availability.service';
 
 @Injectable()
 export class OrdersService {
@@ -25,6 +26,7 @@ export class OrdersService {
     private notificationService: NotificationService,
     private earningsService: EarningsService,
     private userBlockingService: UserBlockingService,
+    private availabilityService: AvailabilityService,
   ) { }
 
   // ===== HELPERS =====
@@ -682,6 +684,10 @@ export class OrdersService {
       order.currentSessionId = undefined;
       order.currentSessionType = 'none';
       await order.save();
+
+      // ✅ RESET AVAILABILITY
+      await this.availabilityService.setAvailable(order.astrologerId.toString());
+
       this.logger.log(`Conversation thread session cleared: ${orderId} | By: ${cancelledBy}`);
       return { success: true, message: 'Session cancelled successfully' };
     }
