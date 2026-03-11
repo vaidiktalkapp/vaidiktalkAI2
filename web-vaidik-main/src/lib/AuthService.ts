@@ -234,6 +234,10 @@ export class AuthService {
     }
   }
 
+  static async updateBirthDetails(data: any) {
+    return this.updateProfile(data);
+  }
+
   static async deleteAccount(reason?: string) {
     try {
       console.log('⚠️ [AuthService] Requesting account deletion...');

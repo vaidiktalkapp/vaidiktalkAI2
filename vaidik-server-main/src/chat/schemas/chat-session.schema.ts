@@ -189,6 +189,30 @@ export class ChatSession {
   // ===== METADATA =====
   @Prop({ default: Date.now })
   createdAt: Date;
+
+  @Prop()
+  updatedAt: Date;
+
+  // ===== AI SPECIFIC =====
+  @Prop({ default: 0 })
+  avgLatency?: number;
+
+  @Prop({ default: 0 })
+  avgAccuracy?: number;
+
+  @Prop({ type: Object })
+  userBirthChart?: {
+    name: string;
+    dateOfBirth: string;
+    timeOfBirth: string;
+    placeOfBirth: string;
+  };
+
+  @Prop({ default: 'English' })
+  language?: string;
+
+  @Prop({ default: false })
+  isGreetingGenerated?: boolean;
 }
 
 export const ChatSessionSchema = SchemaFactory.createForClass(ChatSession);

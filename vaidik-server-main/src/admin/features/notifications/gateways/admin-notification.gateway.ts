@@ -99,6 +99,16 @@ export class AdminNotificationGateway implements OnGatewayConnection, OnGatewayD
   }
 
   /**
+   * Send real-time notification about AI activity or any generic activity
+   */
+  notifyRealtimeActivity(activityData: any) {
+    this.broadcastToAllAdmins('realtime_activity', {
+      ...activityData,
+      timestamp: new Date(),
+    });
+  }
+
+  /**
    * Get count of connected admins
    */
   getConnectedAdminsCount(): number {
