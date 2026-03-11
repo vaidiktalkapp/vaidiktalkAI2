@@ -54,6 +54,12 @@ const SparklesIcon = () => (
   </svg>
 );
 
+const MoreVerticalIcon = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+  </svg>
+);
+
 export default function Header() {
   const {
     user,
@@ -65,7 +71,9 @@ export default function Header() {
   } = useAuth();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = () => {
@@ -82,7 +90,14 @@ export default function Header() {
   };
 
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
       }
@@ -116,13 +131,58 @@ export default function Header() {
             <Link href="/astrologers-call" className="flex items-center gap-2 px-5 py-2.5 text-[15px] font-semibold text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 rounded-xl transition-all whitespace-nowrap border border-transparent hover:border-yellow-200">
               Talk to Astrologer
             </Link>
-            <Link href="/ai-astrologer-chat" className="flex items-center gap-2 px-5 py-2.5 text-[15px] font-semibold text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all whitespace-nowrap border border-transparent hover:border-orange-200">
-              <span className="text-orange-500">✨</span> AI Astrologer
+            <Link href="/ai-astrologer-chat" className="flex items-center gap-2 px-5 py-2.5 text-[15px] font-semibold text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all whitespace-nowrap border border-transparent hover:border-orange-200 group">
+              <div className="relative flex items-center justify-center">
+                <div className="w-2.5 h-2.5 bg-orange-500 rounded-full"></div>
+                <div className="absolute w-2.5 h-2.5 bg-orange-500 rounded-full animate-ping opacity-75"></div>
+              </div>
+              AI Astrologer
             </Link>
           </nav>
 
           {/* Right: Auth Button / Profile */}
           <div className="flex items-center gap-3">
+            {/* Mobile Menu Toggle (Three Dots) - Visible on small screens */}
+            <div className="md:hidden relative" ref={mobileMenuRef}>
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="Mobile menu"
+              >
+                <MoreVerticalIcon />
+              </button>
+
+              {/* Mobile Navigation Dropdown */}
+              {isMobileMenuOpen && (
+                <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 py-3 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <Link 
+                    href="/astrologers-chat" 
+                    className="flex items-center gap-3 px-6 py-4 text-[15px] font-bold text-gray-700 hover:bg-yellow-50 hover:text-yellow-600 transition-all border-b border-gray-50"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <ChatIcon /> Chat with Astrologer
+                  </Link>
+                  <Link 
+                    href="/astrologers-call" 
+                    className="flex items-center gap-3 px-6 py-4 text-[15px] font-bold text-gray-700 hover:bg-yellow-50 hover:text-yellow-600 transition-all border-b border-gray-50"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <PhoneIcon /> Talk to Astrologer
+                  </Link>
+                  <Link 
+                    href="/ai-astrologer-chat" 
+                    className="flex items-center gap-3 px-6 py-4 text-[15px] font-bold text-orange-600 hover:bg-orange-50 transition-all"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <div className="relative flex items-center justify-center mr-1">
+                      <div className="w-3 h-3 bg-orange-500 rounded-full shadow-[0_0_8px_rgba(249,115,22,0.6)]"></div>
+                      <div className="absolute w-3 h-3 bg-orange-500 rounded-full animate-ping opacity-75"></div>
+                    </div>
+                    AI Astrologer
+                  </Link>
+                </div>
+              )}
+            </div>
             {!isAuthenticated ? (
               <button
                 onClick={openLoginModal}

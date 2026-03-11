@@ -19,13 +19,13 @@ sessionId: string;
   @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
   senderId: Types.ObjectId;
 
-  @Prop({ required: true, enum: ['User', 'Astrologer', 'System'] })
+  @Prop({ required: true, enum: ['User', 'Astrologer', 'System', 'AiAstrologerProfile'] })
   senderModel: string;
 
   @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
   receiverId: Types.ObjectId;
 
-  @Prop({ required: true, enum: ['User', 'Astrologer'] })
+  @Prop({ required: true, enum: ['User', 'Astrologer', 'AiAstrologerProfile'] })
   receiverModel: string;
 
   // ===== MESSAGE TYPE =====
@@ -108,7 +108,7 @@ thumbnailUrl?: string; // ✅ For video recordings
     type: [{
       userId: Types.ObjectId,
       emoji: String,
-      userModel: { enum: ['User', 'Astrologer'] },
+      userModel: { enum: ['User', 'Astrologer', 'AiAstrologerProfile'] },
       addedAt: Date
     }],
     default: []

@@ -16,7 +16,7 @@ export class Notification {
   })
   recipientId: string;
 
-  @Prop({ required: true, enum: ['User', 'Astrologer', 'Admin'] })
+  @Prop({ required: true, enum: ['User', 'Astrologer', 'Admin', 'AiAstrologerProfile'] })
   recipientModel: string;
 
 @Prop({

@@ -608,9 +608,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const message = await this.chatMessageService.sendMessage({
         sessionId: data.sessionId,
         senderId: data.senderId,
-        senderModel: data.senderModel || (isUser ? 'User' : 'Astrologer'),
+        senderModel: data.senderModel || (isUser ? 'User' : session.astrologerModel || 'Astrologer'),
         receiverId: data.receiverId,
-        receiverModel: data.receiverModel || (isUser ? 'Astrologer' : 'User'),
+        receiverModel: data.receiverModel || (isUser ? session.astrologerModel || 'Astrologer' : 'User'),
         orderId: data.orderId,
         type,
         content: messageContent,
@@ -632,7 +632,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.notificationService
           .sendNotification({
             recipientId: data.receiverId,
-            recipientModel: (data.receiverModel || 'Astrologer') as 'User' | 'Astrologer',
+            recipientModel: (data.receiverModel || session.astrologerModel || 'Astrologer') as any,
             type: 'chat_message',
             title: 'New chat message',
             message: messageContent.substring(0, 80),

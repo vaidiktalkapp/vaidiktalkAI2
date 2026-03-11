@@ -587,7 +587,11 @@ Occupation: ${intakeData.occupation || 'Unknown'}`;
                 className="relative w-7 h-7 md:w-12 md:h-12 rounded-full object-cover border-1.5 md:border-3 border-white shadow-lg"
                 alt={astrologer?.name}
               />
-              <div className="absolute bottom-0 right-0 w-2 h-2 md:w-4 md:h-4 bg-green-500 border-1.5 border-white rounded-full"></div>
+                <div className="absolute bottom-0 right-0 p-[2px] bg-white rounded-full">
+                  <div className="w-2 h-2 md:w-3.5 md:h-3.5 bg-orange-500 rounded-full relative">
+                    <div className="absolute inset-0 bg-orange-500 rounded-full animate-ping opacity-75"></div>
+                  </div>
+                </div>
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1 md:gap-2 mb-0 md:mb-1">

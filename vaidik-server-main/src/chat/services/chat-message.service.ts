@@ -32,9 +32,9 @@ export class ChatMessageService {
   async sendMessage(data: {
     sessionId: string;
     senderId: string;
-    senderModel: 'User' | 'Astrologer' | 'System';
+    senderModel: 'User' | 'Astrologer' | 'System' | 'AiAstrologerProfile';
     receiverId: string;
-    receiverModel: 'User' | 'Astrologer';
+    receiverModel: 'User' | 'Astrologer' | 'AiAstrologerProfile';
     orderId: string;
     type: string;
     content: string;

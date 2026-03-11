@@ -17,6 +17,7 @@ export class NotificationService {
     @InjectModel(Notification.name) private notificationModel: Model<NotificationDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Astrologer.name) private astrologerModel: Model<AstrologerDocument>,
+    @InjectModel(AiAstrologerProfile.name) @Optional() private aiAstrologerModel: Model<AiAstrologerProfileDocument>,
     private deliveryService: NotificationDeliveryService,
   ) { }
 
@@ -26,7 +27,7 @@ export class NotificationService {
    */
   async sendNotification(data: {
     recipientId: string;
-    recipientModel: 'User' | 'Astrologer';
+    recipientModel: 'User' | 'Astrologer' | 'Admin' | 'AiAstrologerProfile';
     type: string;
     title: string;
     message: string;
@@ -61,9 +62,13 @@ export class NotificationService {
       this.logger.log(`📝 Notification created: ${notificationId} for ${data.recipientModel} ${data.recipientId}`);
 
       // 2. ✅ Verify recipient exists and has devices
-      const model = (
-        data.recipientModel === 'User' ? this.userModel : this.astrologerModel
-      ) as Model<UserDocument | AstrologerDocument>;
+      const modelMap: Record<string, Model<any>> = {
+        'User': this.userModel,
+        'Astrologer': this.astrologerModel,
+        'AiAstrologerProfile': this.aiAstrologerModel
+      };
+
+      const model = modelMap[data.recipientModel];
 
       const recipient = await model
         .findById(data.recipientId)
@@ -490,7 +495,7 @@ export class NotificationService {
    */
   async sendCallNotification(data: {
     recipientId: string;
-    recipientModel: 'User' | 'Astrologer';
+    recipientModel: 'User' | 'Astrologer' | 'Admin' | 'AiAstrologerProfile';
     callerId: string;
     callerName: string;
     callerAvatar?: string;
@@ -526,7 +531,7 @@ export class NotificationService {
    */
   async sendMessageNotification(data: {
     recipientId: string;
-    recipientModel: 'User' | 'Astrologer';
+    recipientModel: 'User' | 'Astrologer' | 'Admin' | 'AiAstrologerProfile';
     senderId: string;
     senderName: string;
     senderAvatar?: string;
@@ -560,7 +565,7 @@ export class NotificationService {
    */
   async sendChatNotification(data: {
     recipientId: string;
-    recipientModel: 'User' | 'Astrologer';
+    recipientModel: 'User' | 'Astrologer' | 'Admin' | 'AiAstrologerProfile';
     senderId: string;
     senderName: string;
     senderAvatar?: string;
@@ -593,7 +598,7 @@ export class NotificationService {
    */
   async sendMissedCallNotification(data: {
     recipientId: string;
-    recipientModel: 'User' | 'Astrologer';
+    recipientModel: 'User' | 'Astrologer' | 'Admin' | 'AiAstrologerProfile';
     callerName: string;
     callType: 'audio' | 'video';
     callId: string;
@@ -622,7 +627,7 @@ export class NotificationService {
    */
   async sendMissedChatNotification(data: {
     recipientId: string;
-    recipientModel: 'User' | 'Astrologer';
+    recipientModel: 'User' | 'Astrologer' | 'Admin' | 'AiAstrologerProfile';
     senderName: string;
     chatId: string;
   }): Promise<NotificationDocument> {
@@ -649,7 +654,7 @@ export class NotificationService {
    */
   async sendLiveEventNotification(data: {
     recipientId: string;
-    recipientModel: 'User' | 'Astrologer';
+    recipientModel: 'User' | 'Astrologer' | 'Admin' | 'AiAstrologerProfile';
     eventId: string;
     eventName: string;
     eventType: 'started' | 'reminder';
@@ -691,7 +696,7 @@ export class NotificationService {
    */
   async sendSystemNotification(data: {
     recipientId: string;
-    recipientModel: 'User' | 'Astrologer';
+    recipientModel: 'User' | 'Astrologer' | 'Admin' | 'AiAstrologerProfile';
     title: string;
     message: string;
     imageUrl?: string;
@@ -718,7 +723,7 @@ export class NotificationService {
    */
   async forceLogoutUser(data: {
     recipientId: string;
-    recipientModel: 'User' | 'Astrologer';
+    recipientModel: 'User' | 'Astrologer' | 'Admin' | 'AiAstrologerProfile';
     reason: string;
     adminId?: string;
   }): Promise<NotificationDocument> {
@@ -741,9 +746,12 @@ export class NotificationService {
     });
 
     // 2. Deactivate all user devices
-    const model = (
-      data.recipientModel === 'User' ? this.userModel : this.astrologerModel
-    ) as Model<UserDocument | AstrologerDocument>;
+    const modelMap: Record<string, Model<any>> = {
+      'User': this.userModel,
+      'Astrologer': this.astrologerModel,
+      'AiAstrologerProfile': this.aiAstrologerModel
+    };
+    const model = modelMap[data.recipientModel];
 
     await model.findByIdAndUpdate(data.recipientId, {
       $set: { 'devices.$[].isActive': false },
