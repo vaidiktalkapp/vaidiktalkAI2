@@ -186,7 +186,8 @@ export class WalletController {
       astrologerId: giftDto.astrologerId,
       amount: giftDto.amount,
       giftType: giftDto.giftType,
-      context: 'direct',
+      context: giftDto.streamId ? 'stream' : 'direct',
+      streamId: giftDto.streamId,
     });
 
     return {
