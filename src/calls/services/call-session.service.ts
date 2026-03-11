@@ -561,6 +561,7 @@ export class CallSessionService {
       recordingUrl: recordingUrl,
       recordingS3Key: recordingS3Key,
       recordingDuration: session.recordingDuration,
+      endedBy: session.endedBy,
     }).catch(e => this.logger.error('Order completion update failed', e));
 
     return {

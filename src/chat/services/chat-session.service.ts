@@ -619,6 +619,7 @@ export class ChatSessionService {
         recordingUrl: undefined,
         recordingS3Key: undefined,
         recordingDuration: undefined,
+        endedBy: session.endedBy,
       });
     } else {
       this.logger.log(`Session ${sessionId} never started (0 duration), updating order with cancelled session`);
@@ -634,6 +635,7 @@ export class ChatSessionService {
           recordingUrl: undefined,
           recordingS3Key: undefined,
           recordingDuration: undefined,
+          endedBy: session.endedBy,
         });
       } catch (error: any) {
         this.logger.error(`Failed to update order session history: ${error.message}`);
@@ -788,6 +790,7 @@ export class ChatSessionService {
             actualDurationSeconds: 0,
             billedMinutes: 0,
             chargedAmount: 0,
+            endedBy: 'system',
           });
 
           // Notify User

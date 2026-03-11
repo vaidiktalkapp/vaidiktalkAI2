@@ -438,6 +438,7 @@ export class OrdersService {
       recordingUrl?: string;
       recordingS3Key?: string;
       recordingDuration?: number;
+      endedBy?: string;
     }
   ): Promise<any> {
     const order = await this.orderModel.findOne({ orderId, isDeleted: false });
@@ -471,6 +472,7 @@ export class OrdersService {
       recordingType: sessionData.recordingUrl
         ? (sessionData.sessionType === 'audio_call' ? 'voice_note' : 'video')
         : undefined,
+      endedBy: sessionData.endedBy,
       status: 'completed'
     };
 
