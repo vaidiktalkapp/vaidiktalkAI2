@@ -64,7 +64,7 @@ export default function StreamAnalyticsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Revenue</p>
-              <p className="text-2xl font-bold text-green-600">{(stats?.totalRevenue || 0).toLocaleString()} Cr</p>
+              <p className="text-2xl font-bold text-green-600">{(stats?.totalRevenue || 0).toLocaleString()} ₹</p>
             </div>
             <Coins className="text-green-600" size={32} />
           </div>
@@ -113,7 +113,7 @@ export default function StreamAnalyticsPage() {
                   <td className="px-4 py-3 text-sm text-gray-900">{stream.totalViews?.toLocaleString()}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{stream.peakViewers}</td>
                   <td className="px-4 py-3 text-sm font-semibold text-green-600">
-                    {stream.totalRevenue?.toLocaleString()} Cr
+                    {stream.totalRevenue?.toLocaleString()} ₹
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900">{stream.totalCalls || 0}</td>
                 </tr>
@@ -169,7 +169,7 @@ export default function StreamAnalyticsPage() {
                   <td className="px-4 py-3 text-sm text-gray-900">{earner.totalViews?.toLocaleString()}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{earner.totalCalls || 0}</td>
                   <td className="px-4 py-3 text-sm font-semibold text-green-600">
-                    {earner.totalRevenue?.toLocaleString()} Cr
+                    {earner.totalRevenue?.toLocaleString()} ₹
                   </td>
                 </tr>
               ))}

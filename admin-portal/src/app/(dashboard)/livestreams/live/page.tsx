@@ -166,7 +166,7 @@ export default function LiveStreamsPage() {
                   </div>
                   <div className="bg-green-50 rounded p-2 text-center border border-green-100">
                     <p className="text-[10px] uppercase tracking-wide text-green-600 font-semibold">Revenue</p>
-                    <p className="text-sm font-bold text-green-700">{stream.totalRevenue || 0} Cr</p>
+                    <p className="text-sm font-bold text-green-700">{stream.totalRevenue || 0} ₹</p>
                   </div>
                 </div>
 

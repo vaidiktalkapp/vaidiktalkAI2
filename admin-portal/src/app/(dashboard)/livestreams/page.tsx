@@ -135,7 +135,7 @@ export default function LivestreamsPage() {
             <div>
               <p className="text-sm text-gray-600">Total Revenue</p>
               <p className="text-2xl font-bold text-blue-600">
-                {(stats?.totalRevenue || 0).toLocaleString()} Cr
+                {(stats?.totalRevenue || 0).toLocaleString()} ₹
               </p>
             </div>
             <Coins className="text-blue-600" size={32} />
@@ -259,7 +259,7 @@ export default function LivestreamsPage() {
                       {stream.duration > 0 ? formatDuration(stream.duration) : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {stream.totalRevenue?.toLocaleString() || 0} Cr
+                      {stream.totalRevenue?.toLocaleString() || 0} ₹
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">

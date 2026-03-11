@@ -71,7 +71,7 @@ export default function LiveStatsWidget() {
           <div>
             <p className="text-sm text-gray-600">💰 Today's Revenue</p>
             <p className="text-3xl font-bold text-gray-900">
-              {(liveStats?.revenueToday || 0).toLocaleString()} Cr
+              {(liveStats?.revenueToday || 0).toLocaleString()} ₹
             </p>
             <p className="text-xs text-purple-600 mt-1">
               {liveStats?.ordersToday || 0} orders

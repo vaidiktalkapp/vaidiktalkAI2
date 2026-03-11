@@ -317,7 +317,7 @@ export default function StreamDetailPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Revenue</p>
-              <p className="text-2xl font-bold text-purple-600">{stream?.totalRevenue || 0} Cr</p>
+              <p className="text-2xl font-bold text-purple-600">{stream?.totalRevenue || 0} ₹</p>
             </div>
             <Coins className="text-purple-600" size={32} />
           </div>
@@ -489,7 +489,7 @@ export default function StreamDetailPage() {
                     <td className="px-4 py-3 text-sm text-gray-600 capitalize">{call.callType}</td>
                     <td className="px-4 py-3 text-sm text-gray-600 capitalize">{call.callMode}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{formatDuration(call.duration || 0)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{call.totalCharge || 0} Cr</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{call.totalCharge || 0} ₹</td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 text-xs font-semibold rounded ${call.status === 'completed' ? 'bg-green-100 text-green-800' : call.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
                         {call.status}

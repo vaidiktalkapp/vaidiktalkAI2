@@ -46,7 +46,7 @@ export default function LiveStatsWidget() {
     },
     {
       label: 'Revenue Today',
-      value: `${(data?.revenue?.today || 0).toLocaleString()} Cr`,
+      value: `${(data?.revenue?.today || 0).toLocaleString()} ₹`,
       icon: Coins,
       color: 'text-purple-600',
       bg: 'bg-purple-50',

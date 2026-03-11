@@ -42,7 +42,7 @@ export default function OrdersList({ userId, limit = 5 }: OrdersListProps) {
             <p className="text-xs text-gray-500">{order.type} • {new Date(order.createdAt).toLocaleDateString()}</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-bold text-gray-900">{order.totalAmount} Cr</span>
+            <span className="font-bold text-gray-900">{order.totalAmount} ₹</span>
             <ExternalLink size={14} className="text-gray-400 group-hover:text-indigo-600" />
           </div>
         </Link>

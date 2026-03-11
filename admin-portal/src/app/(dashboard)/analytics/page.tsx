@@ -38,7 +38,7 @@ export default function AnalyticsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Financial Analytics</h1>
-          <p className="text-gray-600 mt-1">Revenue breakdown and performance metrics (1 Credit = 1 ₹)</p>
+          <p className="text-gray-600 mt-1">Revenue breakdown and performance metrics (₹)</p>
         </div>
 
         {/* Date Filter */}
@@ -68,21 +68,21 @@ export default function AnalyticsPage() {
         <SummaryCard
           label="Gross Commission"
           value={periodStats.gross}
-          subtext="Platform Share (40%) • 1 Cr = 1 ₹"
+          subtext="Platform Share (40%) • ₹"
           color="text-indigo-600"
           icon={Coins}
         />
         <SummaryCard
           label="Bonus Expenses"
           value={periodStats.deductions}
-          subtext="Promotional Credits Used • 1 Cr = 1 ₹"
+          subtext="Promotional Credits Used • ₹"
           color="text-red-500"
           icon={TrendingDown}
         />
         <SummaryCard
           label="Net Profit"
           value={periodStats.net}
-          subtext="Gross - Bonuses • 1 Cr = 1 ₹"
+          subtext="Gross - Bonuses • ₹"
           color={periodStats.net >= 0 ? "text-emerald-600" : "text-red-600"}
           icon={TrendingUp}
           highlight
@@ -130,7 +130,7 @@ export default function AnalyticsPage() {
                   tick={{ fontSize: 12, fill: '#6b7280' }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(val) => `${val} Cr`}
+                  tickFormatter={(val) => `${val} ₹`}
                 />
                 <YAxis
                   yAxisId="right"
@@ -212,7 +212,7 @@ function SummaryCard({ label, value, subtext, color, icon: Icon, highlight, isCu
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</p>
             <p className={`text-2xl font-bold mt-2 ${color}`}>
-              {isCurrency ? `${(value || 0).toLocaleString()} Cr` : (value || 0).toLocaleString()}
+              {isCurrency ? `${(value || 0).toLocaleString()} ₹` : (value || 0).toLocaleString()}
             </p>
             {subtext && <p className="text-xs text-gray-400 mt-1 font-medium">{subtext}</p>}
           </div>

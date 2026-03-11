@@ -169,8 +169,8 @@ export default function OrderDetailPage() {
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard label="Total Amount (1 Cr = 1 ₹)" value={`${order.totalAmount.toLocaleString()} Cr`} icon={Coins} color="text-green-600" />
-          <StatCard label="Rate/Min" value={`${order.ratePerMinute} Cr`} icon={Clock} />
+          <StatCard label="Total Amount (₹)" value={`${order.totalAmount.toLocaleString()} ₹`} icon={Coins} color="text-green-600" />
+          <StatCard label="Rate/Min" value={`${order.ratePerMinute} ₹`} icon={Clock} />
           <StatCard label="Duration" value={formatDuration(order.actualDurationSeconds)} icon={Clock} />
           <StatCard label="Payment" value={order.payment.status} icon={CheckCircle} color={getPaymentStatusColor(order.payment.status)} />
         </div>
@@ -182,9 +182,9 @@ export default function OrderDetailPage() {
           <Coins size={20} /> Payment Breakdown
         </h3>
         <div className="grid md:grid-cols-3 gap-6">
-          <PaymentDetail label="Held Amount" value={`${order.payment.heldAmount} Cr`} timestamp={order.payment.heldAt} />
-          <PaymentDetail label="Charged Amount" value={`${order.payment.chargedAmount} Cr`} timestamp={order.payment.chargedAt} />
-          <PaymentDetail label="Refunded Amount" value={`${order.payment.refundedAmount} Cr`} timestamp={order.payment.refundedAt} />
+          <PaymentDetail label="Held Amount" value={`${order.payment.heldAmount} ₹`} timestamp={order.payment.heldAt} />
+          <PaymentDetail label="Charged Amount" value={`${order.payment.chargedAmount} ₹`} timestamp={order.payment.chargedAt} />
+          <PaymentDetail label="Refunded Amount" value={`${order.payment.refundedAmount} ₹`} timestamp={order.payment.refundedAt} />
         </div>
         {order.payment.transactionId && (
           <div className="mt-4 p-3 bg-gray-50 rounded text-xs text-gray-600">
@@ -221,12 +221,14 @@ export default function OrderDetailPage() {
                     <td className="px-4 py-3">{new Date(session.endedAt).toLocaleTimeString()}</td>
                     <td className="px-4 py-3">{formatDuration(session.durationSeconds)}</td>
                     <td className="px-4 py-3">{session.billedMinutes} min</td>
-                    <td className="px-4 py-3">{session.chargedAmount} Cr</td>
+                    <td className="px-4 py-3">{session.chargedAmount} ₹</td>
                     <td className="px-4 py-3">
-                      {session.endedBy === order.userId?._id ? (
+                      {session.endedBy === 'user' || session.endedBy === order.userId?._id ? (
                         <span className="text-blue-600 font-medium">User</span>
-                      ) : session.endedBy === order.astrologerId?._id ? (
+                      ) : session.endedBy === 'astrologer' || session.endedBy === order.astrologerId?._id ? (
                         <span className="text-purple-600 font-medium">Astrologer</span>
+                      ) : session.endedBy === 'system' ? (
+                        <span className="text-gray-500 font-medium">System</span>
                       ) : session.endedBy ? (
                         <span className="text-gray-500 capitalize">{session.endedBy}</span>
                       ) : (
@@ -296,7 +298,7 @@ export default function OrderDetailPage() {
             <div><span className="font-medium">Status:</span> <span className="capitalize">{order.refundRequest.status}</span></div>
             <div><span className="font-medium">Requested:</span> {new Date(order.refundRequest.requestedAt).toLocaleString()}</div>
             <div><span className="font-medium">Reason:</span> {order.refundRequest.reason}</div>
-            {order.refundRequest.refundAmount && <div><span className="font-medium">Amount:</span> {order.refundRequest.refundAmount} Cr</div>}
+            {order.refundRequest.refundAmount && <div><span className="font-medium">Amount:</span> {order.refundRequest.refundAmount} ₹</div>}
             {order.refundRequest.adminNotes && <div className="col-span-2"><span className="font-medium">Admin Notes:</span> {order.refundRequest.adminNotes}</div>}
             {order.refundRequest.rejectionReason && <div className="col-span-2 text-red-700"><span className="font-medium">Rejection:</span> {order.refundRequest.rejectionReason}</div>}
           </div>
@@ -360,7 +362,7 @@ export default function OrderDetailPage() {
                 max={order.totalAmount}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-500 mt-1">Max: {order.totalAmount.toLocaleString()} Cr</p>
+              <p className="text-xs text-gray-500 mt-1">Max: {order.totalAmount.toLocaleString()} ₹</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Zoho Ticket Reference</label>
