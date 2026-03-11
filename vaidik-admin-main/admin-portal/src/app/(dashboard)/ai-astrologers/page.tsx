@@ -66,7 +66,7 @@ const AdminAstrologers = () => {
   const fetchAstrologers = async () => {
     try {
       setLoading(true);
-      const response = await adminApi.getAllAIAstrologers({ limit: 100, t: Date.now() } as any);
+      const response = await adminApi.fetchAllAiAstrologers({ limit: 100, t: Date.now() } as any);
       const data = response.data;
 
       // Robust data extraction

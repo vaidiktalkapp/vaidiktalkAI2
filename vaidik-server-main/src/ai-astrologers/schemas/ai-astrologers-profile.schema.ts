@@ -68,6 +68,12 @@ export class AiAstrologerProfile {
     @Prop({ default: true })
     isAI: boolean;
 
+    @Prop({ enum: ['active', 'inactive', 'suspended'], default: 'active' })
+    status: string;
+
+    @Prop({ enum: ['active', 'inactive', 'suspended'], default: 'active' })
+    accountStatus: string;
+
     @Prop({ trim: true, default: 'Ancient Wisdom for Modern Times' })
     tagline: string;
 

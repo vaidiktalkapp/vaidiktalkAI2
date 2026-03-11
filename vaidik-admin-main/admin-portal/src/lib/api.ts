@@ -1089,8 +1089,17 @@ Send full-screen notification to a single User or Astrologer
   getAIAstrologerDetails: (id: string) =>
     apiClient.get(`/admin/ai-astrologers/${id}`),
 
+  fetchAllAiAstrologers: (params?: any) =>
+    apiClient.get('/admin/ai-astrologers', { params }),
+
   updateAIAstrologer: (id: string, data: any) =>
-    apiClient.patch(`/admin/ai-astrologers/${id}`, data),
+    apiClient.put(`/admin/ai-astrologers/${id}`, data),
+
+  deleteAIAstrologer: (id: string) =>
+    apiClient.delete(`/admin/ai-astrologers/${id}`),
+
+  toggleAIAstrologerAvailability: (id: string) =>
+    apiClient.patch(`/admin/ai-astrologers/${id}/toggle-availability`),
 
   uploadImage: (file: File) => {
     const formData = new FormData();

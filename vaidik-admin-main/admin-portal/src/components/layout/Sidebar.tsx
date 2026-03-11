@@ -204,10 +204,28 @@ export default function Sidebar() {
           requiredPermission: 'view_astrologers',
         },
         {
+          icon: Activity,
+          label: 'AI Live Traction',
+          href: '/ai-astrologers/traction',
+          requiredPermission: 'view_astrologers',
+        },
+        {
           icon: Database,
           label: 'AI Chat Logs',
           href: '/ai-chat-logs',
           requiredPermission: 'view_orders',
+        },
+        {
+          icon: Wallet,
+          label: 'AI Wallet & Billing',
+          href: '/ai-astrologers/wallet-billing',
+          requiredPermission: 'view_transactions',
+        },
+        {
+          icon: BarChart3,
+          label: 'AI Analytics',
+          href: '/ai-astrologers/performance-analytics',
+          requiredPermission: 'view_analytics',
         },
       ],
     },
