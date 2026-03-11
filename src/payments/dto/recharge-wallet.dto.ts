@@ -2,7 +2,7 @@ import { IsNumber, IsString, IsNotEmpty, Min, IsEnum, IsOptional } from 'class-v
 
 export class RechargeWalletDto {
   @IsNumber({}, { message: 'Amount must be a number' })
-  @Min(50, { message: 'Minimum recharge amount is 100 Credits' })
+  @Min(50, { message: 'Minimum recharge amount is ₹50' })
   amount: number;
 
   @IsOptional()

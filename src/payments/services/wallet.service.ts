@@ -286,7 +286,7 @@ export class WalletService {
 
         transaction.balanceBefore = initialBalance;
         transaction.balanceAfter = initialBalance + transaction.amount;
-        transaction.description = `Wallet recharge of ${transaction.amount} Credits`;
+        transaction.description = `Wallet recharge of ₹${transaction.amount}`;
 
         if (promotionId) (transaction as any).metadata = { ...transaction.metadata, promotionId };
         if (bonusAmount > 0) transaction.metadata = { ...transaction.metadata, hasBonus: true, bonusAmount };
@@ -306,7 +306,7 @@ export class WalletService {
             bonusAmount: bonusAmount,
             isBonus: true,
             status: 'completed',
-            description: `Bonus for recharge of ${transaction.amount} Credits (${finalPercentage}%)`,
+            description: `Bonus for recharge of ₹${transaction.amount} (${finalPercentage}%)`,
             linkedTransactionId: transactionId,
             balanceBefore: transaction.balanceAfter,
             balanceAfter: (transaction.balanceAfter || 0) + bonusAmount,
@@ -438,7 +438,7 @@ export class WalletService {
           amount: bonusAmount,
           isBonus: true,
           status: 'completed',
-          description: `Bonus for Apple recharge of ${rechargeAmount} Credits (${percentage}%)`,
+          description: `Bonus for Apple recharge of ₹${rechargeAmount} (${percentage}%)`,
           linkedTransactionId: transactionId,
           balanceBefore: transaction.balanceAfter,
           balanceAfter: (transaction.balanceAfter || 0) + bonusAmount,
@@ -635,7 +635,7 @@ export class WalletService {
       if (totalAvailable < amount) {
         return {
           success: false,
-          message: `Insufficient balance. Required: ${amount} Credits, Available: ${totalAvailable} Credits`
+          message: `Insufficient balance. Required: ₹${amount}, Available: ₹${totalAvailable}`
         };
       }
 

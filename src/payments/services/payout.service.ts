@@ -54,7 +54,7 @@ export class PayoutService {
 
     // Check minimum payout amount (e.g., 500 Credits)
     if (requestDto.amount < 500) {
-      throw new BadRequestException('Minimum payout amount is 500 Credits');
+      throw new BadRequestException('Minimum payout amount is ₹500');
     }
 
     // Check for pending payout requests
