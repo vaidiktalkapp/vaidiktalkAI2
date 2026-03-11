@@ -203,8 +203,8 @@ export default function OrdersPage() {
             <button
               onClick={() => setActiveTab('chat')}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold transition-all whitespace-nowrap ${activeTab === 'chat'
-                  ? 'bg-yellow-400 text-black shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-yellow-400 text-black shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -215,8 +215,8 @@ export default function OrdersPage() {
             <button
               onClick={() => setActiveTab('call')}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold transition-all whitespace-nowrap ${activeTab === 'call'
-                  ? 'bg-yellow-400 text-black shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-yellow-400 text-black shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,8 +227,8 @@ export default function OrdersPage() {
             <button
               onClick={() => setActiveTab('reports')}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold transition-all whitespace-nowrap ${activeTab === 'reports'
-                  ? 'bg-yellow-400 text-black shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-yellow-400 text-black shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -344,7 +344,7 @@ export default function OrdersPage() {
                           <div className="flex items-center justify-between mb-1">
                             <h3 className="font-bold text-gray-900">{session.astrologerId.name}</h3>
                             <span className="text-sm font-semibold text-gray-900">
-                              {session.totalAmount?.toFixed(0)} Cr
+                              ₹{session.totalAmount?.toFixed(0)}
                             </span>
                           </div>
 

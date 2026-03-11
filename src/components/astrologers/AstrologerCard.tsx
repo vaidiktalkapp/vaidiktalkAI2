@@ -136,10 +136,10 @@ const AstrologerCard: React.FC<Props> = ({ astrologer, mode }) => {
 
         <div className="flex items-center mt-2 gap-2">
           <span className="text-[12px] text-gray-400 line-through">
-            {originalPrice} Cr
+            ₹{originalPrice}
           </span>
           <span className="text-[14px] font-bold text-red-600">
-            {price} Cr/min
+            ₹{price}/min
           </span>
           <span className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded border border-green-100 font-medium">
             Offer

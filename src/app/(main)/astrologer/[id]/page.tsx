@@ -302,8 +302,8 @@ export default function AstrologerProfilePage() {
                           onClick={handleFollowToggle}
                           disabled={followLoading}
                           className={`flex items-center gap-1 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${isFollowing
-                              ? 'bg-pink-50 border-pink-200 text-pink-600'
-                              : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                            ? 'bg-pink-50 border-pink-200 text-pink-600'
+                            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                             }`}
                         >
                           <Heart className={`w-3.5 h-3.5 ${isFollowing ? 'fill-current' : ''}`} />
@@ -346,8 +346,8 @@ export default function AstrologerProfilePage() {
                     onClick={handleFollowToggle}
                     disabled={followLoading}
                     className={`flex items-center gap-1 px-4 py-1.5 rounded-full border text-xs font-semibold transition-all ${isFollowing
-                        ? 'bg-pink-50 border-pink-200 text-pink-600'
-                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                      ? 'bg-pink-50 border-pink-200 text-pink-600'
+                      : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                       }`}
                   >
                     <Heart className={`w-3.5 h-3.5 ${isFollowing ? 'fill-current' : ''}`} />
@@ -541,8 +541,8 @@ export default function AstrologerProfilePage() {
               onClick={() => handleConnect('chat')}
               disabled={!astrologer.availability.isOnline || isChatProcessing || isBusy}
               className={`flex flex-col items-center justify-center py-2.5 px-3 rounded-lg border-2 transition-all ${astrologer.availability.isOnline && !isBusy
-                  ? 'border-green-500 bg-green-50 hover:bg-green-100 active:bg-green-200'
-                  : 'border-gray-200 bg-gray-50 opacity-70 cursor-not-allowed'
+                ? 'border-green-500 bg-green-50 hover:bg-green-100 active:bg-green-200'
+                : 'border-gray-200 bg-gray-50 opacity-70 cursor-not-allowed'
                 }`}
             >
               <div className="flex items-center gap-1.5">
@@ -557,7 +557,7 @@ export default function AstrologerProfilePage() {
                 </span>
               </div>
               <span className={`text-[11px] mt-0.5 ${astrologer.availability.isOnline && !isBusy ? 'text-green-600 font-medium' : 'text-gray-400'}`}>
-                {astrologer.pricing.chat} Cr/min
+                ₹{astrologer.pricing.chat}/min
               </span>
             </button>
 
@@ -566,8 +566,8 @@ export default function AstrologerProfilePage() {
               onClick={() => handleConnect('call')}
               disabled={!astrologer.availability.isOnline || isCallProcessing || isBusy}
               className={`flex flex-col items-center justify-center py-2.5 px-3 rounded-lg border-2 transition-all ${astrologer.availability.isOnline && !isBusy
-                  ? 'border-blue-500 bg-blue-50 hover:bg-blue-100 active:bg-blue-200'
-                  : 'border-gray-200 bg-gray-50 opacity-70 cursor-not-allowed'
+                ? 'border-blue-500 bg-blue-50 hover:bg-blue-100 active:bg-blue-200'
+                : 'border-gray-200 bg-gray-50 opacity-70 cursor-not-allowed'
                 }`}
             >
               <div className="flex items-center gap-1.5">
@@ -581,7 +581,7 @@ export default function AstrologerProfilePage() {
                 </span>
               </div>
               <span className={`text-[11px] mt-0.5 ${astrologer.availability.isOnline && !isBusy ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>
-                {astrologer.pricing.call} Cr/min
+                ₹{astrologer.pricing.call}/min
               </span>
             </button>
           </div>

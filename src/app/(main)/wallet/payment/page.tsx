@@ -28,7 +28,7 @@ function PaymentContent() {
     if (isProcessing) return;
 
     if (baseAmount < 50) {
-      alert('Minimum recharge is 50 Credits');
+      alert('Minimum recharge is ₹50');
       return;
     }
 
@@ -46,7 +46,7 @@ function PaymentContent() {
         async (newBalance) => {
           setIsProcessing(false);
           await fetchUserProfile();
-          alert(`Success! Added ${totalCredit.toLocaleString()} Credits`);
+          alert(`Success! Added ₹${totalCredit.toLocaleString()}`);
           router.push('/wallet');
         },
         (err) => {
@@ -95,7 +95,7 @@ function PaymentContent() {
             <div className="flex justify-between items-center">
               <span className="text-gray-700">Recharge Amount</span>
               <span className="font-semibold text-gray-900">
-                {baseAmount.toLocaleString()} Cr
+                ₹{baseAmount.toLocaleString()}
               </span>
             </div>
 
@@ -109,7 +109,7 @@ function PaymentContent() {
             {bonus.amount > 0 && (
               <div className="flex justify-between items-center text-green-600">
                 <span className="font-semibold">Bonus Applied ({bonus.percentage}%)</span>
-                <span className="font-bold">+ {bonus.amount.toLocaleString()} Cr</span>
+                <span className="font-bold">+ ₹{bonus.amount.toLocaleString()}</span>
               </div>
             )}
 
@@ -117,7 +117,7 @@ function PaymentContent() {
               <div className="flex justify-between items-center">
                 <span className="text-lg font-bold text-gray-900">Wallet Credit</span>
                 <span className="text-2xl font-bold text-gray-900">
-                  {totalCredit.toLocaleString()} Credits
+                  ₹{totalCredit.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -129,7 +129,7 @@ function PaymentContent() {
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-yellow-900">Current Balance</span>
             <span className="text-lg font-bold text-yellow-900">
-              {user?.wallet?.balance?.toFixed(0) || 0} Credits
+              ₹{user?.wallet?.balance?.toFixed(0) || 0}
             </span>
           </div>
         </div>

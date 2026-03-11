@@ -429,7 +429,7 @@ export default function ChatHistoryScreen() {
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-900">Continue chatting?</p>
-                <p className="text-xs text-green-600 font-bold">{astrologer.chatRate || 10} Cr/min</p>
+                <p className="text-xs text-green-600 font-bold">₹{astrologer.chatRate || 10}/min</p>
               </div>
               <button
                 onClick={() => handleContinue()}
