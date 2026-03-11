@@ -86,22 +86,20 @@ export class AvailabilityService {
     // 1. Live status
     if (av.isLive) return 'live';
 
-    // 2. Fundamental Reachability (Priority Logic)
-    const isManuallyOnline = av.isOnline; // Global Toggle
-    const isScheduled = this.isWithinWorkingHours(av.workingHours); // Weekly Schedule
-
+    // 2. Reachability check FIRST
+    const isManuallyOnline = av.isOnline;
+    const isScheduled = this.isWithinWorkingHours(av.workingHours);
     const isReachable = isManuallyOnline || isScheduled;
 
-    // 3. Busy Logic (Only matters if they are reachable)
+    // 3. If not reachable, always offline — ignore isAvailable / busyUntil flags
+    if (!isReachable) return 'offline';
+
+    // 4. Busy only applies to reachable astrologers
     const isBusyManual = av.isAvailable === false;
     const isBusyTimer = av.busyUntil && new Date(av.busyUntil) > new Date();
+    if (isBusyManual || isBusyTimer) return 'busy';
 
-    if (isBusyManual || isBusyTimer) {
-      return 'busy';
-    }
-
-    // 4. Final Status (Online vs Offline)
-    return isReachable ? 'online' : 'offline';
+    return 'online';
   }
 
   async updateWorkingHours(astrologerId: string, updateDto: UpdateWorkingHoursDto): Promise<any> {
