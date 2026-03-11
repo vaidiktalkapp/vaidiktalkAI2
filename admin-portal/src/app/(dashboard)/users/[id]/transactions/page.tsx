@@ -62,14 +62,14 @@ export default function UserTransactionsPage() {
         return (
           <div className={`font-bold flex items-center gap-1 ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
             {isCredit ? <ArrowDown size={14} /> : <ArrowUp size={14} />}
-            {txn.amount} Cr
+            ₹{txn.amount}
           </div>
         );
       },
     },
     {
       header: 'Balance After',
-      cell: (txn) => txn.balanceAfter ? `${txn.balanceAfter} Cr` : '-',
+      cell: (txn) => txn.balanceAfter ? `₹${txn.balanceAfter}` : '-',
     },
     {
       header: 'Date',

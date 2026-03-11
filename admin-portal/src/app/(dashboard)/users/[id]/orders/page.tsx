@@ -83,7 +83,7 @@ export default function UserOrdersPage() {
     {
       header: 'Amount',
       accessorKey: 'totalAmount',
-      cell: (order) => <span className="font-bold">{order.totalAmount} Cr</span>,
+      cell: (order) => <span className="font-bold">₹{order.totalAmount}</span>,
     },
     {
       header: 'Date',

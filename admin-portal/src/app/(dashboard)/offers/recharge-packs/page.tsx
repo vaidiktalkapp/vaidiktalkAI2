@@ -74,7 +74,7 @@ export default function RechargePacksPage() {
     <div className="max-w-5xl mx-auto space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Recharge Packs & Bonuses</h1>
-        <p className="text-gray-500">Configure recharge amounts and their bonus percentages dynamically (1 Credit = 1 ₹).</p>
+        <p className="text-gray-500">Configure recharge amounts and their bonus percentages dynamically.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -87,7 +87,7 @@ export default function RechargePacksPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Recharge Amount (Credits) - 1 Cr = 1 ₹</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Recharge Amount (₹)</label>
                 <input
                   type="number"
                   value={amount}
@@ -108,7 +108,7 @@ export default function RechargePacksPage() {
                   placeholder="e.g. 100"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  User gets {amount ? Math.floor(Number(amount) * (Number(bonus) / 100)) : 0} Cr bonus
+                  User gets ₹{amount ? Math.floor(Number(amount) * (Number(bonus) / 100)) : 0} bonus
                 </p>
               </div>
 
@@ -176,7 +176,7 @@ export default function RechargePacksPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-gray-900">{pack.amount} Cr</h4>
+                          <h4 className="font-bold text-gray-900">₹{pack.amount}</h4>
                           {pack.isPopular && (
                             <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded-full font-medium flex items-center gap-1">
                               <Star size={10} fill="currentColor" /> Popular
@@ -187,7 +187,7 @@ export default function RechargePacksPage() {
                           )}
                         </div>
                         <p className="text-sm text-gray-500">
-                          User gets <span className="text-green-600 font-medium">{Math.floor(pack.amount * (pack.bonusPercentage / 100))} Cr</span> bonus
+                          User gets <span className="text-green-600 font-medium">₹{Math.floor(pack.amount * (pack.bonusPercentage / 100))}</span> bonus
                         </p>
                       </div>
                     </div>

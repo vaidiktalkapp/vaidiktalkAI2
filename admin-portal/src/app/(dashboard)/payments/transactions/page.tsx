@@ -178,7 +178,7 @@ export default function TransactionsPage() {
         const isCredit = ['recharge', 'refund', 'bonus', 'giftcard'].includes(txn.type);
         return (
           <span className={`font-bold ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
-            {isCredit ? '+' : '-'}{txn.amount.toLocaleString()} Cr
+            {isCredit ? '+' : '-'}{txn.amount.toLocaleString()}
           </span>
         );
       },
@@ -187,8 +187,8 @@ export default function TransactionsPage() {
       header: 'Balance',
       cell: (txn) => (
         <div className="text-xs text-gray-600">
-          <div>Before: {txn.balanceBefore} Cr</div>
-          <div>After: {txn.balanceAfter} Cr</div>
+          <div>Before: ₹{txn.balanceBefore}</div>
+          <div>After: ₹{txn.balanceAfter}</div>
         </div>
       ),
     },
@@ -240,15 +240,15 @@ export default function TransactionsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Transactions</h1>
-        <p className="text-gray-600 mt-1">Monitor all wallet transactions (1 Credit = 1 ₹)</p>
+        <p className="text-gray-600 mt-1">Monitor all wallet transactions</p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard label="Total Recharged (1 Cr = 1 ₹)" value={`${(stats?.totalRecharge || 0).toLocaleString()} Cr`} icon={TrendingUp} color="text-green-600" />
-        <StatCard label="Total Spent" value={`${(stats?.totalSpent || 0).toLocaleString()} Cr`} icon={TrendingDown} color="text-red-600" />
-        <StatCard label="Bonuses Credited" value={`${(stats?.totalBonusCredited || 0).toLocaleString()} Cr`} icon={Coins} color="text-purple-600" />
-        <StatCard label="Refunds Processed" value={`${(stats?.totalOrderRefunds || 0).toLocaleString()} Cr`} icon={RefreshCw} color="text-blue-600" />
+        <StatCard label="Total Recharged" value={`₹${(stats?.totalRecharge || 0).toLocaleString()}`} icon={TrendingUp} color="text-green-600" />
+        <StatCard label="Total Spent" value={`₹${(stats?.totalSpent || 0).toLocaleString()}`} icon={TrendingDown} color="text-red-600" />
+        <StatCard label="Bonuses Credited" value={`₹${(stats?.totalBonusCredited || 0).toLocaleString()}`} icon={Coins} color="text-purple-600" />
+        <StatCard label="Refunds Processed" value={`₹${(stats?.totalOrderRefunds || 0).toLocaleString()}`} icon={RefreshCw} color="text-blue-600" />
       </div>
 
       {/* Search Bar */}
@@ -373,7 +373,7 @@ export default function TransactionsPage() {
             <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200 text-sm text-yellow-800">
               <p className="font-semibold">Warning:</p>
               <ul className="list-disc pl-4 mt-1 space-y-1">
-                <li>This will initiate a refund via Razorpay for <strong>{selectedTxn.amount} Cr</strong>.</li>
+                <li>This will initiate a refund via Razorpay for <strong>₹{selectedTxn.amount}</strong>.</li>
                 <li>The user's <strong>Cash Balance</strong> will be deducted.</li>
                 <li>Any <strong>Bonus</strong> earned from this recharge will be automatically removed.</li>
               </ul>

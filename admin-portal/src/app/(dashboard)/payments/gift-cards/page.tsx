@@ -91,7 +91,7 @@ export default function GiftCardsPage() {
     {
       header: 'Amount',
       cell: (card) => (
-        <span className="font-bold text-green-600 text-lg">{card.amount.toLocaleString()} Cr</span>
+        <span className="font-bold text-green-600 text-lg">₹{card.amount.toLocaleString()}</span>
       ),
     },
     {
@@ -225,7 +225,7 @@ export default function GiftCardsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Amount (Credits) *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Amount (₹) *</label>
               <input
                 type="number"
                 value={amount}

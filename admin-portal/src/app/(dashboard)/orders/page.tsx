@@ -97,7 +97,7 @@ export default function OrdersPage() {
       header: 'Amount',
       cell: (order) => (
         <span className="font-medium text-green-700 flex items-center text-sm">
-          <Coins size={12} /> {order.totalAmount} Cr
+          <Coins size={12} /> ₹{order.totalAmount}
         </span>
       )
     },
@@ -173,7 +173,7 @@ export default function OrdersPage() {
         <StatCard label="Total Orders" value={stats?.total || 0} />
         <StatCard label="Completed" value={stats?.completed || 0} color="text-green-600" />
         <StatCard label="Cancelled" value={stats?.cancelled || 0} color="text-red-600" />
-        <StatCard label="Total Revenue" value={`${stats?.revenue?.toLocaleString() || 0} Cr`} color="text-indigo-600" />
+        <StatCard label="Total Revenue" value={`₹${stats?.revenue?.toLocaleString() || 0}`} color="text-indigo-600" />
       </div>
 
       {/* Filters */}

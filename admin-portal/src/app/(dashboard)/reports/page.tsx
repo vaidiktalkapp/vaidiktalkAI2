@@ -99,7 +99,7 @@ export default function ReportsPage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Reports & Analytics</h1>
-          <p className="text-gray-500 mt-2 text-sm">Generate insights and export data for offline analysis (1 Credit = 1 ₹).</p>
+          <p className="text-gray-500 mt-2 text-sm">Generate insights and export data for offline analysis.</p>
         </div>
 
         {/* Date Filter */}
@@ -147,7 +147,7 @@ export default function ReportsPage() {
 
           {/* 1. REVENUE REPORT */}
           <ReportCard
-            title="Revenue Overview (1 Cr = 1 ₹)"
+            title="Revenue Overview"
             icon={Coins}
             color="emerald"
             onExport={() => handleExport('revenue')}
@@ -155,7 +155,7 @@ export default function ReportsPage() {
             <div className="grid grid-cols-3 gap-4 mb-6">
               <MetricItem
                 label="Total Revenue"
-                value={`${(summary?.revenue?.summary?.totalRevenue || 0).toLocaleString()} Cr`}
+                value={`₹${(summary?.revenue?.summary?.totalRevenue || 0).toLocaleString()}`}
                 trend="up"
               />
               <MetricItem
@@ -164,7 +164,7 @@ export default function ReportsPage() {
               />
               <MetricItem
                 label="Avg Order Value"
-                value={`${(summary?.revenue?.summary?.avgOrderValue || 0).toFixed(0)} Cr`}
+                value={`₹${(summary?.revenue?.summary?.avgOrderValue || 0).toFixed(0)}`}
               />
             </div>
 
@@ -181,7 +181,7 @@ export default function ReportsPage() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <Tooltip
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                    formatter={(val: number) => [`${val} Cr`, 'Revenue']}
+                    formatter={(val: number) => [`₹${val}`, 'Revenue']}
                   />
                   <Area type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" />
                 </AreaChart>
@@ -305,7 +305,7 @@ export default function ReportsPage() {
                         <div className="text-xs text-gray-500">{astro.phoneNumber}</div>
                       </td>
                       <td className="px-6 py-4 text-right font-medium text-emerald-600">
-                        {astro.totalRevenue.toLocaleString()} Cr
+                        ₹{astro.totalRevenue.toLocaleString()}
                       </td>
                       <td className="px-6 py-4 text-right text-gray-700">
                         {astro.totalOrders}
@@ -332,7 +332,7 @@ export default function ReportsPage() {
           {/* 5. PAYMENTS OVERVIEW (Full Width) */}
           <div className="xl:col-span-2">
             <ReportCard
-              title="Financial Transactions (1 Cr = 1 ₹)"
+              title="Financial Transactions"
               icon={Wallet}
               color="indigo"
             >
@@ -434,7 +434,7 @@ function PaymentMetric({ label, amount, count, color, bgColor }: any) {
   return (
     <div className={`p-4 rounded-xl ${bgColor} border border-transparent hover:border-gray-200 transition-all`}>
       <p className="text-xs font-semibold opacity-70 uppercase mb-2 text-gray-800">{label}</p>
-      <p className={`text-xl font-bold ${color}`}>{(amount || 0).toLocaleString()} Cr</p>
+      <p className={`text-xl font-bold ${color}`}>₹{(amount || 0).toLocaleString()}</p>
       <p className="text-xs mt-1 text-gray-600 font-medium">{count || 0} txns</p>
     </div>
   );

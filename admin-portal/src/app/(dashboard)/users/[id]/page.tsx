@@ -175,13 +175,13 @@ export default function UserDetailPage() {
             {/* Quick Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <QuickStat
-                label="Wallet Balance (1 Cr = 1 ₹)"
-                value={`${user.wallet?.balance?.toLocaleString() ?? 0} Cr`}
+                label="Wallet Balance"
+                value={`₹${user.wallet?.balance?.toLocaleString() ?? 0}`}
                 color="text-green-600"
               />
               <QuickStat
                 label="Total Spent"
-                value={`${user.stats?.totalSpent?.toLocaleString() ?? 0} Cr`}
+                value={`₹${user.stats?.totalSpent?.toLocaleString() ?? 0}`}
                 color="text-purple-600"
               />
               <QuickStat
@@ -230,8 +230,8 @@ export default function UserDetailPage() {
           icon={Wallet}
           title="Wallet Details"
           items={[
-            { label: 'Current Balance', value: `${user.wallet?.balance ?? 0} Cr` },
-            { label: 'Total Spent', value: `${user.stats?.totalSpent ?? 0} Cr` },
+            { label: 'Current Balance', value: `₹${user.wallet?.balance ?? 0}` },
+            { label: 'Total Spent', value: `₹${user.stats?.totalSpent ?? 0}` },
           ]}
         />
         <StatsCard
@@ -271,7 +271,7 @@ export default function UserDetailPage() {
                   <p className="text-xs text-gray-500">{new Date(txn.createdAt).toLocaleString()}</p>
                 </div>
                 <span className={`font-bold ${txn.type?.includes('credit') || txn.type?.includes('recharge') ? 'text-green-600' : 'text-red-600'}`}>
-                  {txn.type?.includes('credit') || txn.type?.includes('recharge') ? '+' : '-'}{txn.amount} Cr
+                  {txn.type?.includes('credit') || txn.type?.includes('recharge') ? '+₹' : '-₹'}{txn.amount}
                 </span>
               </div>
             ))}
@@ -305,7 +305,7 @@ export default function UserDetailPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <StatusBadge status={order.status} />
-                  <span className="font-bold text-gray-900">{order.totalAmount} Cr</span>
+                  <span className="font-bold text-gray-900">₹{order.totalAmount}</span>
                 </div>
               </Link>
             ))}

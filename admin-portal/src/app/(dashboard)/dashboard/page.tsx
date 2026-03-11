@@ -66,8 +66,8 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatWidget
           label="Net Revenue"
-          value={`${analytics?.financials?.netRevenue?.toLocaleString() || 0} Cr`}
-          subtext="After commissions & bonuses (1 Cr = 1 ₹)"
+          value={`₹${analytics?.financials?.netRevenue?.toLocaleString() || 0}`}
+          subtext="After commissions & bonuses"
           icon={Coins}
           color="text-emerald-600"
           bg="bg-emerald-50"
@@ -112,7 +112,7 @@ export default function DashboardPage() {
               <h3 className="font-bold text-gray-900 flex items-center gap-2">
                 <TrendingUp size={18} className="text-indigo-600" /> Revenue Trend
               </h3>
-              <p className="text-xs text-gray-500 mt-1">Gross transaction volume (1 Credit = 1 ₹)</p>
+              <p className="text-xs text-gray-500 mt-1">Gross transaction volume</p>
             </div>
             <select
               value={timeRange}
@@ -155,11 +155,11 @@ export default function DashboardPage() {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: '#6b7280', fontSize: 12 }}
-                    tickFormatter={(value) => `${value >= 1000 ? `${value / 1000}k` : value} Cr`}
+                    tickFormatter={(value) => `₹${value >= 1000 ? `${value / 1000}k` : value}`}
                   />
                   <Tooltip
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px -5px rgb(0 0 0 / 0.1)' }}
-                    formatter={(value: number) => [`${value.toLocaleString()} Cr`, 'Gross Revenue']}
+                    formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Gross Revenue']}
                   />
                   <Area
                     type="monotone"

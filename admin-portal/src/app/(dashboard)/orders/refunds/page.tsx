@@ -103,7 +103,7 @@ export default function DirectOrderRefundPage() {
               </div>
               <div>
                 <p className="text-gray-500">Original Amount</p>
-                <p className="font-bold text-lg text-gray-900">{order.totalAmount} Cr</p>
+                <p className="font-bold text-lg text-gray-900">₹{order.totalAmount}</p>
               </div>
             </div>
 
@@ -114,7 +114,7 @@ export default function DirectOrderRefundPage() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Refund Amount (Credits)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Refund Amount (₹)</label>
                   <input
                     type="number"
                     value={amount}
@@ -123,7 +123,7 @@ export default function DirectOrderRefundPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Max refundable: {order.totalAmount} Cr
+                    Max refundable: ₹{order.totalAmount}
                   </p>
                 </div>
 
