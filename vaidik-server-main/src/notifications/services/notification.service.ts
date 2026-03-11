@@ -1,10 +1,11 @@
 // notifications/services/notification.service.ts (UPDATED)
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Notification, NotificationDocument } from '../schemas/notification.schema';
 import { User, UserDocument } from '../../users/schemas/user.schema';
 import { Astrologer, AstrologerDocument } from '../../astrologers/schemas/astrologer.schema';
+import { AiAstrologerProfile, AiAstrologerProfileDocument } from '../../ai-astrologers/schemas/ai-astrologers-profile.schema';
 import { NotificationDeliveryService } from './notification-delivery.service';
 import { getNotificationConfig, RefinedNotificationType } from '../config/notification-types.config';
 

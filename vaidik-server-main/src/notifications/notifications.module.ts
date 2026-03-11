@@ -20,6 +20,7 @@ import { Notification, NotificationSchema } from './schemas/notification.schema'
 import { ScheduledNotification, ScheduledNotificationSchema } from './schemas/scheduled-notification.schema';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { Astrologer, AstrologerSchema } from '../astrologers/schemas/astrologer.schema';
+import { AiAstrologerProfile, AiAstrologerProfileSchema } from '../ai-astrologers/schemas/ai-astrologers-profile.schema';
 import { ChatModule } from 'src/chat/chat.module';
 
 @Module({
@@ -39,6 +40,7 @@ import { ChatModule } from 'src/chat/chat.module';
       { name: ScheduledNotification.name, schema: ScheduledNotificationSchema },
       { name: User.name, schema: UserSchema },
       { name: Astrologer.name, schema: AstrologerSchema },
+      { name: AiAstrologerProfile.name, schema: AiAstrologerProfileSchema },
     ]),
     forwardRef(() => ChatModule),
     forwardRef(() => require('../admin/features/notifications/notifications.module').AdminNotificationsModule),
