@@ -208,6 +208,7 @@ export default function OrderDetailPage() {
                   <th className="px-4 py-3 text-left">Duration</th>
                   <th className="px-4 py-3 text-left">Billed</th>
                   <th className="px-4 py-3 text-left">Charged</th>
+                  <th className="px-4 py-3 text-left">Ended By</th>
                   <th className="px-4 py-3 text-left">Recording</th>
                 </tr>
               </thead>
@@ -221,6 +222,17 @@ export default function OrderDetailPage() {
                     <td className="px-4 py-3">{formatDuration(session.durationSeconds)}</td>
                     <td className="px-4 py-3">{session.billedMinutes} min</td>
                     <td className="px-4 py-3">{session.chargedAmount} Cr</td>
+                    <td className="px-4 py-3">
+                      {session.endedBy === order.userId?._id ? (
+                        <span className="text-blue-600 font-medium">User</span>
+                      ) : session.endedBy === order.astrologerId?._id ? (
+                        <span className="text-purple-600 font-medium">Astrologer</span>
+                      ) : session.endedBy ? (
+                        <span className="text-gray-500 capitalize">{session.endedBy}</span>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       {session.sessionType === 'chat' ? (
                         <button
