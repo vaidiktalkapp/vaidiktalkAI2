@@ -621,6 +621,7 @@ export class ChatSessionService {
           session.astrologerId.toString(),
           session.totalAmount,
           'chat',
+          session.billedMinutes,
         );
 
         session.isPaid = true;

@@ -161,17 +161,41 @@ export class AstrologerAuthService {
   }
 
   /**
+   * 🔍 Helper: Robustly find astrologer by phone number
+   * Handles leading zeros and variant country code storage
+   */
+  private async findAstrologerByPhone(phoneNumber: string, countryCode: string, additionalQuery: any = {}) {
+    // 1. Sanitize: Strip leading zeros and non-digits
+    const cleanNumber = phoneNumber.replace(/^0+/, '').replace(/\D/g, '');
+    const fullPhoneNumber = `+${countryCode}${cleanNumber}`;
+
+    this.logger.log('🔍 [AstrologerAuth] Looking up astrologer...', { fullPhoneNumber });
+
+    // 2. Try exact match first
+    let astrologer = await this.astrologerModel.findOne({
+      phoneNumber: fullPhoneNumber,
+      ...additionalQuery
+    });
+
+    // 3. Fallback: Try regex match for trailing digits (last 10)
+    if (!astrologer && cleanNumber.length >= 10) {
+      const tail = cleanNumber.slice(-10);
+      this.logger.log(`⚠️  [AstrologerAuth] Exact match failed. Trying fallback for tail: ${tail}`);
+      astrologer = await this.astrologerModel.findOne({
+        phoneNumber: { $regex: `${tail}$` },
+        ...additionalQuery
+      });
+    }
+
+    return astrologer;
+  }
+
+  /**
    * ✅ Check if phone number has approved astrologer account
    */
   async checkPhoneForLogin(phoneNumber: string, countryCode: string) {
-    const fullPhoneNumber = `+${countryCode}${phoneNumber}`;
-    
-    this.logger.log('🔍 Checking for approved astrologer', { fullPhoneNumber });
-
-    // ✅ FIX: Add 'deleted' to the allowed statuses so they can proceed to OTP
-    const astrologer = await this.astrologerModel.findOne({
-      phoneNumber: fullPhoneNumber,
-      accountStatus: { $in: ['active', 'inactive', 'deleted'] } 
+    const astrologer = await this.findAstrologerByPhone(phoneNumber, countryCode, {
+      accountStatus: { $in: ['active', 'inactive', 'deleted', 'suspended'] }
     });
 
     if (!astrologer) {
@@ -280,9 +304,7 @@ export class AstrologerAuthService {
 
     this.logger.log('✅ OTP is valid');
 
-    const fullPhoneNumber = `+${countryCode}${phoneNumber}`;
-
-    const astrologer = await this.astrologerModel.findOne({ phoneNumber: fullPhoneNumber });
+    const astrologer = await this.findAstrologerByPhone(phoneNumber, countryCode);
 
     if (!astrologer) {
       throw new UnauthorizedException('Astrologer profile not found');

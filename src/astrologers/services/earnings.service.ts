@@ -23,6 +23,7 @@ export class EarningsService {
     astrologerId: string,
     grossAmount: number,
     sessionType: 'call' | 'chat',
+    durationMinutes?: number, // ✅ Optional explicit duration
   ): Promise<void> {
     const astrologer = await this.astrologerModel.findById(astrologerId);
 
@@ -35,8 +36,12 @@ export class EarningsService {
     const commission = (grossAmount * commissionRate) / 100;
     const netEarnings = grossAmount - commission; // 50% to astrologer
 
-    // Calculate minutes
-    const durationMinutes = sessionType === 'call' ? Math.ceil(grossAmount / (astrologer.pricing.call || 1)) : 0;
+    // Calculate minutes if not provided
+    let minutes = durationMinutes;
+    if (minutes === undefined) {
+      const rate = sessionType === 'call' ? astrologer.pricing.call : astrologer.pricing.chat;
+      minutes = Math.ceil(grossAmount / (rate || 1));
+    }
 
     await this.astrologerModel.findByIdAndUpdate(astrologerId, {
       $inc: {
@@ -46,9 +51,9 @@ export class EarningsService {
         'earnings.withdrawableAmount': netEarnings, // Available to withdraw
         'stats.totalEarnings': netEarnings, // Legacy field
         'stats.totalOrders': 1,
-        'stats.totalMinutes': durationMinutes || 0,
-        ...(sessionType === 'call' && { 'stats.callOrders': 1 }),
-        ...(sessionType === 'chat' && { 'stats.chatOrders': 1 }),
+        'stats.totalMinutes': minutes || 0,
+        ...(sessionType === 'call' && { 'stats.callOrders': 1, 'stats.callMinutes': minutes || 0 }),
+        ...(sessionType === 'chat' && { 'stats.chatOrders': 1, 'stats.chatMinutes': minutes || 0 }),
       },
       $set: {
         'earnings.lastUpdated': new Date(),
@@ -56,7 +61,7 @@ export class EarningsService {
     });
 
     this.logger.log(
-      `✅ Earnings updated: Astrologer ${astrologerId} | Gross: ₹${grossAmount} | Commission: ₹${commission.toFixed(2)} (${commissionRate}%) | Net: ₹${netEarnings.toFixed(2)}`,
+      `✅ Earnings updated: Astrologer ${astrologerId} | Gross: ₹${grossAmount} | Minutes: ${minutes} | Net: ₹${netEarnings.toFixed(2)}`,
     );
   }
 

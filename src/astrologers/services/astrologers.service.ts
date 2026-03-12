@@ -60,13 +60,25 @@ export class AstrologersService {
   /**
    * ✅ UPDATED: Calculates 'realStatus' (Busy/Live/Online) for display
    */
-  private serializeAstrologers(astrologers: any[]): any[] {
+  private serializeAstrologers(astrologers: any[], platform: 'user' | 'astrologer' = 'user'): any[] {
     return astrologers.map(astro => {
       const doc = astro.toObject ? astro.toObject() : astro;
       if (doc._id) doc._id = doc._id.toString();
 
       // ✅ Calculate Real-Time Status (Robust Logic)
       doc.realStatus = this.availabilityService.getRealTimeStatus(doc);
+
+      // ✅ Legacy App Compatibility Fix
+      if (doc.stats) {
+        if (platform === 'user') {
+          // User App: Chat Icon (availableMins) uses 'totalMinutes', Call Icon (consultationMins) uses 'totalConsultations'
+          doc.stats.totalConsultations = doc.stats.callMinutes || 0;
+          doc.stats.totalMinutes = doc.stats.chatMinutes || 0;
+        } else {
+          // Astrologer App: Uses 'totalMinutes' for total time, 'totalOrders' for sessions
+          doc.stats.totalConsultations = doc.stats.totalOrders || 0; // Just in case
+        }
+      }
 
       return doc;
     });
@@ -114,7 +126,8 @@ export class AstrologersService {
       andConditions.push({
         $or: [
           { name: { $regex: term, $options: 'i' } },
-          { bio: { $regex: term, $options: 'i' } }
+          { bio: { $regex: term, $options: 'i' } },
+          { phoneNumber: { $regex: term, $options: 'i' } }
         ]
       });
     }
@@ -274,7 +287,7 @@ export class AstrologersService {
     return {
       success: true,
       data: {
-        astrologers: this.serializeAstrologers(astrologers), // Computes realStatus
+        astrologers: this.serializeAstrologers(astrologers, 'user'), // Computes realStatus
         pagination: {
           page: Number(page),
           limit: Number(limit),
@@ -465,7 +478,7 @@ export class AstrologersService {
     return {
       success: true,
       count: astrologers.length,
-      data: this.serializeAstrologers(astrologers)
+      data: this.serializeAstrologers(astrologers, 'user')
     };
   }
 
@@ -498,7 +511,7 @@ export class AstrologersService {
     return {
       success: true,
       count: astrologers.length,
-      data: this.serializeAstrologers(astrologers)
+      data: this.serializeAstrologers(astrologers, 'user')
     };
   }
 
@@ -532,7 +545,7 @@ export class AstrologersService {
     return {
       success: true,
       count: astrologers.length,
-      data: this.serializeAstrologers(astrologers)
+      data: this.serializeAstrologers(astrologers, 'user')
     };
   }
 
@@ -570,7 +583,7 @@ export class AstrologersService {
       success: true,
       count: astrologers.length,
       specialization,
-      data: this.serializeAstrologers(astrologers)
+      data: this.serializeAstrologers(astrologers, 'user')
     };
   }
 
@@ -676,7 +689,7 @@ export class AstrologersService {
       throw new NotFoundException('Astrologer not found or not available');
     }
 
-    const serialized = this.serializeAstrologers([astrologer])[0];
+    const serialized = this.serializeAstrologers([astrologer], 'user')[0];
 
     return {
       success: true,
@@ -711,7 +724,7 @@ export class AstrologersService {
     return {
       success: true,
       count: liveAstrologers.length,
-      data: this.serializeAstrologers(liveAstrologers)
+      data: this.serializeAstrologers(liveAstrologers, 'user')
     };
   }
 
@@ -730,7 +743,7 @@ export class AstrologersService {
       throw new NotFoundException('Astrologer not found');
     }
 
-    const serialized = this.serializeAstrologers([astrologer])[0];
+    const serialized = this.serializeAstrologers([astrologer], 'astrologer')[0];
 
     return {
       success: true,

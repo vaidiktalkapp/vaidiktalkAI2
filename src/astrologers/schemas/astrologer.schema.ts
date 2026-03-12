@@ -139,6 +139,8 @@ export class Astrologer {
     type: {
       totalEarnings: { type: Number, default: 0 },
       totalMinutes: { type: Number, default: 0 },
+      callMinutes: { type: Number, default: 0 }, // ✅ NEW
+      chatMinutes: { type: Number, default: 0 }, // ✅ NEW
       totalOrders: { type: Number, default: 0 },
       callOrders: { type: Number, default: 0 },
       chatOrders: { type: Number, default: 0 },

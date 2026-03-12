@@ -531,6 +531,7 @@ export class OrdersService {
             order.astrologerId.toString(),
             userSpend,
             logicalSessionType,
+            chargedAmount / order.ratePerMinute // Approximate duration
           );
 
           this.logger.log(

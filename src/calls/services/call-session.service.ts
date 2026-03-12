@@ -507,6 +507,7 @@ export class CallSessionService {
             session.astrologerId.toString(),
             session.totalAmount,
             'call',
+            session.billedMinutes,
           );
           session.isPaid = true;
         }
