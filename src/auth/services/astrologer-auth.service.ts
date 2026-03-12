@@ -195,7 +195,7 @@ export class AstrologerAuthService {
    */
   async checkPhoneForLogin(phoneNumber: string, countryCode: string) {
     const astrologer = await this.findAstrologerByPhone(phoneNumber, countryCode, {
-      accountStatus: { $in: ['active', 'inactive', 'deleted', 'suspended'] }
+      accountStatus: { $in: ['active', 'inactive', 'deleted', 'suspended', ''] }
     });
 
     if (!astrologer) {
@@ -331,7 +331,7 @@ export class AstrologerAuthService {
         `Your account is suspended. Reason: ${astrologer.suspensionReason || 'Please contact support'}`
       );
     }
-    else if (astrologer.accountStatus === 'inactive') {
+    else if (astrologer.accountStatus === 'inactive' || astrologer.accountStatus === '') {
       astrologer.accountStatus = 'active';
     }
 
