@@ -74,7 +74,7 @@ export class OrdersService {
           totalChatSessions: 0,
           totalCallSessions: 0,
           messageCount: 0,
-          reviewSubmitted: false,
+          reviewGiven: false,
           payment: {
             status: 'none',
             heldAmount: 0,

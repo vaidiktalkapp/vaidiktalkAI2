@@ -499,7 +499,7 @@ async getAstrologerReviews(
       { orderId: review.orderId },
       { 
         $set: { 
-          reviewSubmitted: false,
+          reviewGiven: false,
           reviewId: null
         } 
       }
