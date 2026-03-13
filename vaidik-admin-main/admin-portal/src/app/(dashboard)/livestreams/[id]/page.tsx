@@ -8,7 +8,7 @@ import {
   ArrowLeft,
   Users,
   Clock,
-  IndianRupee,
+  Coins,
   Heart,
   MessageCircle,
   Gift,
@@ -153,33 +153,30 @@ export default function StreamDetailPage() {
 
       {/* Status Banner */}
       <div
-        className={`rounded-lg p-4 ${
-          stream?.status === 'live'
-            ? 'bg-red-50 border border-red-200'
-            : stream?.status === 'ended'
+        className={`rounded-lg p-4 ${stream?.status === 'live'
+          ? 'bg-red-50 border border-red-200'
+          : stream?.status === 'ended'
             ? 'bg-gray-50 border border-gray-200'
             : 'bg-blue-50 border border-blue-200'
-        }`}
+          }`}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <span
-              className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                stream?.status === 'live'
-                  ? 'bg-red-600 text-white animate-pulse'
-                  : stream?.status === 'ended'
+              className={`px-3 py-1 rounded-full text-sm font-semibold ${stream?.status === 'live'
+                ? 'bg-red-600 text-white animate-pulse'
+                : stream?.status === 'ended'
                   ? 'bg-gray-600 text-white'
                   : 'bg-blue-600 text-white'
-              }`}
+                }`}
             >
               {stream?.status === 'live' ? '🔴 LIVE' : stream?.status?.toUpperCase()}
             </span>
             <span
-              className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                stream?.currentState === 'on_call'
-                  ? 'bg-blue-100 text-blue-800'
-                  : 'bg-green-100 text-green-800'
-              }`}
+              className={`px-3 py-1 rounded-full text-sm font-semibold ${stream?.currentState === 'on_call'
+                ? 'bg-blue-100 text-blue-800'
+                : 'bg-green-100 text-green-800'
+                }`}
             >
               {stream?.currentState === 'on_call' ? '📞 On Call' : '🎥 Streaming'}
             </span>
@@ -263,17 +260,17 @@ export default function StreamDetailPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <a 
-                    href={url} 
-                    target="_blank" 
+                  <a
+                    href={url}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center px-3 py-1.5 bg-white text-gray-700 border border-gray-300 rounded hover:bg-gray-50 text-sm font-medium"
                   >
                     <PlayCircle size={16} className="mr-1.5" />
                     Play
                   </a>
-                  <a 
-                    href={url} 
+                  <a
+                    href={url}
                     download
                     className="flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded hover:bg-indigo-100 text-sm font-medium"
                   >
@@ -320,9 +317,9 @@ export default function StreamDetailPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Revenue</p>
-              <p className="text-2xl font-bold text-purple-600">₹{stream?.totalRevenue || 0}</p>
+              <p className="text-2xl font-bold text-purple-600">{stream?.totalRevenue || 0} ₹</p>
             </div>
-            <IndianRupee className="text-purple-600" size={32} />
+            <Coins className="text-purple-600" size={32} />
           </div>
         </div>
       </div>
@@ -392,11 +389,10 @@ export default function StreamDetailPage() {
             <div>
               <p className="text-sm text-gray-600">Call Mode</p>
               <span
-                className={`px-2 py-1 rounded text-xs font-semibold ${
-                  stream.currentCall.callMode === 'public'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-orange-100 text-orange-800'
-                }`}
+                className={`px-2 py-1 rounded text-xs font-semibold ${stream.currentCall.callMode === 'public'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-orange-100 text-orange-800'
+                  }`}
               >
                 {stream.currentCall.callMode}
               </span>
@@ -410,7 +406,7 @@ export default function StreamDetailPage() {
           </div>
         </div>
       )}
-      
+
       {/* Call Waitlist */}
       {waitlist.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
@@ -493,7 +489,7 @@ export default function StreamDetailPage() {
                     <td className="px-4 py-3 text-sm text-gray-600 capitalize">{call.callType}</td>
                     <td className="px-4 py-3 text-sm text-gray-600 capitalize">{call.callMode}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{formatDuration(call.duration || 0)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">₹{call.totalCharge || 0}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{call.totalCharge || 0} ₹</td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 text-xs font-semibold rounded ${call.status === 'completed' ? 'bg-green-100 text-green-800' : call.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
                         {call.status}
@@ -501,10 +497,10 @@ export default function StreamDetailPage() {
                     </td>
                     <td className="px-4 py-3 text-sm">
                       {stream?.recordingFiles?.length > 0 ? (
-                        <a 
-                          href={stream.recordingFiles[0]} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
+                        <a
+                          href={stream.recordingFiles[0]}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="text-indigo-600 hover:text-indigo-800 flex items-center"
                         >
                           <PlayCircle size={14} className="mr-1" /> View Stream

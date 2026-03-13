@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import Link from 'next/link';
-import { Eye, IndianRupee, Phone, MessageCircle, Video, Clock } from 'lucide-react';
+import { Eye, Coins, Phone, MessageCircle, Video, Clock } from 'lucide-react';
 import { DataTable, Column } from '@/components/shared/DataTable';
 import { FilterBar } from '@/components/shared/FilterBar';
 import { usePermission } from '@/hooks/use-permission';
@@ -97,7 +97,7 @@ export default function OrdersPage() {
       header: 'Amount',
       cell: (order) => (
         <span className="font-medium text-green-700 flex items-center text-sm">
-          <IndianRupee size={12} /> {order.totalAmount}
+          <Coins size={12} /> ₹{order.totalAmount}
         </span>
       )
     },
@@ -144,23 +144,23 @@ export default function OrdersPage() {
           <h1 className="text-2xl font-bold text-gray-900">Order Management</h1>
           <p className="text-sm text-gray-500">Overview of all platform activities</p>
         </div>
-        
+
         {/* Navigation Tabs */}
         <div className="flex bg-gray-100 p-1 rounded-lg">
-          <button 
-            onClick={() => router.push('/orders')} 
+          <button
+            onClick={() => router.push('/orders')}
             className="px-4 py-1.5 text-sm font-medium bg-white text-gray-900 shadow-sm rounded-md"
           >
             All Orders
           </button>
-          <button 
-            onClick={() => router.push('/orders/calls')} 
+          <button
+            onClick={() => router.push('/orders/calls')}
             className="px-4 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 rounded-md"
           >
             Calls & Video
           </button>
-          <button 
-            onClick={() => router.push('/orders/chats')} 
+          <button
+            onClick={() => router.push('/orders/chats')}
             className="px-4 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 rounded-md"
           >
             Chats

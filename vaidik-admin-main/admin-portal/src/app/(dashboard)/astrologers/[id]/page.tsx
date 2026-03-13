@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  ArrowLeft, Star, IndianRupee, TrendingUp, Activity,
+  ArrowLeft, Star, Coins, TrendingUp, Activity,
   MessageCircle, Phone, Video, Settings, Ban, CheckCircle,
   Wallet, Gift, Trash2
 } from 'lucide-react';
@@ -245,8 +245,8 @@ export default function AstrologerDetailPage() {
               <QuickStat label="Experience" value={`${astrologer.experienceYears || 0} years`} />
               <QuickStat label="Total Orders" value={astrologer.stats?.totalOrders || 0} />
               <QuickStat
-                label="Net Earnings"
-                value={`₹${(astrologer.earnings?.netEarnings || astrologer.stats?.totalEarnings || 0).toLocaleString()}`}
+                label="Net Earnings (₹)"
+                value={`${(astrologer.earnings?.netEarnings || astrologer.stats?.totalEarnings || 0).toLocaleString()} ₹`}
                 color="text-green-600"
               />
               <QuickStat
@@ -272,7 +272,7 @@ export default function AstrologerDetailPage() {
               onClick={() => setShowPricingModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              <IndianRupee size={18} />
+              <Coins size={18} />
               Update Pricing
             </button>
             <button
@@ -317,7 +317,7 @@ export default function AstrologerDetailPage() {
           <div className="p-6 text-center">
             <p className="text-xs font-medium text-gray-500 uppercase mb-2">Total Gross</p>
             <p className="text-xl font-bold text-gray-900">
-              ₹{(astrologer.earnings?.totalEarned || 0).toLocaleString()}
+              {(astrologer.earnings?.totalEarned || 0).toLocaleString()} ₹
             </p>
           </div>
 
@@ -328,35 +328,35 @@ export default function AstrologerDetailPage() {
               <p className="text-xs font-medium text-pink-700 uppercase">Gift Revenue</p>
             </div>
             <p className="text-xl font-bold text-pink-700">
-              ₹{(astrologer.earnings?.totalGiftEarnings || 0).toLocaleString()}
+              {(astrologer.earnings?.totalGiftEarnings || 0).toLocaleString()} ₹
             </p>
           </div>
 
           <div className="p-6 text-center">
             <p className="text-xs font-medium text-gray-500 uppercase mb-2">Platform Comm.</p>
             <p className="text-xl font-bold text-indigo-600">
-              ₹{(astrologer.earnings?.platformCommission || 0).toLocaleString()}
+              {(astrologer.earnings?.platformCommission || 0).toLocaleString()} ₹
             </p>
           </div>
 
           <div className="p-6 text-center bg-green-50">
             <p className="text-xs font-medium text-green-700 uppercase mb-2">Net Earnings</p>
             <p className="text-xl font-bold text-green-700">
-              ₹{(astrologer.earnings?.netEarnings || 0).toLocaleString()}
+              {(astrologer.earnings?.netEarnings || 0).toLocaleString()} ₹
             </p>
           </div>
 
           <div className="p-6 text-center">
             <p className="text-xs font-medium text-red-500 uppercase mb-2">Penalties</p>
             <p className="text-xl font-bold text-red-600">
-              -₹{(astrologer.earnings?.totalPenalties || 0).toLocaleString()}
+              -{(astrologer.earnings?.totalPenalties || 0).toLocaleString()} ₹
             </p>
           </div>
 
           <div className="p-6 text-center bg-blue-50">
             <p className="text-xs font-medium text-blue-700 uppercase mb-2">Withdrawable</p>
             <p className="text-xl font-bold text-blue-700">
-              ₹{(astrologer.earnings?.withdrawableAmount || 0).toLocaleString()}
+              {(astrologer.earnings?.withdrawableAmount || 0).toLocaleString()} ₹
             </p>
           </div>
         </div>
@@ -371,7 +371,7 @@ export default function AstrologerDetailPage() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <MetricCard label="Total Orders" value={performance.performance.totalOrders} />
             <MetricCard label="Completed" value={performance.performance.completedOrders} color="text-green-600" />
-            <MetricCard label="Revenue" value={`₹${performance.performance.totalRevenue.toLocaleString()}`} color="text-purple-600" />
+            <MetricCard label="Revenue" value={`${performance.performance.totalRevenue.toLocaleString()} ₹`} color="text-purple-600" />
             <MetricCard label="Avg Rating" value={performance.performance.averageRating.toFixed(1)} color="text-yellow-600" />
             {/* Added Gifts Count if available */}
             <MetricCard label="Gifts Received" value={astrologer.stats?.totalGifts || 0} color="text-pink-600" />
@@ -425,7 +425,7 @@ export default function AstrologerDetailPage() {
                       {new Date(penalty.appliedAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-red-600">
-                      ₹{penalty.amount}
+                      {penalty.amount} ₹
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {penalty.reason}
@@ -482,7 +482,7 @@ export default function AstrologerDetailPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <StatusBadge status={order.status} />
-                  <span className="font-bold text-gray-900">₹{order.totalAmount}</span>
+                  <span className="font-bold text-gray-900">{order.totalAmount} ₹</span>
                 </div>
               </Link>
             ))}
@@ -541,7 +541,7 @@ export default function AstrologerDetailPage() {
         <Modal title="Update Pricing" onClose={() => setShowPricingModal(false)}>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Chat Rate (₹/min)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Chat Rate (Cr/min)</label>
               <input
                 type="number"
                 value={chatRate}
@@ -550,7 +550,7 @@ export default function AstrologerDetailPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Call Rate (₹/min)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Call Rate (Cr/min)</label>
               <input
                 type="number"
                 value={callRate}
@@ -559,7 +559,7 @@ export default function AstrologerDetailPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Video Call Rate (₹/min)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Video Call Rate (Cr/min)</label>
               <input
                 type="number"
                 value={videoRate}
@@ -776,7 +776,7 @@ function ServiceCard({ icon: Icon, title, rate, enabled }: any) {
           <Ban size={20} className="text-gray-400" />
         )}
       </div>
-      <p className="text-2xl font-bold text-gray-900">₹{rate || 0}<span className="text-sm text-gray-500">/min</span></p>
+      <p className="text-2xl font-bold text-gray-900">{rate || 0}<span className="text-sm text-gray-500"> ₹/min</span></p>
       <p className="text-xs text-gray-500 mt-1">{enabled ? 'Active' : 'Disabled'}</p>
     </div>
   );
