@@ -33,7 +33,8 @@ export class AstronomyService {
                 try {
                     const result = JSON.parse(stdout.trim());
                     if (result.status === 'error') {
-                        return reject(new Error(result.message));
+                        this.logger.error(`Astrology Bridge Data Error: ${result.message}`);
+                        return reject(new Error(`Astrology Calculation Error: ${result.message}`));
                     }
                     resolve(result.data);
                 } catch (parseError) {

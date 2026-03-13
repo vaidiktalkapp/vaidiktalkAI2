@@ -83,21 +83,7 @@ def calculate_kundli(data):
         tzone = float(data.get('tzone', 5.5))
 
         if not HAS_SWISSEPH:
-            # Fallback mock data for environments without Swiss Ephemeris
-            cusps = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330]
-            houses = {i+1: {"cusp": cusps[i], "sign": ZODIAC_SIGNS[i]} for i in range(12)}
-            planets = {
-                "Sun": {"longitude": 45, "sign": "Taurus", "degree": 15, "house": 2},
-                "Moon": {"longitude": 125, "sign": "Leo", "degree": 5, "house": 5},
-                "Mars": {"longitude": 210, "sign": "Scorpio", "degree": 0, "house": 7},
-                "Mercury": {"longitude": 55, "sign": "Taurus", "degree": 25, "house": 2},
-                "Jupiter": {"longitude": 320, "sign": "Aquarius", "degree": 20, "house": 11},
-                "Venus": {"longitude": 10, "sign": "Aries", "degree": 10, "house": 1},
-                "Saturn": {"longitude": 280, "sign": "Capricorn", "degree": 10, "house": 10},
-                "Rahu": {"longitude": 190, "sign": "Libra", "degree": 10, "house": 7},
-                "Ketu": {"longitude": 10, "sign": "Aries", "degree": 10, "house": 1}
-            }
-            return {"status": "success", "data": {"planets": planets, "houses": houses, "note": "MOCK_DATA_USED"}}
+            return {"status": "error", "message": "Swiss Ephemeris library (pyswisseph) is not installed. Precise calculations are unavailable."}
 
         year, month, day = map(int, date_str.split('-'))
         hour, minute = map(int, time_str.split(':'))
@@ -108,6 +94,7 @@ def calculate_kundli(data):
 
         res = swe.houses(jd, lat, lon, b'P')
         cusps = res[0]
+        ascmc = res[1]
         houses = {i+1: {"cusp": cusps[i], "sign": ZODIAC_SIGNS[int(cusps[i] / 30)]} for i in range(12)}
 
         planets = {}
@@ -144,38 +131,52 @@ def match_kundli(data):
         girl_kundli = calculate_kundli(girl_data)
         
         if boy_kundli['status'] == 'error' or girl_kundli['status'] == 'error':
-            # Fallback for match
-            return {
-                "status": "success",
-                "data": {
-                    "score": 25,
-                    "total": 36,
-                    "verdict": "Good",
-                    "details": {"note": "MOCK_MATCH_USED"}
-                }
-            }
+            return {"status": "error", "message": "Could not calculate charts for matchmaking"}
 
         boy_moon = boy_kundli['data']['planets']['Moon']['longitude']
         girl_moon = girl_kundli['data']['planets']['Moon']['longitude']
 
-        # Simplified Guna Milan based on Moon's longitude difference
-        diff = abs(boy_moon - girl_moon)
-        # Random but deterministic score for demonstration
-        score = int((36 - (diff % 18)) if diff < 180 else (diff % 18 + 18))
-        if score > 36: score = 36
-        if score < 12: score = 15 # Minimum decent score for product feel
+        # Improved Guna Milan (Simplified Ashta-koota)
+        # 1. Varna (1 Point)
+        def get_varna(lon):
+            sign_idx = int(lon / 30)
+            if sign_idx in [3, 7, 11]: return 4 # Brahmin
+            if sign_idx in [0, 4, 8]: return 3  # Kshatriya
+            if sign_idx in [1, 5, 9]: return 2  # Vaishya
+            return 1 # Shudra
+        
+        varna_score = 1 if get_varna(boy_moon) >= get_varna(girl_moon) else 0
 
+        # 2. Bhakut (7 Points)
+        boy_sign = int(boy_moon / 30) + 1
+        girl_sign = int(girl_moon / 30) + 1
+        dist = (girl_sign - boy_sign + 12) % 12 + 1
+        bhakut_score = 7 if dist in [1, 7, 3, 4, 10, 11] else 0 # Simplified Bhakut
+
+        # 3. Yoni Harmony placeholder (4 Points)
+        harmony_base = abs(boy_moon % 30 - girl_moon % 30)
+        yoni_score = round(max(0, 4 - (harmony_base / 7.5)), 1)
+
+        # Total Score calculation (Simplified but based on moon positions)
+        sign_diff = abs(boy_sign - girl_sign)
+        base_score = 12
+        if sign_diff in [0, 4, 8]: base_score += 12 # Trine/Same
+        if sign_diff in [3, 4, 9, 10]: base_score += 8 # Good relative positions
+        
+        score = min(36, max(12, base_score + varna_score + bhakut_score + yoni_score))
+        
         verdict = "Excellent" if score > 28 else "Good" if score > 20 else "Average" if score > 15 else "Poor"
         
         return {
             "status": "success",
             "data": {
-                "score": score,
+                "score": round(score, 1),
                 "total": 36,
                 "verdict": verdict,
                 "details": {
                     "boy_moon_sign": boy_kundli['data']['planets']['Moon']['sign'],
-                    "girl_moon_sign": girl_kundli['data']['planets']['Moon']['sign']
+                    "girl_moon_sign": girl_kundli['data']['planets']['Moon']['sign'],
+                    "varna_match": varna_score
                 }
             }
         }
@@ -196,14 +197,7 @@ def calculate_dasha(data):
         # Get birth kundli for Moon position
         kundli = calculate_kundli({'date': birth_date, 'time': birth_time, 'lat': lat, 'lon': lon, 'tzone': tzone})
         if kundli['status'] == 'error' or not HAS_SWISSEPH:
-            # Fallback for Dasha
-            return {
-                "status": "success",
-                "data": {
-                    "mahadasha": {"lord": "Jupiter", "total_years": 16, "elapsed_years": 5, "remaining_years": 11, "end_date": "March 2035"},
-                    "antardasha": {"lord": "Venus", "elapsed_years": 1, "remaining_years": 1, "end_date": "May 2026"}
-                }
-            }
+            return {"status": "error", "message": "Precise Dasha calculation requires Swiss Ephemeris"}
         
         moon_lon = kundli['data']['planets']['Moon']['longitude']
         
@@ -311,17 +305,7 @@ def calculate_panchang(data):
 
         kundli = calculate_kundli({'date': date_str, 'time': time_str, 'lat': lat, 'lon': lon, 'tzone': tzone})
         if kundli['status'] == 'error' or not HAS_SWISSEPH:
-            return {
-                "status": "success",
-                "data": {
-                    "tithi": "Panchami",
-                    "nakshatra": "Rohini",
-                    "yoga": "Siddha",
-                    "karana": "Bava",
-                    "sun_sign": "Taurus",
-                    "moon_sign": "Leo"
-                }
-            }
+            return {"status": "error", "message": "Panchang requires Swiss Ephemeris for precise calculations"}
 
         sun_lon = kundli['data']['planets']['Sun']['longitude']
         moon_lon = kundli['data']['planets']['Moon']['longitude']
@@ -337,13 +321,26 @@ def calculate_panchang(data):
         nak_names = ["Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra", "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha", "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"]
         nakshatra = nak_names[(nak_num - 1) % 27]
 
+        # Yoga Calculation: (Sun + Moon) / (360/27)
+        yoga_names = ["Vishkumbha", "Preeti", "Ayushman", "Saubhagya", "Shobhana", "Atiganda", "Sukarma", "Dhriti", "Shoola", "Ganda", "Vriddhi", "Dhruva", "Vyaghata", "Harshana", "Vajra", "Siddhi", "Vyatipata", "Variyan", "Parigha", "Shiva", "Siddha", "Sadhya", "Shubha", "Shukla", "Brahma", "Indra", "Vaidhriti"]
+        yoga_num = int(((sun_lon + moon_lon) % 360) / (360/27)) + 1
+        yoga = yoga_names[(yoga_num - 1) % 27]
+
+        # Karana Calculation: Tithi is diff/12. Karana is half of a Tithi (6 degrees).
+        karana_num = int(diff / 6) + 1
+        karana_names = ["Kintughna", "Bava", "Balava", "Kaulava", "Taitila", "Gara", "Vanija", "Vishti", "Shakuni", "Chatushpada", "Naga"]
+        # There are 11 karanas. First one is special.
+        if tithi_num == 1: karana = "Kintughna"
+        elif tithi_num == 60: karana = "Naga"
+        else: karana = karana_names[(karana_num % 7) + 1] # Simplified recurring
+
         return {
             "status": "success",
             "data": {
                 "tithi": tithi,
                 "nakshatra": nakshatra,
-                "yoga": "Siddha", # Mock for now
-                "karana": "Bava",   # Mock for now
+                "yoga": yoga,
+                "karana": karana,
                 "sun_sign": kundli['data']['planets']['Sun']['sign'],
                 "moon_sign": kundli['data']['planets']['Moon']['sign']
             }

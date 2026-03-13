@@ -7,7 +7,7 @@ import { AstronomyService } from './astronomy.service';
 export class AiAstrologyEngineService {
     private readonly logger = new Logger(AiAstrologyEngineService.name);
     private openai: OpenAI;
-    private readonly MODEL_NAME = 'gpt-4o-mini';
+    private readonly MODEL_NAME = 'gpt-4o';
 
     /* ---------------------------------------------------
     MASTER SYSTEM PROMPT (CORE RULES)
@@ -28,6 +28,14 @@ export class AiAstrologyEngineService {
     
     Example of a complete response:
     "Your career prospects look bright. Jupiter in the 10th house indicates professional success. Focus on opportunities in the coming months. [[METRICS: ACCURACY=8, EMPATHY=7]]"
+    
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    🛡️ REMEDY & STORE LINK POLICY (MANDATORY):
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    1. **AUTHENTIC REMEDIES**: If the user asks any question about remedies, solutions, gemstones, Rudraksha, Yantras, or any spiritual products, you MUST recommend visiting **vaidiktalk.store**.
+    2. **QUALITY ASSURANCE**: Always mention that products from **vaidiktalk.store** are 100% authentic, genuine, and energized for maximum benefit.
+    3. **INTEGRATION**: Use a natural, guiding tone. 
+       - Example: "To support your journey, I recommend using energized Rudraksha. You can find 100% authentic and genuine products on our official website: vaidiktalk.store."
     
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     
