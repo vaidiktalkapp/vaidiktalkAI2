@@ -4,18 +4,18 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import { usePermission } from '@/hooks/use-permission';
-import { 
-  TrendingUp, Users, IndianRupee, ShoppingCart, 
+import {
+  TrendingUp, Users, Coins, ShoppingCart,
   Download, Calendar, BarChart3, ArrowRight, Wallet
 } from 'lucide-react';
-import { 
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid 
+import {
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
 import { toast } from 'sonner';
 
 export default function ReportsPage() {
   const { can } = usePermission();
-  
+
   // Default to last 30 days
   const [startDate, setStartDate] = useState(
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -121,9 +121,9 @@ export default function ReportsPage() {
               className="bg-transparent border-none p-0 text-sm text-gray-700 focus:ring-0 cursor-pointer"
             />
           </div>
-          
+
           <div className="h-6 w-px bg-gray-200 mx-1" />
-          
+
           <button
             onClick={() => {
               setStartDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
@@ -144,42 +144,42 @@ export default function ReportsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          
+
           {/* 1. REVENUE REPORT */}
           <ReportCard
             title="Revenue Overview"
-            icon={IndianRupee}
+            icon={Coins}
             color="emerald"
             onExport={() => handleExport('revenue')}
           >
             <div className="grid grid-cols-3 gap-4 mb-6">
-              <MetricItem 
-                label="Total Revenue" 
-                value={`₹${(summary?.revenue?.summary?.totalRevenue || 0).toLocaleString()}`} 
+              <MetricItem
+                label="Total Revenue"
+                value={`₹${(summary?.revenue?.summary?.totalRevenue || 0).toLocaleString()}`}
                 trend="up"
               />
-              <MetricItem 
-                label="Total Orders" 
-                value={summary?.revenue?.summary?.totalOrders || 0} 
+              <MetricItem
+                label="Total Orders"
+                value={summary?.revenue?.summary?.totalOrders || 0}
               />
-              <MetricItem 
-                label="Avg Order Value" 
-                value={`₹${(summary?.revenue?.summary?.avgOrderValue || 0).toFixed(0)}`} 
+              <MetricItem
+                label="Avg Order Value"
+                value={`₹${(summary?.revenue?.summary?.avgOrderValue || 0).toFixed(0)}`}
               />
             </div>
-            
+
             {/* Revenue Area Chart */}
             <div className="h-48 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={revenueChartData}>
                   <defs>
                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                     formatter={(val: number) => [`₹${val}`, 'Revenue']}
                   />
@@ -197,10 +197,10 @@ export default function ReportsPage() {
             onExport={() => handleExport('users')}
           >
             <div className="flex items-start justify-between mb-6">
-              <MetricItem 
-                label="New Users" 
-                value={summary?.users?.summary?.totalNewUsers || 0} 
-                highlight 
+              <MetricItem
+                label="New Users"
+                value={summary?.users?.summary?.totalNewUsers || 0}
+                highlight
                 color="text-blue-600"
               />
               <div className="flex gap-2">
@@ -217,8 +217,8 @@ export default function ReportsPage() {
             <div className="h-48 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={userChartData}>
-                  <Tooltip 
-                    cursor={{fill: '#f8fafc'}}
+                  <Tooltip
+                    cursor={{ fill: '#f8fafc' }}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   />
                   <Bar dataKey="users" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={20} />
@@ -252,7 +252,7 @@ export default function ReportsPage() {
                 <div className="text-2xl font-bold">{summary?.orders?.completionRate || 0}%</div>
               </div>
             </div>
-            
+
             {/* Order Type Breakdown */}
             <div className="mt-6">
               <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">Order Types</h4>
@@ -265,9 +265,9 @@ export default function ReportsPage() {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="h-1.5 w-32 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full ${type._id === 'chat' ? 'bg-blue-400' : 'bg-pink-400'}`} 
-                          style={{ width: `${(type.count / (summary?.orders?.totalOrders || 1)) * 100}%` }} 
+                        <div
+                          className={`h-full rounded-full ${type._id === 'chat' ? 'bg-blue-400' : 'bg-pink-400'}`}
+                          style={{ width: `${(type.count / (summary?.orders?.totalOrders || 1)) * 100}%` }}
                         />
                       </div>
                       <span className="text-sm font-bold text-gray-900 w-12 text-right">{type.count}</span>
@@ -337,35 +337,35 @@ export default function ReportsPage() {
               color="indigo"
             >
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <PaymentMetric 
+                <PaymentMetric
                   label="Recharges"
                   amount={summary?.payments?.recharges?.total}
                   count={summary?.payments?.recharges?.count}
                   color="text-emerald-600"
                   bgColor="bg-emerald-50"
                 />
-                <PaymentMetric 
+                <PaymentMetric
                   label="Usage (Deductions)"
                   amount={summary?.payments?.deductions?.total}
                   count={summary?.payments?.deductions?.count}
                   color="text-blue-600"
                   bgColor="bg-blue-50"
                 />
-                <PaymentMetric 
+                <PaymentMetric
                   label="Refunds"
                   amount={summary?.payments?.refunds?.total}
                   count={summary?.payments?.refunds?.count}
                   color="text-red-600"
                   bgColor="bg-red-50"
                 />
-                <PaymentMetric 
+                <PaymentMetric
                   label="Bonuses"
                   amount={summary?.payments?.bonuses?.total}
                   count={summary?.payments?.bonuses?.count}
                   color="text-purple-600"
                   bgColor="bg-purple-50"
                 />
-                <PaymentMetric 
+                <PaymentMetric
                   label="Gift Cards"
                   amount={summary?.payments?.giftcards?.total}
                   count={summary?.payments?.giftcards?.count}
@@ -403,7 +403,7 @@ function ReportCard({ title, icon: Icon, color, children, onExport }: any) {
           <h3 className="font-bold text-gray-800">{title}</h3>
         </div>
         {onExport && (
-          <button 
+          <button
             onClick={onExport}
             className="flex items-center gap-2 text-xs font-medium text-gray-500 hover:text-indigo-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-50"
           >

@@ -107,7 +107,7 @@ export default function ShopifyOrdersPage() {
         <StatBox label="Total Revenue" value={`₹${(stats?.summary?.totalRevenue || 0).toLocaleString()}`} icon={TrendingUp} color="text-purple-600" />
       </div>
 
-      <FilterBar 
+      <FilterBar
         search={{
           value: search,
           onChange: (val) => { setSearch(val); setPage(1); },

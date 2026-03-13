@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
-import { TrendingUp, Users, IndianRupee, Video, Award } from 'lucide-react';
+import { TrendingUp, Users, Coins, Video, Award } from 'lucide-react';
 
 export default function StreamAnalyticsPage() {
   // Fetch top streams
@@ -64,9 +64,9 @@ export default function StreamAnalyticsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Revenue</p>
-              <p className="text-2xl font-bold text-green-600">₹{(stats?.totalRevenue || 0).toLocaleString()}</p>
+              <p className="text-2xl font-bold text-green-600">{(stats?.totalRevenue || 0).toLocaleString()} ₹</p>
             </div>
-            <IndianRupee className="text-green-600" size={32} />
+            <Coins className="text-green-600" size={32} />
           </div>
         </div>
         <div className="bg-white rounded-lg shadow p-4">
@@ -113,7 +113,7 @@ export default function StreamAnalyticsPage() {
                   <td className="px-4 py-3 text-sm text-gray-900">{stream.totalViews?.toLocaleString()}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{stream.peakViewers}</td>
                   <td className="px-4 py-3 text-sm font-semibold text-green-600">
-                    ₹{stream.totalRevenue?.toLocaleString()}
+                    {stream.totalRevenue?.toLocaleString()} ₹
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900">{stream.totalCalls || 0}</td>
                 </tr>
@@ -126,7 +126,7 @@ export default function StreamAnalyticsPage() {
       {/* Top Earning Astrologers */}
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <IndianRupee className="mr-2 text-green-600" size={24} />
+          <Coins className="mr-2 text-green-600" size={24} />
           Top Earning Astrologers (Livestreams)
         </h3>
         <div className="overflow-x-auto">
@@ -169,7 +169,7 @@ export default function StreamAnalyticsPage() {
                   <td className="px-4 py-3 text-sm text-gray-900">{earner.totalViews?.toLocaleString()}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{earner.totalCalls || 0}</td>
                   <td className="px-4 py-3 text-sm font-semibold text-green-600">
-                    ₹{earner.totalRevenue?.toLocaleString()}
+                    {earner.totalRevenue?.toLocaleString()} ₹
                   </td>
                 </tr>
               ))}

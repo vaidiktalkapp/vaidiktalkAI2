@@ -5,10 +5,10 @@ import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
 import { usePermission } from '@/hooks/use-permission';
 import ActivityFeed from '@/components/dashboard/ActivityFeed';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-import { Loader2, Users, IndianRupee, Activity, ShoppingCart, TrendingUp } from 'lucide-react';
+import { Loader2, Users, Coins, Activity, ShoppingCart, TrendingUp } from 'lucide-react';
 
 export default function DashboardPage() {
   const { user } = usePermission();
@@ -21,7 +21,7 @@ export default function DashboardPage() {
       const response = await adminApi.getDashboardStats();
       return response.data.data;
     },
-    refetchInterval: 30000, 
+    refetchInterval: 30000,
   });
 
   // 2. Fetch Revenue Chart Data
@@ -68,7 +68,7 @@ export default function DashboardPage() {
           label="Net Revenue"
           value={`₹${analytics?.financials?.netRevenue?.toLocaleString() || 0}`}
           subtext="After commissions & bonuses"
-          icon={IndianRupee}
+          icon={Coins}
           color="text-emerald-600"
           bg="bg-emerald-50"
           loading={isLoadingStats}
@@ -104,7 +104,7 @@ export default function DashboardPage() {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         {/* Revenue Chart */}
         <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
           <div className="flex justify-between items-center mb-6">
@@ -139,8 +139,8 @@ export default function DashboardPage() {
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
@@ -155,7 +155,7 @@ export default function DashboardPage() {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: '#6b7280', fontSize: 12 }}
-                    tickFormatter={(value) => `₹${value >= 1000 ? `${value/1000}k` : value}`}
+                    tickFormatter={(value) => `₹${value >= 1000 ? `${value / 1000}k` : value}`}
                   />
                   <Tooltip
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px -5px rgb(0 0 0 / 0.1)' }}
