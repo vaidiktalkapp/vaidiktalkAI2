@@ -81,13 +81,13 @@ const getRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diff = (now.getTime() - date.getTime()) / 1000;
-    
+
     if (diff < 60) return 'Just now';
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
     if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-    
-    return date.toLocaleDateString(); 
+
+    return date.toLocaleDateString();
   } catch (e) {
     return '';
   }
@@ -96,7 +96,7 @@ const getRelativeTime = (dateString: string) => {
 // ✅ Helper to format last message preview text
 const getLastMessageText = (msg: Conversation['lastMessage']) => {
   if (!msg) return 'Start a conversation...';
-  
+
   switch (msg.type) {
     case 'text':
       return msg.content;
@@ -120,12 +120,12 @@ const getLastMessageText = (msg: Conversation['lastMessage']) => {
 export default function OrdersPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('chat');
-  
+
   // Data States
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [callSession, setcallSession] = useState<CallSession[]>([]);
   const [reports, setReports] = useState<BlockedAstrologer[]>([]);
-  
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -202,11 +202,10 @@ export default function OrdersPage() {
           <div className="flex gap-4 py-4 overflow-x-auto no-scrollbar">
             <button
               onClick={() => setActiveTab('chat')}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold transition-all whitespace-nowrap ${
-                activeTab === 'chat'
-                  ? 'bg-yellow-400 text-black shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold transition-all whitespace-nowrap ${activeTab === 'chat'
+                ? 'bg-yellow-400 text-black shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -215,11 +214,10 @@ export default function OrdersPage() {
             </button>
             <button
               onClick={() => setActiveTab('call')}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold transition-all whitespace-nowrap ${
-                activeTab === 'call'
-                  ? 'bg-yellow-400 text-black shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold transition-all whitespace-nowrap ${activeTab === 'call'
+                ? 'bg-yellow-400 text-black shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -228,14 +226,13 @@ export default function OrdersPage() {
             </button>
             <button
               onClick={() => setActiveTab('reports')}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold transition-all whitespace-nowrap ${
-                activeTab === 'reports'
-                  ? 'bg-yellow-400 text-black shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-semibold transition-all whitespace-nowrap ${activeTab === 'reports'
+                ? 'bg-yellow-400 text-black shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               Reports
             </button>
@@ -285,13 +282,13 @@ export default function OrdersPage() {
                               {getRelativeTime(convo.updatedAt)}
                             </span>
                           </div>
-                          
+
                           <div className="flex justify-between items-center">
                             {/* ✅ Show Last Message Text instead of generic "Start conversation" */}
                             <p className={`text-sm truncate pr-4 ${convo.unreadCount > 0 ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
                               {getLastMessageText(convo.lastMessage)}
                             </p>
-                            
+
                             {/* Unread Badge */}
                             {convo.unreadCount > 0 && (
                               <span className="shrink-0 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-5 text-center">
@@ -300,7 +297,7 @@ export default function OrdersPage() {
                             )}
                           </div>
                         </div>
-                        
+
                         {/* Chevron */}
                         <div className="text-gray-300 group-hover:text-yellow-500 transition-colors">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -312,7 +309,7 @@ export default function OrdersPage() {
                   ))}
                 </div>
               ) : (
-                <EmptyState 
+                <EmptyState
                   icon={
                     <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -350,27 +347,27 @@ export default function OrdersPage() {
                               ₹{session.totalAmount?.toFixed(0)}
                             </span>
                           </div>
-                          
+
                           <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
                             <span className="flex items-center gap-1">
-                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                               {new Date(session.createdAt).toLocaleDateString()}
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                              {new Date(session.createdAt).toLocaleDateString()}
                             </span>
                             {session.duration > 0 && (
-                                <span className="flex items-center gap-1">
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    {formatDuration(session.duration)}
-                                </span>
+                              <span className="flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                {formatDuration(session.duration)}
+                              </span>
                             )}
                           </div>
-                          
+
                           <div className="flex items-center justify-between">
-                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${getStatusColor(session.status)}`}>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${getStatusColor(session.status)}`}>
                               {session.status}
-                             </span>
-                             {session.status === 'ended' &&  (
-                                <span className="text-xs font-medium text-yellow-600 hover:underline">Rate Call</span>
-                             )}
+                            </span>
+                            {session.status === 'ended' && (
+                              <span className="text-xs font-medium text-yellow-600 hover:underline">Rate Call</span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -378,7 +375,7 @@ export default function OrdersPage() {
                   ))}
                 </div>
               ) : (
-                <EmptyState 
+                <EmptyState
                   icon={
                     <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -432,7 +429,7 @@ export default function OrdersPage() {
                   ))}
                 </div>
               ) : (
-                <EmptyState 
+                <EmptyState
                   icon={
                     <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
