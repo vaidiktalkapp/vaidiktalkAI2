@@ -42,17 +42,26 @@ const AiChatIntakeModal = ({ isOpen, onClose, astrologer }: AiChatIntakeModalPro
             const u = user as any;
 
 
-            // Format date from ISO string to YYYY-MM-DD for input field
-            let formattedDate = '';
+            // Format date for input field (picker expects YYYY-MM-DD)
+            let pickerDate = '';
             if (u.dateOfBirth) {
-                const date = new Date(u.dateOfBirth);
-                formattedDate = date.toISOString().split('T')[0]; // "2002-02-20"
+                if (u.dateOfBirth.includes('-') && u.dateOfBirth.split('-')[0].length === 4) {
+                    pickerDate = u.dateOfBirth;
+                } else if (u.dateOfBirth.includes('-') && u.dateOfBirth.split('-')[0].length <= 2) {
+                    const [d, m, y] = u.dateOfBirth.split('-');
+                    pickerDate = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                } else {
+                    const date = new Date(u.dateOfBirth);
+                    if (!isNaN(date.getTime())) {
+                        pickerDate = date.toISOString().split('T')[0];
+                    }
+                }
             }
 
             setIntakeData({
                 name: u.name || '',
                 gender: u.gender ? (u.gender.charAt(0).toUpperCase() + u.gender.slice(1)) : 'Male',
-                date: formattedDate,
+                date: pickerDate,
                 time: u.timeOfBirth || '',
                 place: u.placeOfBirth || '',
                 maritalStatus: u.maritalStatus || 'Single',
@@ -69,19 +78,25 @@ const AiChatIntakeModal = ({ isOpen, onClose, astrologer }: AiChatIntakeModalPro
         try {
             setLoading(true);
 
-            // Update profile in background
-            const profilePayload = {
-                gender: intakeData.gender.toLowerCase(),
-                dateOfBirth: intakeData.date,
-                timeOfBirth: intakeData.time,
-                placeOfBirth: intakeData.place,
-            };
+            // Reformat ISO (YYYY-MM-DD) to DD-MM-YYYY for backend/astrology engine
+            const [y, m, d] = intakeData.date.split('-');
+            const formattedDate = `${d}-${m}-${y}`;
 
-            console.log('📡 Sending profile update payload:', profilePayload);
-            await AuthService.updateBirthDetails(profilePayload);
+            // Update profile in background (non-blocking — don't let profile update failure stop the chat)
+            try {
+                const profilePayload = {
+                    gender: intakeData.gender.toLowerCase(),
+                    dateOfBirth: intakeData.date, // Send YYYY-MM-DD (ISO) — backend @IsDateString requires it
+                    timeOfBirth: intakeData.time,
+                    placeOfBirth: intakeData.place,
+                };
 
-            // Refresh local user state
-            if (refreshUser) refreshUser();
+                console.log('📡 Sending profile update payload:', profilePayload);
+                await AuthService.updateBirthDetails(profilePayload);
+                if (refreshUser) refreshUser();
+            } catch (profileErr: any) {
+                console.warn('⚠️ [Intake Modal] Profile update failed (non-blocking):', profileErr.message);
+            }
 
             // Start AI Chat Order (Next.js Path)
             const order = await aiAstrologerService.startAiChatOrder(
@@ -89,7 +104,7 @@ const AiChatIntakeModal = ({ isOpen, onClose, astrologer }: AiChatIntakeModalPro
                 'chat',
                 {
                     name: intakeData.name,
-                    dateOfBirth: intakeData.date,
+                    dateOfBirth: formattedDate,
                     timeOfBirth: intakeData.time,
                     placeOfBirth: intakeData.place,
                     query: '',
@@ -118,9 +133,10 @@ const AiChatIntakeModal = ({ isOpen, onClose, astrologer }: AiChatIntakeModalPro
                 return;
             }
 
-            // Store intake for session display
+            // Store intake for session display (using formatted DD-MM-YYYY)
             localStorage.setItem(`ai-chat-intake-${orderId}`, JSON.stringify({
                 ...intakeData,
+                date: formattedDate,
                 query: ''
             }));
 
@@ -130,7 +146,8 @@ const AiChatIntakeModal = ({ isOpen, onClose, astrologer }: AiChatIntakeModalPro
             onClose();
         } catch (err: any) {
             console.error("❌ [Intake Modal] Error starting consultation", err);
-            const errorMessage = err.response?.data?.message || err.message || 'Failed to start consultation. Please try again.';
+            const rawMsg = err.response?.data?.message || err.message || 'Failed to start consultation. Please try again.';
+            const errorMessage = Array.isArray(rawMsg) ? rawMsg.join(', ') : String(rawMsg);
             toast.error(errorMessage);
 
             if (errorMessage.toLowerCase().includes('insufficient balance')) {

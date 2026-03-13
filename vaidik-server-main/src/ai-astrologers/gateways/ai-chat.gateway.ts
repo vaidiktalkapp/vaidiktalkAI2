@@ -313,28 +313,60 @@ export class AiChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 accuracy = this.aiEngineService.calculateQualityScore(aiResponse) * 10;
             }
 
-            const cleanResponse = aiResponse
-                ?.replace(/\[\[METRICS:.*?\]\]/gi, '')
-                ?.replace(/[#*]/g, '')
-                ?.trim();
+            const cleanResponseRaw = aiResponse?.replace(/\[\[METRICS:.*?\]\]/gi, '')?.trim();
 
-            const { message: aiMessage, session: updatedSession3 } = await this.aiChatSessionService.saveMessage(
-                sessionId,
-                cleanResponse,
-                'astrologer',
-                chatSession.astrologerId.toString()
-            );
+            // Split response into highly granular "cards" (bubbles) as requested.
+            // Split by:
+            // 1. Double newlines (paragraphs)
+            // 2. Start of a bullet point line (*, -, or •)
+            // 3. Start of a numbered line (1., 2., etc.)
+            // We use lookahead to keep the bullet/number in the next part.
+            const responseParts = cleanResponseRaw
+                .split(/\n\s*\n|(?=\n\s*[-*•]\s+)|(?=\n\s*\d+\.\s+[A-Z])/)
+                .map(p => p.trim())
+                .filter(Boolean);
 
-            await this.aiChatSessionService.updateProfilePerformanceStats(
-                chatSession.astrologerId.toString(),
-                latencySeconds,
-                accuracy
-            );
+            for (const part of responseParts) {
+                const cleanPart = part;
 
-            const currentMsgCount = updatedSession3.messageCount || 1;
-            updatedSession3.avgLatency = (((updatedSession3.avgLatency || 0) * (currentMsgCount - 1)) + latencySeconds) / currentMsgCount;
-            updatedSession3.avgAccuracy = (((updatedSession3.avgAccuracy || 0) * (currentMsgCount - 1)) + accuracy) / currentMsgCount;
-            await (updatedSession3 as any).save();
+                const { message: aiMessage, session: updatedSession3 } = await this.aiChatSessionService.saveMessage(
+                    sessionId,
+                    cleanPart,
+                    'astrologer',
+                    chatSession.astrologerId.toString()
+                );
+
+                const currentMsgCount = updatedSession3.messageCount || 1;
+                updatedSession3.avgLatency = (((updatedSession3.avgLatency || 0) * (currentMsgCount - 1)) + latencySeconds) / currentMsgCount;
+                updatedSession3.avgAccuracy = (((updatedSession3.avgAccuracy || 0) * (currentMsgCount - 1)) + accuracy) / currentMsgCount;
+                await (updatedSession3 as any).save();
+
+                const standardPayload = {
+                    _id: (aiMessage as any)._id.toString(),
+                    messageId: aiMessage.messageId,
+                    sessionId: sessionId,
+                    orderId: chatSession.orderId || sessionId,
+                    senderId: chatSession.astrologerId.toString(),
+                    senderModel: 'AiAstrologerProfile',
+                    receiverId: userId,
+                    receiverModel: 'User',
+                    type: 'text',
+                    content: cleanPart,
+                    message: cleanPart,
+                    deliveryStatus: 'sent',
+                    sentAt: new Date(),
+                    threadId: sessionId,
+                    isAi: true
+                };
+
+                this.logger.log(`📡 Sending AI Bubble to ${sessionId}: ${cleanPart.substring(0, 30)}...`);
+                this.server.to(sessionId).emit('ai_message', standardPayload);
+                this.server.to(sessionId).emit('new_message', standardPayload);
+                this.server.to(sessionId).emit('chat_message', standardPayload);
+
+                // Small delay between bubbles for better visual flow
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
 
             this.server.to(sessionId).emit('ai_typing', {
                 sessionId: sessionId,
@@ -342,29 +374,6 @@ export class AiChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 isTyping: false,
                 timestamp: new Date()
             });
-
-            const standardPayload = {
-                _id: (aiMessage as any)._id.toString(),
-                messageId: aiMessage.messageId,
-                sessionId: sessionId,
-                orderId: chatSession.orderId || sessionId,
-                senderId: chatSession.astrologerId.toString(),
-                senderModel: 'AiAstrologerProfile',
-                receiverId: userId,
-                receiverModel: 'User',
-                type: 'text',
-                content: cleanResponse,
-                message: cleanResponse,
-                deliveryStatus: 'sent',
-                sentAt: new Date(),
-                threadId: sessionId,
-                isAi: true
-            };
-
-            this.logger.log(`📡 Sending AI Response to ${sessionId}: ${cleanResponse.substring(0, 30)}...`);
-            this.server.to(sessionId).emit('ai_message', standardPayload);
-            this.server.to(sessionId).emit('new_message', standardPayload);
-            this.server.to(sessionId).emit('chat_message', standardPayload);
 
             try {
                 const suggestions = await this.aiEngineService.suggestFollowUps(

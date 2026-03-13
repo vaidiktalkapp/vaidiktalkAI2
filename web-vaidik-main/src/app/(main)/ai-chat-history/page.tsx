@@ -13,6 +13,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import io from 'socket.io-client';
+import { renderMessageContent } from '@/lib/renderUtils';
 
 const AiChatHistoryPage = () => {
     const { user, isAuthenticated } = useAuth();
@@ -555,7 +556,7 @@ const AiChatHistoryPage = () => {
                                                     </div>
                                                 )}
                                                 <p className="leading-relaxed whitespace-pre-wrap break-words">
-                                                    {msg.content}
+                                                    {renderMessageContent(msg.content)}
                                                 </p>
                                                 <div className={`text-xs mt-2 opacity-60 flex items-center gap-2 ${msg.senderModel === 'User' ? 'justify-end' : 'justify-start'
                                                     }`}>

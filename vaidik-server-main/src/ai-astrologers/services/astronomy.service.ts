@@ -82,4 +82,44 @@ export class AstronomyService {
     async calculateAllData(date: string, time: string, lat: string, lon: string, tzone: number = 5.5): Promise<any> {
         return this.calculateAstrology('all', { date, time, lat, lon, tzone });
     }
+
+    /**
+     * Geocode a place name to lat/lon using OpenStreetMap Nominatim API.
+     * Returns { lat: number, lon: number }
+     */
+    async geocodePlaceOfBirth(place: string): Promise<{ lat: number; lon: number }> {
+        if (!place || place.trim().length === 0) {
+            throw new Error('Place of birth is empty');
+        }
+
+        try {
+            const encoded = encodeURIComponent(place.trim());
+            const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1`;
+
+            const response = await fetch(url, {
+                headers: {
+                    'User-Agent': 'VaidikTalk-Astrology/1.0'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Nominatim API returned ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (!data || data.length === 0) {
+                throw new Error(`No geocode results for "${place}"`);
+            }
+
+            const lat = parseFloat(data[0].lat);
+            const lon = parseFloat(data[0].lon);
+
+            this.logger.log(`📍 Geocoded "${place}" → lat=${lat}, lon=${lon}`);
+            return { lat, lon };
+        } catch (error) {
+            this.logger.error(`❌ Geocoding failed for "${place}":`, error.message);
+            throw error;
+        }
+    }
 }

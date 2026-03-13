@@ -7730,6 +7730,442 @@
         ]
       }
     },
+    "/api/v1/admin/ai-astrologers": {
+      "get": {
+        "operationId": "AdminAiAstrologersController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      },
+      "post": {
+        "operationId": "AdminAiAstrologersController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAiAstrologerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/stats": {
+      "get": {
+        "operationId": "AdminAiAstrologersController_getQuickStats",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/performance-metrics": {
+      "get": {
+        "operationId": "AdminAiAstrologersController_getPerformanceMetrics",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/overall-stats": {
+      "get": {
+        "operationId": "AdminAiAstrologersController_getOverallStats",
+        "parameters": [
+          {
+            "name": "timeRange",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/chat-logs": {
+      "get": {
+        "operationId": "AdminAiAstrologersController_getChatLogs",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/chat-logs/export": {
+      "get": {
+        "operationId": "AdminAiAstrologersController_exportChats",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/chat-logs/{id}": {
+      "get": {
+        "operationId": "AdminAiAstrologersController_getChatLogDetails",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/chat-logs/{id}/messages": {
+      "get": {
+        "operationId": "AdminAiAstrologersController_getChatMessages",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/chat-stats": {
+      "get": {
+        "operationId": "AdminAiAstrologersController_getChatStats",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/transactions": {
+      "get": {
+        "operationId": "AdminAiAstrologersController_getTransactions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/transactions/export": {
+      "get": {
+        "operationId": "AdminAiAstrologersController_exportBilling",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/wallet-stats": {
+      "get": {
+        "operationId": "AdminAiAstrologersController_getWalletStats",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/analytics/revenue": {
+      "get": {
+        "operationId": "AdminAiAstrologersController_getAIRevenueAnalytics",
+        "parameters": [
+          {
+            "name": "timeRange",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/analytics/time-slots": {
+      "get": {
+        "operationId": "AdminAiAstrologersController_getAITimeSlotAnalysis",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/analytics/comparison": {
+      "get": {
+        "operationId": "AdminAiAstrologersController_getAIAstrologerComparison",
+        "parameters": [
+          {
+            "name": "metric",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/export": {
+      "get": {
+        "operationId": "AdminAiAstrologersController_exportProfiles",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/{id}": {
+      "get": {
+        "operationId": "AdminAiAstrologersController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      },
+      "put": {
+        "operationId": "AdminAiAstrologersController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAiAstrologerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      },
+      "delete": {
+        "operationId": "AdminAiAstrologersController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/{id}/toggle-availability": {
+      "patch": {
+        "operationId": "AdminAiAstrologersController_toggleAvailability",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-astrologers/{id}/status": {
+      "patch": {
+        "operationId": "AdminAiAstrologersController_updateStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AdminAiAstrologers"
+        ]
+      }
+    },
     "/api/v1/remedies/stats/summary": {
       "get": {
         "operationId": "RemediesController_getRemedyStats",
@@ -9281,6 +9717,394 @@
           "Moderation"
         ]
       }
+    },
+    "/api/v1/ai-astrologers": {
+      "get": {
+        "operationId": "AiAstrologersController_listAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/ai-astrologers/{id}": {
+      "get": {
+        "operationId": "AiAstrologersController_getDetail",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/ai-astrologers/chat/start": {
+      "post": {
+        "operationId": "AiAstrologersController_startChat",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartAiChatDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/ai-astrologers/chat/message": {
+      "post": {
+        "operationId": "AiAstrologersController_sendMessage",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendAiMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/ai-astrologers/personality-presets": {
+      "get": {
+        "operationId": "AiAstrologersController_getPersonalityPresets",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/ai-astrologers/{id}/personality": {
+      "patch": {
+        "operationId": "AiAstrologersController_updatePersonality",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePersonalityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/ai-astrologers/analytics/revenue": {
+      "get": {
+        "operationId": "AiAstrologersController_getRevenueAnalytics",
+        "parameters": [
+          {
+            "name": "timeRange",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/ai-astrologers/analytics/time-slots": {
+      "get": {
+        "operationId": "AiAstrologersController_getTimeSlotAnalysis",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/ai-astrologers/analytics/comparison": {
+      "get": {
+        "operationId": "AiAstrologersController_getAstrologerComparison",
+        "parameters": [
+          {
+            "name": "metric",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/ai-astrologers/analytics/conversion-metrics": {
+      "get": {
+        "operationId": "AiAstrologersController_getConversionMetrics",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiAstrologers"
+        ]
+      }
+    },
+    "/api/v1/ai-orders/ai": {
+      "post": {
+        "operationId": "AiOrdersController_initiateAiChat",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartAiChatDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiOrders"
+        ]
+      },
+      "get": {
+        "operationId": "AiOrdersController_getAiHistory",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiOrders"
+        ]
+      }
+    },
+    "/api/v1/ai-orders/fix-identity-migration": {
+      "post": {
+        "operationId": "AiOrdersController_fixIdentityMigration",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiOrders"
+        ]
+      }
+    },
+    "/api/v1/ai-orders/ai/{orderId}": {
+      "get": {
+        "operationId": "AiOrdersController_getAiOrderDetails",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiOrders"
+        ]
+      }
+    },
+    "/api/v1/ai-orders/ai/{orderId}/end": {
+      "post": {
+        "operationId": "AiOrdersController_endAiChat",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiOrders"
+        ]
+      }
+    },
+    "/api/v1/ai-history": {
+      "get": {
+        "operationId": "AiHistoryController_getHistory",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiHistory"
+        ]
+      }
+    },
+    "/api/v1/ai-history/{orderId}": {
+      "get": {
+        "operationId": "AiHistoryController_getOrderDetails",
+        "parameters": [
+          {
+            "name": "orderId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "AiHistory"
+        ]
+      }
     }
   },
   "info": {
@@ -9481,6 +10305,14 @@
         "type": "object",
         "properties": {}
       },
+      "CreateAiAstrologerDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateAiAstrologerDto": {
+        "type": "object",
+        "properties": {}
+      },
       "UpdateRemedyStatusDto": {
         "type": "object",
         "properties": {}
@@ -9649,6 +10481,18 @@
         "properties": {}
       },
       "UpdateBankAccountDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "StartAiChatDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "SendAiMessageDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdatePersonalityDto": {
         "type": "object",
         "properties": {}
       }

@@ -8,6 +8,9 @@ import aiAstrologerService, { AiChatMessage, AiAstrologer } from '@/lib/aiAstrol
 import { Send, Clock, Wallet, LogOut, MessageCircle, Sparkles, User, Info, Languages, Star, Shield, Zap, Moon, Sun, Heart, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
+import { renderMessageContent } from '@/lib/renderUtils';
+import LowBalanceBanner from '@/components/chat/LowBalanceBanner';
+import QuickRechargeModal from '@/components/chat/QuickRechargeModal';
 
 const MANTRA_ROTATION_SPEED_MS = 4000;
 
@@ -40,6 +43,7 @@ const ChatPage = () => {
     return 'English';
   });
   const [loading, setLoading] = useState(true);
+  const [showRechargeModal, setShowRechargeModal] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasSentIntake = useRef(false);
@@ -687,6 +691,21 @@ Occupation: ${intakeData.occupation || 'Unknown'}`;
 
         {/* Messages Area */}
         <main className="flex-grow overflow-y-auto p-4 md:p-6 space-y-4 bg-gradient-to-b from-orange-50/30 to-amber-50/20 relative custom-scrollbar">
+          
+          {/* Low Balance Warning */}
+          {(() => {
+            const rate = astrologer?.chatRate || 10;
+            const remainingSeconds = rate > 0 ? (timer.walletBalance / rate) * 60 : 0;
+            return (
+              <div className="sticky top-0 z-50 -mx-4 md:-mx-6 -mt-4 md:-mt-6 mb-4">
+                <LowBalanceBanner
+                  remainingTime={remainingSeconds}
+                  onRechargeClick={() => setShowRechargeModal(true)}
+                />
+              </div>
+            );
+          })()}
+
           {/* Welcome Message */}
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-6 opacity-70">
@@ -730,9 +749,9 @@ Occupation: ${intakeData.occupation || 'Unknown'}`;
                     </div>
                   )}
 
-                  <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap relative z-10 font-['Inter',sans-serif] font-medium tracking-tight">
-                    {msg.content}
-                  </p>
+                  <div className="text-sm md:text-base leading-relaxed whitespace-pre-wrap relative z-10 font-['Inter',sans-serif] font-medium tracking-tight">
+                    {renderMessageContent(msg.content)}
+                  </div>
 
                   <div className={`flex items-center justify-between mt-3 text-[9px] md:text-[10px] font-bold tracking-wider uppercase opacity-60 ${msg.senderModel === 'User' ? 'text-orange-100' : 'text-orange-800/40'}`}>
                     <span className="flex items-center gap-1.5">
@@ -837,6 +856,17 @@ Occupation: ${intakeData.occupation || 'Unknown'}`;
           </div>
         </footer>
       </div>
+
+      <QuickRechargeModal
+        isOpen={showRechargeModal}
+        onClose={() => setShowRechargeModal(false)}
+        ratePerMinute={astrologer?.chatRate || 10}
+        astrologerName={astrologer?.name || 'Astrologer'}
+        onSuccess={(newBalance) => {
+          setTimer(prev => ({ ...prev, walletBalance: newBalance }));
+          toast.success('Wallet recharged successfully!');
+        }}
+      />
     </div>
   );
 };

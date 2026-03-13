@@ -15,7 +15,7 @@ export class StartAiChatDto {
 
     @IsNotEmpty()
     @IsString()
-    dateOfBirth: string; // YYYY-MM-DD
+    dateOfBirth: string; // DD-MM-YYYY
 
     @IsNotEmpty()
     @IsString()
