@@ -12,10 +12,10 @@ function PaymentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, fetchUserProfile } = useAuth();
-  
+
   const amount = Number(searchParams.get('amount')) || 0;
   const isBonusAvailable = searchParams.get('bonus') === 'true';
-  
+
   const [isProcessing, setIsProcessing] = useState(false);
 
   const baseAmount = amount;
@@ -129,7 +129,7 @@ function PaymentContent() {
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-yellow-900">Current Balance</span>
             <span className="text-lg font-bold text-yellow-900">
-              ₹{user?.wallet?.balance?.toFixed(2) || 0}
+              ₹{user?.wallet?.balance?.toFixed(0) || 0}
             </span>
           </div>
         </div>

@@ -167,21 +167,19 @@ export default function WalletPage() {
         <div className="max-w-4xl mx-auto flex gap-3">
           <button
             onClick={() => setActiveTab('transactions')}
-            className={`flex-1 py-2.5 rounded-full text-sm font-semibold transition-all ${
-              activeTab === 'transactions'
-                ? 'bg-yellow-400 text-black shadow-sm'
-                : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
-            }`}
+            className={`flex-1 py-2.5 rounded-full text-sm font-semibold transition-all ${activeTab === 'transactions'
+              ? 'bg-yellow-400 text-black shadow-sm'
+              : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+              }`}
           >
             Wallet Transactions
           </button>
           <button
             onClick={() => setActiveTab('logs')}
-            className={`flex-1 py-2.5 rounded-full text-sm font-semibold transition-all ${
-              activeTab === 'logs'
-                ? 'bg-yellow-400 text-black shadow-sm'
-                : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
-            }`}
+            className={`flex-1 py-2.5 rounded-full text-sm font-semibold transition-all ${activeTab === 'logs'
+              ? 'bg-yellow-400 text-black shadow-sm'
+              : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+              }`}
           >
             Payment Logs
           </button>
@@ -211,9 +209,8 @@ export default function WalletPage() {
                     </div>
                     <div className="text-right">
                       <p
-                        className={`text-lg font-bold ${
-                          txn.type === 'credit' ? 'text-green-600' : 'text-red-600'
-                        }`}
+                        className={`text-lg font-bold ${txn.type === 'credit' ? 'text-green-600' : 'text-red-600'
+                          }`}
                       >
                         {txn.amount}
                       </p>
@@ -246,19 +243,18 @@ export default function WalletPage() {
                   <div className="text-right">
                     <p className="text-lg font-bold text-gray-900">{log.amount}</p>
                     <span
-                      className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold ${
-                        log.status === 'completed'
-                          ? 'bg-green-100 text-green-700'
-                          : log.status === 'failed'
+                      className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold ${log.status === 'completed'
+                        ? 'bg-green-100 text-green-700'
+                        : log.status === 'failed'
                           ? 'bg-red-100 text-red-700'
                           : 'bg-yellow-100 text-yellow-700'
-                      }`}
+                        }`}
                     >
                       {log.status === 'completed'
                         ? 'Success'
                         : log.status === 'failed'
-                        ? 'Failed'
-                        : 'Pending'}
+                          ? 'Failed'
+                          : 'Pending'}
                     </span>
                   </div>
                 </div>

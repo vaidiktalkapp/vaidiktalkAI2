@@ -15,15 +15,15 @@ const AstrologerCard: React.FC<Props> = ({ astrologer, mode }) => {
   const router = useRouter();
   const { isAuthenticated, openLoginModal } = useAuth();
   const { initiateChat, initiateCall, isChatProcessing, isCallProcessing } = useRealTime();
-  
+
   const { tier, availability } = astrologer;
 
   // --- LOGIC FROM HOME.JS (React Native) ---
   // Priority: realStatus > availability flags
-  const status = astrologer.realStatus || 
-     (availability?.isLive ? 'live' : 
-     (availability?.busyUntil ? 'busy' : 
-     (availability?.isOnline ? 'online' : 'offline')));
+  const status = astrologer.realStatus ||
+    (availability?.isLive ? 'live' :
+      (availability?.busyUntil ? 'busy' :
+        (availability?.isOnline ? 'online' : 'offline')));
 
   const isLive = status === 'live';
   const isBusy = status === 'busy';
@@ -36,10 +36,10 @@ const AstrologerCard: React.FC<Props> = ({ astrologer, mode }) => {
     tier === 'celebrity'
       ? 'bg-black text-yellow-400'
       : tier === 'top_choice' || tier === 'top-choice'
-      ? 'bg-green-500 text-white'
-      : tier === 'rising_star' || tier === 'rising-star'
-      ? 'bg-orange-500 text-white'
-      : '';
+        ? 'bg-green-500 text-white'
+        : tier === 'rising_star' || tier === 'rising-star'
+          ? 'bg-orange-500 text-white'
+          : '';
 
   // Status Dot Color
   let dotColor = 'bg-gray-400'; // Offline
@@ -53,11 +53,11 @@ const AstrologerCard: React.FC<Props> = ({ astrologer, mode }) => {
   // Wait time calculation
   const waitTime = useMemo(() => {
     if (!isBusy || !availability.busyUntil) return 0;
-    
+
     const now = new Date();
     const busyUntil = new Date(availability.busyUntil);
     const diffMinutes = Math.ceil((busyUntil.getTime() - now.getTime()) / 60000);
-    
+
     return Math.max(1, diffMinutes);
   }, [isBusy, availability.busyUntil]);
 
@@ -87,7 +87,7 @@ const AstrologerCard: React.FC<Props> = ({ astrologer, mode }) => {
   const isProcessing = mode === 'chat' ? isChatProcessing : isCallProcessing;
 
   return (
-    <div 
+    <div
       className="relative flex bg-white rounded-xl border border-gray-200 p-3 shadow-sm hover:shadow-md transition-shadow text-black cursor-pointer group"
       onClick={() => router.push(`/astrologer/${astrologer._id}`)}
     >
@@ -158,7 +158,7 @@ const AstrologerCard: React.FC<Props> = ({ astrologer, mode }) => {
           </button>
         ) : isBusy ? (
           <div className="flex flex-col items-end">
-             <button
+            <button
               disabled
               className="px-4 py-1.5 rounded-full border border-orange-500 bg-orange-50 text-orange-600 text-[12px] font-bold cursor-default mb-1"
             >
@@ -170,9 +170,8 @@ const AstrologerCard: React.FC<Props> = ({ astrologer, mode }) => {
           <button
             onClick={handleAction}
             disabled={isProcessing}
-            className={`px-4 py-1.5 rounded-full border border-green-500 bg-white hover:bg-green-50 text-green-600 text-[13px] font-bold transition-all shadow-sm ${
-              isProcessing ? 'opacity-70 cursor-wait' : ''
-            }`}
+            className={`px-4 py-1.5 rounded-full border border-green-500 bg-white hover:bg-green-50 text-green-600 text-[13px] font-bold transition-all shadow-sm ${isProcessing ? 'opacity-70 cursor-wait' : ''
+              }`}
           >
             {isProcessing ? 'Wait...' : (mode === 'chat' ? 'Chat' : 'Call')}
           </button>
