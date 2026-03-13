@@ -9,6 +9,8 @@ import { User, UserDocument } from '../../users/schemas/user.schema';
 import { Astrologer, AstrologerDocument } from '../../astrologers/schemas/astrologer.schema';
 import { StreamSession, StreamSessionDocument } from '../../streaming/schemas/stream-session.schema';
 import { WalletTransaction, WalletTransactionDocument } from '../schemas/wallet-transaction.schema';
+import { StreamGateway } from '../../streaming/gateways/streaming.gateway';
+import { Inject, forwardRef } from '@nestjs/common';
 
 export type GiftContext = 'direct' | 'stream';
 
@@ -32,6 +34,8 @@ export class GiftService {
     @InjectModel(Astrologer.name) private readonly astrologerModel: Model<AstrologerDocument>,
     @InjectModel(StreamSession.name) private readonly streamModel: Model<StreamSessionDocument>,
     @InjectModel(WalletTransaction.name) private readonly transactionModel: Model<WalletTransactionDocument>,
+    @Inject(forwardRef(() => StreamGateway))
+    private readonly streamGateway: StreamGateway,
   ) { }
 
   /**
@@ -230,6 +234,22 @@ export class GiftService {
       this.logger.log(
         `✅ Gift processed: ₹${amount} | User: ${userId} (-₹${amount}) | Astrologer: ${astrologerId} (+₹${astrologerEarning}) | Context: ${context}`,
       );
+
+      // ✅ Real-time notification for streams
+      if (context === 'stream' && streamId) {
+        try {
+          this.streamGateway.notifyGiftSent(streamId, {
+            userId,
+            userName,
+            userAvatar: user.profileImage || null,
+            giftName: giftType.charAt(0).toUpperCase() + giftType.slice(1),
+            amount,
+            giftType
+          });
+        } catch (err) {
+          this.logger.error(`❌ Failed to emit gift notification: ${err.message}`);
+        }
+      }
 
       return {
         success: true,

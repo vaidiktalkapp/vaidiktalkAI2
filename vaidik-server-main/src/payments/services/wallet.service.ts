@@ -5,6 +5,7 @@ import {
   Logger,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, ClientSession } from 'mongoose';
 import { WalletTransaction, WalletTransactionDocument } from '../schemas/wallet-transaction.schema';
@@ -13,6 +14,10 @@ import { RazorpayService } from './razorpay.service';
 import { GiftCard, GiftCardDocument } from '../schemas/gift-card.schema';
 import { WalletRefundRequest, WalletRefundRequestDocument } from '../schemas/wallet-refund-request.schema';
 import { RechargePack, RechargePackDocument } from '../schemas/recharge-pack.schema';
+import { AppleIapService } from './apple-iap.service';
+import { VerifyApplePaymentDto } from '../dto/verify-apple-payment.dto';
+import { ChatSessionService } from '../../chat/services/chat-session.service';
+import { CallSessionService } from '../../calls/services/call-session.service';
 
 const GST_PERCENTAGE = 18;
 
@@ -31,7 +36,9 @@ export class WalletService {
     private walletRefundModel: Model<WalletRefundRequestDocument>,
     @InjectModel(RechargePack.name)
     private rechargePackModel: Model<RechargePackDocument>,
-    private razorpayService: RazorpayService, // ✅ Only Razorpay
+    private razorpayService: RazorpayService,
+    private appleIapService: AppleIapService, // ✅ Added Apple IAP
+    private moduleRef: ModuleRef,
   ) { }
 
   // ===== UTILITY METHODS =====
@@ -79,7 +86,7 @@ export class WalletService {
     const totalAvailable = (wallet.cashBalance || 0) + (wallet.bonusBalance || 0);
     if (totalAvailable < amount) {
       throw new BadRequestException(
-        `Insufficient wallet balance. Required: ₹${amount}, Available: ₹${totalAvailable}`,
+        `Insufficient wallet balance. Required: ${amount} Cr, Available: ${totalAvailable} Cr`,
       );
     }
     const bonusAvailable = wallet.bonusBalance || 0;
@@ -96,47 +103,51 @@ export class WalletService {
     return { cashDebited, bonusDebited };
   }
 
-  private async hasReceivedBonusForAmount(userId: string, amount: number): Promise<boolean> {
-    const count = await this.transactionModel.countDocuments({
-      userId: new Types.ObjectId(userId),
-      type: 'recharge',
-      status: 'completed',
-      amount: amount,
-      'metadata.hasBonus': true,
-    });
-    return count > 0;
+  /**
+   * ✅ CALCULATE BONUS FOR AMOUNT
+   * Rule: First recharge = Full Pack Bonus | After that = Flat 10% Bonus
+   */
+  private async calculateBonusForAmount(amount: number, userId: string): Promise<{ bonusAmount: number; percentage: number }> {
+    try {
+      // 1. Check if this is the user's first COMPLETED recharge
+      const completedRecharges = await this.transactionModel.countDocuments({
+        userId: new Types.ObjectId(userId),
+        type: 'recharge',
+        status: 'completed'
+      });
+
+      const isFirstRecharge = completedRecharges === 0;
+
+      if (isFirstRecharge) {
+        // Use predefined pack bonus
+        const pack = await this.rechargePackModel.findOne({ amount, isActive: true });
+        const percentage = pack ? pack.bonusPercentage : 0;
+        return {
+          bonusAmount: Math.floor((amount * percentage) / 100),
+          percentage
+        };
+      } else {
+        // Subsequent recharges = Flat 10%
+        const percentage = 10;
+        return {
+          bonusAmount: Math.floor((amount * percentage) / 100),
+          percentage
+        };
+      }
+    } catch (error) {
+      this.logger.error(`Error calculating bonus: ${error.message}`);
+      return { bonusAmount: 0, percentage: 0 };
+    }
   }
 
   /**
-   * ✅ DYNAMIC BONUS CALCULATION (DB Based)
+   * Helper to check if a specific bonus ID was already received (Legacy support)
    */
-  private async calculateBonusForAmount(amount: number): Promise<{ bonusAmount: number; percentage: number }> {
-    // 1. Try to find an exact match first (Active packs only)
-    const exactPack = await this.rechargePackModel.findOne({
-      amount: amount,
-      isActive: true
-    });
+  private async hasReceivedBonusForAmount(userId: string, amount: number): Promise<boolean> {
+    // This is now redundant with the "First vs Subsequent" logic in calculateBonusForAmount
+    // but we keep it returning false so the flow continues, or we can use it for idempotency.
+    return false;
 
-    if (exactPack) {
-      return {
-        bonusAmount: Math.floor((amount * exactPack.bonusPercentage) / 100),
-        percentage: exactPack.bonusPercentage
-      };
-    }
-
-    // 2. Fallback: Find the highest active tier less than or equal to the amount
-    const lowerPack = await this.rechargePackModel
-      .findOne({ amount: { $lte: amount }, isActive: true })
-      .sort({ amount: -1 });
-
-    if (lowerPack) {
-      return {
-        bonusAmount: Math.floor((amount * lowerPack.bonusPercentage) / 100),
-        percentage: lowerPack.bonusPercentage
-      };
-    }
-
-    return { bonusAmount: 0, percentage: 0 };
   }
 
   // ===== RECHARGE PACK MANAGEMENT (USER & ADMIN) =====
@@ -264,18 +275,10 @@ export class WalletService {
         const initialBonus = user.wallet.bonusBalance || 0;
 
         // ✅ 1. CALCULATE BONUS DYNAMICALLY
-        const { bonusAmount: calculatedBonus, percentage } = await this.calculateBonusForAmount(transaction.amount);
+        const { bonusAmount: calculatedBonus, percentage } = await this.calculateBonusForAmount(transaction.amount, user._id.toString());
 
-        let bonusAmount = 0;
-        let finalPercentage = 0;
-
-        const alreadyGotBonus = await this.hasReceivedBonusForAmount(user._id.toString(), transaction.amount);
-
-        // Only give bonus if not received before (or modify this logic if you want recursive bonuses)
-        if (!alreadyGotBonus && calculatedBonus > 0) {
-          bonusAmount = calculatedBonus;
-          finalPercentage = percentage;
-        }
+        let bonusAmount = calculatedBonus;
+        let finalPercentage = percentage;
 
         // ✅ 2. Update Cash Balance
         user.wallet.cashBalance = initialCash + transaction.amount;
@@ -323,6 +326,11 @@ export class WalletService {
       if (bonusTransaction) await bonusTransaction.save({ session });
       await session.commitTransaction();
 
+      // ✅ Dynamically extend active sessions after recharge
+      if (status === 'completed') {
+        this.triggerSessionExtension(transaction.userId.toString());
+      }
+
       return {
         success: true,
         message: status === 'completed' ? 'Payment verified successfully' : 'Payment verification failed',
@@ -337,6 +345,129 @@ export class WalletService {
     } catch (error: any) {
       await session.abortTransaction();
       this.logger.error(`Verification failed: ${error.message}`);
+      throw new InternalServerErrorException(error.message);
+    } finally {
+      session.endSession();
+    }
+  }
+
+  /**
+   * apple iap verification & Recharge
+   */
+  async verifyApplePayment(userId: string, dto: VerifyApplePaymentDto): Promise<any> {
+    const session = await this.startSession();
+    session.startTransaction();
+
+    try {
+      // 1. Double check if transaction already processed (Idempotency)
+      const existing = await this.transactionModel.findOne({
+        paymentId: dto.transactionId, // Apple's transaction ID
+        paymentGateway: 'apple'
+      }).session(session);
+
+      if (existing) {
+        return {
+          success: true,
+          message: 'Purchase already processed',
+          data: { newBalance: (await this.userModel.findById(userId))?.wallet?.balance }
+        };
+      }
+
+      // 2. Verify with Apple Service
+      const applePurchase = await this.appleIapService.verifyReceipt(dto.receipt);
+
+      // Verify Product ID matches
+      if (applePurchase.productId !== dto.productId) {
+        throw new BadRequestException('Product ID mismatch');
+      }
+
+      // 3. Process the credit
+      const user = await this.userModel.findById(userId).session(session);
+      if (!user) throw new NotFoundException('User not found');
+      this.ensureWallet(user as any);
+
+      // Determine amount (Apple library should return the amount, but we fallback to DTO)
+      const rechargeAmount = dto.amount || 0; // In a production app, we would map ProductID to Price in DB
+
+      const transactionId = this.generateTransactionId('APL');
+      const initialBalance = user.wallet.balance;
+      const initialCash = user.wallet.cashBalance || 0;
+      const initialBonus = user.wallet.bonusBalance || 0;
+
+      // Calculate Bonus
+      const { bonusAmount: calculatedBonus, percentage } = await this.calculateBonusForAmount(rechargeAmount, userId);
+      let bonusAmount = calculatedBonus;
+
+      // Create Transaction Record
+      const transaction = new this.transactionModel({
+        transactionId,
+        userId: new Types.ObjectId(userId),
+        type: 'recharge',
+        amount: rechargeAmount,
+        taxAmount: 0, // Apple inclusive
+        totalPayable: rechargeAmount, // User paid this total via Apple
+        balanceBefore: initialBalance,
+        balanceAfter: initialBalance + rechargeAmount,
+        description: `Wallet recharge via Apple IAP (Product: ${dto.productId})`,
+        paymentGateway: 'apple',
+        paymentId: dto.transactionId,
+        status: 'completed',
+        createdAt: new Date(),
+        metadata: {
+          productId: dto.productId,
+          appleOriginalId: applePurchase.originalTransactionId,
+          hasBonus: bonusAmount > 0,
+          bonusAmount: bonusAmount
+        }
+      });
+
+      // Update User Wallet
+      user.wallet.cashBalance = initialCash + rechargeAmount;
+      user.wallet.totalRecharged = (user.wallet.totalRecharged || 0) + rechargeAmount;
+
+      let bonusTransaction: WalletTransactionDocument | null = null;
+      if (bonusAmount > 0) {
+        user.wallet.bonusBalance = initialBonus + bonusAmount;
+        user.wallet.totalBonusReceived = (user.wallet.totalBonusReceived || 0) + bonusAmount;
+
+        bonusTransaction = new this.transactionModel({
+          transactionId: this.generateTransactionId('BNS'),
+          userId: user._id,
+          userModel: 'User',
+          type: 'bonus',
+          amount: bonusAmount,
+          isBonus: true,
+          status: 'completed',
+          description: `Bonus for Apple recharge of ₹${rechargeAmount} (${percentage}%)`,
+          linkedTransactionId: transactionId,
+          balanceBefore: transaction.balanceAfter,
+          balanceAfter: (transaction.balanceAfter || 0) + bonusAmount,
+          createdAt: new Date(),
+        });
+      }
+
+      user.wallet.balance = user.wallet.cashBalance + user.wallet.bonusBalance;
+      user.wallet.lastRechargeAt = new Date();
+      user.wallet.lastTransactionAt = new Date();
+
+      await transaction.save({ session });
+      if (bonusTransaction) await bonusTransaction.save({ session });
+      await user.save({ session });
+
+      await session.commitTransaction();
+
+      return {
+        success: true,
+        message: 'Apple payment verified and wallet updated',
+        data: {
+          transactionId: transaction.transactionId,
+          amount: rechargeAmount,
+          newBalance: user.wallet.balance
+        }
+      };
+    } catch (error: any) {
+      await session.abortTransaction();
+      this.logger.error(`Apple Verification failed: ${error.message}`);
       throw new InternalServerErrorException(error.message);
     } finally {
       session.endSession();
@@ -1849,6 +1980,29 @@ export class WalletService {
       throw error;
     } finally {
       session.endSession();
+    }
+  }
+
+  /**
+   * ✅ NEW: Trigger session extensions for any active sessions the user might have
+   */
+  private async triggerSessionExtension(userId: string) {
+    try {
+      this.logger.log(`🔄 Checking for active sessions to extend for user: ${userId}`);
+
+      // Defer resolution to break circular dependencies
+      const chatSessionService = this.moduleRef.get(ChatSessionService, { strict: false });
+      const callSessionService = this.moduleRef.get(CallSessionService, { strict: false });
+
+      // We don't wait for these to complete to avoid blocking the payment response
+      Promise.all([
+        chatSessionService.extendActiveSessionForUser(userId),
+        callSessionService.extendActiveSessionForUser(userId)
+      ]).catch(err => {
+        this.logger.error(`❌ Session extension background task failed: ${err.message}`);
+      });
+    } catch (error) {
+      this.logger.error(`Error triggering session extension: ${error.message}`);
     }
   }
 }

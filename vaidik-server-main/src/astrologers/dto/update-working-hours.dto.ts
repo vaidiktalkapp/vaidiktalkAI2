@@ -36,7 +36,6 @@ class DaySchedule {
 
 export class UpdateWorkingHoursDto {
   @IsArray({ message: 'Working hours must be an array' })
-  @ArrayMinSize(1, { message: 'At least one day schedule is required' })
   @ValidateNested({ each: true })
   @Type(() => DaySchedule)
   workingHours: DaySchedule[];

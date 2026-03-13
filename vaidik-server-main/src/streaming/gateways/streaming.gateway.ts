@@ -704,4 +704,22 @@ export class StreamGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
+  public notifyGiftSent(
+    streamId: string,
+    data: {
+      userId: string;
+      userName: string;
+      userAvatar: string | null;
+      giftName: string;
+      amount: number;
+      giftType: string;
+    }
+  ) {
+    console.log(`📢 Broadcasting GIFT for stream ${streamId}`);
+    this.server.to(streamId).emit('new_gift', {
+      ...data,
+      timestamp: new Date().toISOString()
+    });
+  }
+
 }

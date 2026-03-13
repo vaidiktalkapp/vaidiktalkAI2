@@ -86,22 +86,25 @@ export class AvailabilityService {
     // 1. Live status
     if (av.isLive) return 'live';
 
-    // 2. Fundamental Reachability (Priority Logic)
-    const isManuallyOnline = av.isOnline; // Global Toggle
-    const isScheduled = this.isWithinWorkingHours(av.workingHours); // Weekly Schedule
-
+    // 2. Reachability check FIRST
+    const isManuallyOnline = av.isOnline === true; // explicit toggle
+    const isScheduled = this.isWithinWorkingHours(av.workingHours); // weekly schedule
     const isReachable = isManuallyOnline || isScheduled;
 
-    // 3. Busy Logic (Only matters if they are reachable)
-    const isBusyManual = av.isAvailable === false;
+    // 3. Not reachable at all — always offline (ignore any stale flags)
+    if (!isReachable) return 'offline';
+
+    // 4. Busy via timed session (applies to both manual and scheduled astrologers)
     const isBusyTimer = av.busyUntil && new Date(av.busyUntil) > new Date();
+    if (isBusyTimer) return 'busy';
 
-    if (isBusyManual || isBusyTimer) {
-      return 'busy';
-    }
+    // 5. Busy via manual flag ONLY for astrologers who explicitly turned on their toggle.
+    //    If the astrologer is only "reachable" via schedule but isOnline is false,
+    //    we cannot trust isAvailable=false (it may be stale from a previous session).
+    const isBusyManual = isManuallyOnline && av.isAvailable === false;
+    if (isBusyManual) return 'busy';
 
-    // 4. Final Status (Online vs Offline)
-    return isReachable ? 'online' : 'offline';
+    return 'online';
   }
 
   async updateWorkingHours(astrologerId: string, updateDto: UpdateWorkingHoursDto): Promise<any> {
@@ -125,6 +128,11 @@ export class AvailabilityService {
 
     if (updateDto.isOnline !== undefined) {
       updateFields['availability.isOnline'] = updateDto.isOnline;
+      // When going offline, clear stale busy flags so they don't linger
+      if (updateDto.isOnline === false) {
+        updateFields['availability.isAvailable'] = true;
+        updateFields['availability.busyUntil'] = null;
+      }
     }
     if (updateDto.isAvailable !== undefined) {
       updateFields['availability.isAvailable'] = updateDto.isAvailable;

@@ -1,6 +1,6 @@
 // src/calls/calls.module.ts
 
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CallController } from './controllers/calls.controller';
 import { CallGateway } from './gateways/calls.gateway';
@@ -16,7 +16,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { ChatModule } from '../chat/chat.module';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { Astrologer, AstrologerSchema } from '../astrologers/schemas/astrologer.schema';
-import { EarningsService } from '../astrologers/services/earnings.service'; 
+import { EarningsService } from '../astrologers/services/earnings.service';
 import { UsersModule } from '../users/users.module';
 
 @Module({
@@ -26,11 +26,11 @@ import { UsersModule } from '../users/users.module';
       { name: User.name, schema: UserSchema },
       { name: Astrologer.name, schema: AstrologerSchema },
     ]),
-    OrdersModule,
-    PaymentsModule,
-    AstrologersModule,
-    NotificationsModule,
-    ChatModule,
+    forwardRef(() => OrdersModule),
+    forwardRef(() => PaymentsModule),
+    forwardRef(() => AstrologersModule),
+    forwardRef(() => NotificationsModule),
+    forwardRef(() => ChatModule),
     UsersModule,
   ],
   controllers: [CallController],
@@ -44,4 +44,4 @@ import { UsersModule } from '../users/users.module';
   ],
   exports: [CallSessionService, CallRecordingService, AgoraService, CallBillingService],
 })
-export class CallsModule {}
+export class CallsModule { }

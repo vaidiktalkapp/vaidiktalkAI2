@@ -42,9 +42,7 @@ import { AdminModule } from 'src/admin/admin.module';
   ],
   providers: [
     ZohoDeskService,
-    RazorpayService,
-    WalletService,
   ],
   exports: [ZohoDeskService],
 })
-export class SupportModule {}
+export class SupportModule { }
