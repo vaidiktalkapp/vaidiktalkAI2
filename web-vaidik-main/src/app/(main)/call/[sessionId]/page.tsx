@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '../../../../context/AuthContext';
-import callService from '../../../../lib/callService';
+import { useAuth } from '@/context/AuthContext';
+import callService from '@/lib/callService';
 import { Mic, MicOff, Video, VideoOff, PhoneOff } from 'lucide-react';
-import LowBalanceBanner from '../../../../components/chat/LowBalanceBanner';
-import QuickRechargeModal from '../../../../components/chat/QuickRechargeModal';
+import LowBalanceBanner from '@/components/chat/LowBalanceBanner';
+import QuickRechargeModal from '@/components/chat/QuickRechargeModal';
 
 export default function CallScreen() {
   const params = useParams();

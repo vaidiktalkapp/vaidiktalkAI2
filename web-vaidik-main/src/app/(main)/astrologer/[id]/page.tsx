@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { apiClient } from '../../../../lib/api';
-import { Astrologer } from '../../../../lib/types';
-import { useAuth } from '../../../../context/AuthContext';
-import { useRealTime } from '../../../../context/RealTimeContext';
-import astrologerService from '../../../../lib/astrologerService';
+import { apiClient } from '@/lib/api';
+import { Astrologer } from '@/lib/types';
+import { useAuth } from '@/context/AuthContext';
+import { useRealTime } from '@/context/RealTimeContext';
+import astrologerService from '@/lib/astrologerService';
 import {
   Star,
   MessageCircle,

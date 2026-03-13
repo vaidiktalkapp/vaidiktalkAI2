@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '../../../../context/AuthContext';
-import chatService from '../../../../lib/chatService';
+import { useAuth } from '@/context/AuthContext';
+import chatService from '@/lib/chatService';
 import { Play, Pause, Download } from 'lucide-react';
-import LowBalanceBanner from '../../../../components/chat/LowBalanceBanner';
-import QuickRechargeModal from '../../../../components/chat/QuickRechargeModal';
+import LowBalanceBanner from '@/components/chat/LowBalanceBanner';
+import QuickRechargeModal from '@/components/chat/QuickRechargeModal';
 
 // --- Interfaces ---
 interface Message {

@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '../../../../context/AuthContext';
-import { calculateBonus } from '../../../../lib/walletService';
-import paymentService from '../../../../lib/paymentService';
+import { useAuth } from '@/context/AuthContext';
+import { calculateBonus } from '@/lib/walletService';
+import paymentService from '@/lib/paymentService';
 
 const GST_RATE = 18;
 
