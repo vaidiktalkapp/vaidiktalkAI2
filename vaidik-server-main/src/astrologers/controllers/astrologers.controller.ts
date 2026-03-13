@@ -210,8 +210,11 @@ export class AstrologersController {
     const userId = req.user?.userId || req.user?.id;
     
     if (!userId) {
+      console.error('❌ [AstrologersController] UNAUTHORIZED: user not found in request');
       throw new HttpException('Authentication required', HttpStatus.UNAUTHORIZED);
     }
+
+    console.log(`📝 [AstrologersController] Review attempt: astrologerId=${astrologerId}, userId=${userId}, orderId=${reviewDto.orderId}`);
 
     return this.ratingReviewService.addReview({
       userId,

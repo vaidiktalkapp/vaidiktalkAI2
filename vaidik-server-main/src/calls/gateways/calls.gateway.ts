@@ -38,6 +38,7 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(CallGateway.name);
   private activeUsers = new Map<string, { socketId: string; userId: string; role: string; sessionId?: string }>();
   private sessionTimers = new Map<string, NodeJS.Timeout>();
+  private sessionTimerData = new Map<string, { maxDurationSeconds: number; secondsElapsed: number }>();
   private userSockets = new Map<string, string>();
   private astrologerSockets = new Map<string, string>();
   private activeRecordings = new Map<string, string>();
@@ -412,30 +413,76 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
       clearInterval(this.sessionTimers.get(sessionId)!);
       this.sessionTimers.delete(sessionId);
     }
+    this.sessionTimerData.delete(sessionId);
   }
 
   private startTimerTicker(sessionId: string, maxDurationSeconds: number) {
-    let secondsElapsed = 0;
     this.stopSessionTimer(sessionId);
+    this.sessionTimerData.set(sessionId, { maxDurationSeconds, secondsElapsed: 0 });
 
     const ticker = setInterval(async () => {
-      secondsElapsed++;
-      const remainingSeconds = Math.max(0, maxDurationSeconds - secondsElapsed);
-
-      if (secondsElapsed >= maxDurationSeconds) {
+      const data = this.sessionTimerData.get(sessionId);
+      if (!data) {
         this.stopSessionTimer(sessionId);
+        return;
+      }
+
+      const { maxDurationSeconds: currentMax, secondsElapsed } = data;
+
+      if (secondsElapsed >= currentMax) {
+        this.stopSessionTimer(sessionId);
+
+        // Emit final 0 tick so apps don't get stuck at 1 second
+        this.server.to(sessionId).emit('timer_tick', {
+          elapsedSeconds: currentMax,
+          remainingSeconds: 0,
+          maxDuration: currentMax,
+          formattedTime: '00:00',
+          percentage: 100
+        });
+
         await this.endCallInternal(sessionId, 'system', 'timeout');
         return;
       }
 
-      this.server.to(sessionId).emit('timer_tick', { elapsedSeconds: secondsElapsed, remainingSeconds, maxDuration: maxDurationSeconds });
+      const remainingSeconds = Math.max(0, currentMax - secondsElapsed);
+      this.server.to(sessionId).emit('timer_tick', {
+        elapsedSeconds: secondsElapsed,
+        remainingSeconds,
+        maxDuration: currentMax
+      });
 
       if (remainingSeconds === 60) {
-        this.server.to(sessionId).emit('timer_warning', { message: '1 minute remaining', remainingSeconds: 60 });
+        this.server.to(sessionId).emit('timer_warning', {
+          message: '1 minute remaining',
+          remainingSeconds: 60
+        });
       }
+
+      this.sessionTimerData.set(sessionId, { ...data, secondsElapsed: secondsElapsed + 1 });
     }, 1000);
 
     this.sessionTimers.set(sessionId, ticker);
+  }
+
+  /**
+   * Dynamically update the session timer (e.g., after recharge)
+   */
+  public updateSessionTimer(sessionId: string, newMaxDurationSeconds: number) {
+    const data = this.sessionTimerData.get(sessionId);
+    if (data) {
+      this.sessionTimerData.set(sessionId, { ...data, maxDurationSeconds: newMaxDurationSeconds });
+      this.logger.log(`⏲️ Updated timer for call session ${sessionId}: New Max Duration = ${newMaxDurationSeconds}s`);
+
+      // Notify clients immediately
+      const remainingSeconds = newMaxDurationSeconds - data.secondsElapsed;
+      this.server.to(sessionId).emit('timer_updated', {
+        sessionId,
+        newMaxSeconds: newMaxDurationSeconds,
+        newSecondsLeft: remainingSeconds,
+        timestamp: new Date()
+      });
+    }
   }
 
   @SubscribeMessage('end_call')

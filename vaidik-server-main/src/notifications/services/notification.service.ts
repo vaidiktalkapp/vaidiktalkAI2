@@ -415,7 +415,6 @@ export class NotificationService {
    * ✅ DELETE NOTIFICATION (Fixed Query Logic)
    */
   async deleteNotification(notificationId: string, userId: string): Promise<void> {
-    // ✅ Matches both types to ensure deletion works
     const query = {
       notificationId,
       $or: [
@@ -423,6 +422,12 @@ export class NotificationService {
         { recipientId: new Types.ObjectId(userId) }
       ]
     };
+
+    // ✅ Requirement: Mark as read before deleting to ensure unread count sync
+    await this.notificationModel.updateOne(
+      { ...query, isRead: false },
+      { $set: { isRead: true, readAt: new Date() } }
+    );
 
     const result = await this.notificationModel.deleteOne(query);
     this.logger.log(`Deleted notification ${notificationId}: ${result.deletedCount} documents removed`);

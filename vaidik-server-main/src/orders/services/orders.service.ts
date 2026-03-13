@@ -1,6 +1,6 @@
 // src/orders/services/orders.service.ts
 
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger, forwardRef, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Order, OrderDocument } from '../schemas/orders.schema';
@@ -10,6 +10,7 @@ import { NotificationService } from '../../notifications/services/notification.s
 import { Astrologer, AstrologerDocument } from '../../astrologers/schemas/astrologer.schema';
 import { EarningsService } from '../../astrologers/services/earnings.service';
 import { UserBlockingService } from 'src/users/services/user-blocking.service';
+import { AvailabilityService } from '../../astrologers/services/availability.service';
 
 @Injectable()
 export class OrdersService {
@@ -20,10 +21,12 @@ export class OrdersService {
     @InjectModel(Astrologer.name) private astrologerModel: Model<AstrologerDocument>,
     // OrderPaymentService is now only for legacy/other order types, not chat/call conversation threads
     private orderPaymentService: OrderPaymentService,
+    @Inject(forwardRef(() => WalletService))
     private walletService: WalletService,
     private notificationService: NotificationService,
     private earningsService: EarningsService,
     private userBlockingService: UserBlockingService,
+    private availabilityService: AvailabilityService,
   ) { }
 
   // ===== HELPERS =====
@@ -71,7 +74,7 @@ export class OrdersService {
           totalChatSessions: 0,
           totalCallSessions: 0,
           messageCount: 0,
-          reviewSubmitted: false,
+          reviewGiven: false,
           payment: {
             status: 'none',
             heldAmount: 0,
@@ -405,8 +408,12 @@ export class OrdersService {
           sentAt: conv.lastMessage.sentAt,
           isRead: conv.lastMessage.isRead
         } : null,
+        totalMessages: conv.messageCount || 0,
+        totalCallSessions: conv.totalCallSessions || 0,
+        totalSpent: conv.totalAmount || 0,
+        totalDurationSeconds: conv.totalUsedDurationSeconds || 0,
         category, // 'chat', 'call', 'both', or 'none'
-        unreadCount: 0, // You can fetch real unread count from ChatMessageService if needed
+        unreadCount: 0,
         updatedAt: conv.lastInteractionAt || conv.createdAt
       };
     });
@@ -437,6 +444,7 @@ export class OrdersService {
       recordingUrl?: string;
       recordingS3Key?: string;
       recordingDuration?: number;
+      endedBy?: string;
     }
   ): Promise<any> {
     const order = await this.orderModel.findOne({ orderId, isDeleted: false });
@@ -470,6 +478,7 @@ export class OrdersService {
       recordingType: sessionData.recordingUrl
         ? (sessionData.sessionType === 'audio_call' ? 'voice_note' : 'video')
         : undefined,
+      endedBy: sessionData.endedBy,
       status: 'completed'
     };
 
@@ -522,6 +531,7 @@ export class OrdersService {
             order.astrologerId.toString(),
             userSpend,
             logicalSessionType,
+            billedMinutes // ✅ Use actual billed minutes instead of approximate
           );
 
           this.logger.log(
@@ -679,6 +689,10 @@ export class OrdersService {
       order.currentSessionId = undefined;
       order.currentSessionType = 'none';
       await order.save();
+
+      // ✅ RESET AVAILABILITY
+      await this.availabilityService.setAvailable(order.astrologerId.toString());
+
       this.logger.log(`Conversation thread session cleared: ${orderId} | By: ${cancelledBy}`);
       return { success: true, message: 'Session cancelled successfully' };
     }

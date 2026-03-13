@@ -387,12 +387,12 @@ export class AstrologerProfileController {
         $group: {
           _id: '$sessionType', // groups by: audio_call, video_call, chat, stream_call
           count: { $sum: 1 },
-          totalMinutes: { $sum: { $ifNull: ['$metadata.duration', 0] } },
+          totalMinutes: { $sum: { $ifNull: ['$metadata.durationMinutes', 0] } }, // ✅ FIXED: use 'durationMinutes'
         },
       },
     ]);
 
-    // 3. Aggregate Repeat Customers (same logic as before)
+    // ... (repeat customers logic) ...
     const repeatUserStats = await this.walletService['transactionModel'].aggregate([
       { $match: matchQuery },
       {
@@ -414,17 +414,18 @@ export class AstrologerProfileController {
     let totalOrders = 0;
     let callOrders = 0;
     let chatOrders = 0;
-    let streamOrders = 0; // ✅ ADDED
+    let streamOrders = 0;
     let totalMinutes = 0;
 
     stats.forEach((s) => {
       totalOrders += s.count;
+      totalMinutes += s.totalMinutes; // ✅ Summing everything
+
       if (s._id === 'chat') {
         chatOrders += s.count;
       } else if (s._id === 'audio_call' || s._id === 'video_call') {
         callOrders += s.count;
-        totalMinutes += s.totalMinutes;
-      } else if (s._id === 'stream_call') { // ✅ Check for stream_call
+      } else if (s._id === 'stream_call') {
         streamOrders += s.count;
       }
     });
@@ -435,8 +436,8 @@ export class AstrologerProfileController {
         totalOrders,
         callOrders,
         chatOrders,
-        streamOrders, // ✅ Returned to frontend
-        totalMinutes: Math.round(totalMinutes / 60),
+        streamOrders,
+        totalMinutes: Math.round(totalMinutes), // ✅ FIXED: Metadata is already in minutes
         repeatCustomers: repeatCustomers,
         totalEarnings: 0,
       },

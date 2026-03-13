@@ -19,6 +19,7 @@ import { RechargeWalletDto } from '../dto/recharge-wallet.dto';
 import { VerifyPaymentDto } from '../dto/verify-payment.dto';
 import { GiftService } from '../services/gift.service';
 import { SendDirectGiftDto } from '../dto/send-direct-gift.dto';
+import { VerifyApplePaymentDto } from '../dto/verify-apple-payment.dto';
 
 interface AuthenticatedRequest extends Request {
   user: { _id: string };
@@ -30,7 +31,7 @@ export class WalletController {
   constructor(
     private walletService: WalletService,
     private giftService: GiftService,
-  ) {}
+  ) { }
 
   // ===== WALLET STATS =====
 
@@ -117,6 +118,18 @@ export class WalletController {
   }
 
   /**
+   * Verify Apple IAP payment
+   * POST /wallet/verify-apple-payment
+   */
+  @Post('verify-apple-payment')
+  async verifyApplePayment(
+    @Req() req: AuthenticatedRequest,
+    @Body(ValidationPipe) verifyAppleDto: VerifyApplePaymentDto,
+  ) {
+    return this.walletService.verifyApplePayment(req.user._id, verifyAppleDto);
+  }
+
+  /**
    * Redeem gift card (adds non-withdrawable bonus balance)
    * POST /wallet/redeem-giftcard
    */
@@ -173,7 +186,8 @@ export class WalletController {
       astrologerId: giftDto.astrologerId,
       amount: giftDto.amount,
       giftType: giftDto.giftType,
-      context: 'direct',
+      context: giftDto.streamId ? 'stream' : 'direct',
+      streamId: giftDto.streamId,
     });
 
     return {

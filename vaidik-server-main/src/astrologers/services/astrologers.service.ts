@@ -60,13 +60,49 @@ export class AstrologersService {
   /**
    * ✅ UPDATED: Calculates 'realStatus' (Busy/Live/Online) for display
    */
-  private serializeAstrologers(astrologers: any[]): any[] {
+  private serializeAstrologers(astrologers: any[], platform: 'user' | 'astrologer' = 'user'): any[] {
     return astrologers.map(astro => {
       const doc = astro.toObject ? astro.toObject() : astro;
       if (doc._id) doc._id = doc._id.toString();
 
       // ✅ Calculate Real-Time Status (Robust Logic)
       doc.realStatus = this.availabilityService.getRealTimeStatus(doc);
+
+      // ✅ Legacy App Compatibility Fix
+      if (doc.stats) {
+        const totalMinutes = doc.stats.totalMinutes || 0;
+        const callMins = doc.stats.callMinutes || 0;
+        const chatMins = doc.stats.chatMinutes || 0;
+        const splitSum = callMins + chatMins;
+
+        if (platform === 'user') {
+          // Robust calculation to avoid "same total time" for both icons
+          const diff = Math.max(0, totalMinutes - splitSum);
+          if (diff > 0) {
+            // We have legacy minutes that are not split. 
+            // Let's split them based on order counts or a default 40/60 split to keep them different.
+            const totalSplitOrders = (doc.stats.callOrders || 0) + (doc.stats.chatOrders || 0);
+            let callLegacyShare = 0.4; // Default to 40% for calls in legacy data to keep it different
+            if (totalSplitOrders > 0) {
+              callLegacyShare = (doc.stats.callOrders || 0) / totalSplitOrders;
+            }
+            
+            const legacyCallMins = Math.floor(diff * callLegacyShare);
+            const legacyChatMins = diff - legacyCallMins;
+
+            doc.stats.totalConsultations = callMins + legacyCallMins;
+            doc.stats.totalMinutes = chatMins + legacyChatMins;
+          } else {
+            // Data is already fully split between fields
+            doc.stats.totalConsultations = callMins;
+            doc.stats.totalMinutes = chatMins;
+          }
+        } else {
+          // Astrologer App: Show total minutes for their "Total Time" and totalOrders for sessions
+          doc.stats.totalConsultations = doc.stats.totalOrders || 0;
+          doc.stats.totalMinutes = totalMinutes;
+        }
+      }
 
       return doc;
     });
@@ -114,7 +150,8 @@ export class AstrologersService {
       andConditions.push({
         $or: [
           { name: { $regex: term, $options: 'i' } },
-          { bio: { $regex: term, $options: 'i' } }
+          { bio: { $regex: term, $options: 'i' } },
+          { phoneNumber: { $regex: term, $options: 'i' } }
         ]
       });
     }
@@ -274,7 +311,7 @@ export class AstrologersService {
     return {
       success: true,
       data: {
-        astrologers: this.serializeAstrologers(astrologers), // Computes realStatus
+        astrologers: this.serializeAstrologers(astrologers, 'user'), // Computes realStatus
         pagination: {
           page: Number(page),
           limit: Number(limit),
@@ -465,7 +502,7 @@ export class AstrologersService {
     return {
       success: true,
       count: astrologers.length,
-      data: this.serializeAstrologers(astrologers)
+      data: this.serializeAstrologers(astrologers, 'user')
     };
   }
 
@@ -498,7 +535,7 @@ export class AstrologersService {
     return {
       success: true,
       count: astrologers.length,
-      data: this.serializeAstrologers(astrologers)
+      data: this.serializeAstrologers(astrologers, 'user')
     };
   }
 
@@ -532,7 +569,7 @@ export class AstrologersService {
     return {
       success: true,
       count: astrologers.length,
-      data: this.serializeAstrologers(astrologers)
+      data: this.serializeAstrologers(astrologers, 'user')
     };
   }
 
@@ -570,7 +607,7 @@ export class AstrologersService {
       success: true,
       count: astrologers.length,
       specialization,
-      data: this.serializeAstrologers(astrologers)
+      data: this.serializeAstrologers(astrologers, 'user')
     };
   }
 
@@ -676,7 +713,7 @@ export class AstrologersService {
       throw new NotFoundException('Astrologer not found or not available');
     }
 
-    const serialized = this.serializeAstrologers([astrologer])[0];
+    const serialized = this.serializeAstrologers([astrologer], 'user')[0];
 
     return {
       success: true,
@@ -711,7 +748,7 @@ export class AstrologersService {
     return {
       success: true,
       count: liveAstrologers.length,
-      data: this.serializeAstrologers(liveAstrologers)
+      data: this.serializeAstrologers(liveAstrologers, 'user')
     };
   }
 
@@ -730,7 +767,7 @@ export class AstrologersService {
       throw new NotFoundException('Astrologer not found');
     }
 
-    const serialized = this.serializeAstrologers([astrologer])[0];
+    const serialized = this.serializeAstrologers([astrologer], 'astrologer')[0];
 
     return {
       success: true,

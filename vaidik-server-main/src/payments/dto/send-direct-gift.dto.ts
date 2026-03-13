@@ -17,5 +17,9 @@ export class SendDirectGiftDto {
   @IsString()
   @MaxLength(200)
   message?: string;
+
+  @IsOptional()
+  @IsString()
+  streamId?: string;
 }
 

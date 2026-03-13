@@ -30,6 +30,7 @@ export class CallSessionService {
     private callGateway: CallGateway,
     private ordersService: OrdersService,
     private orderPaymentService: OrderPaymentService,
+    @Inject(forwardRef(() => WalletService))
     private walletService: WalletService,
     private notificationService: NotificationService,
     private chatMessageService: ChatMessageService,
@@ -506,6 +507,7 @@ export class CallSessionService {
             session.astrologerId.toString(),
             session.totalAmount,
             'call',
+            session.billedMinutes,
           );
           session.isPaid = true;
         }
@@ -560,6 +562,7 @@ export class CallSessionService {
       recordingUrl: recordingUrl,
       recordingS3Key: recordingS3Key,
       recordingDuration: session.recordingDuration,
+      endedBy: session.endedBy,
     }).catch(e => this.logger.error('Order completion update failed', e));
 
     return {
@@ -615,6 +618,19 @@ export class CallSessionService {
     }
   }
 
+  /**
+   * Find and extend any active session for a specific user
+   */
+  async extendActiveSessionForUser(userId: string): Promise<any> {
+    const activeSession = await this.sessionModel.findOne({
+      userId: this.toObjectId(userId),
+      status: 'active'
+    });
+
+    if (activeSession) {
+      return this.extendActiveSession(activeSession.sessionId);
+    }
+  }
 
   private async createRecordingChatMessage(sessionId: string, orderId: string, conversationThreadId: string, userId: string, astrologerId: string, callType: 'audio' | 'video', recordingUrl: string, recordingS3Key: string, recordingDuration: number, actualDurationSeconds: number): Promise<string> {
     const mins = Math.floor(actualDurationSeconds / 60);
@@ -672,6 +688,46 @@ export class CallSessionService {
       } catch (error: any) { }
     }, maxDurationSeconds * 1000);
     this.sessionTimers.set(sessionId, timeout);
+  }
+
+  /**
+   * Extend an active session (e.g., after recharge)
+   */
+  async extendActiveSession(sessionId: string): Promise<any> {
+    const session = await this.sessionModel.findOne({ sessionId });
+    if (!session || session.status !== 'active') return;
+
+    const user = await this.userModel.findById(session.userId).select('wallet').lean();
+    if (!user) return;
+
+    const currentBalance = user.wallet.balance || 0;
+    const newMaxDurationMinutes = Math.floor(currentBalance / session.ratePerMinute);
+    const newMaxDurationSeconds = newMaxDurationMinutes * 60;
+
+    if (newMaxDurationSeconds > session.maxDurationSeconds) {
+      this.logger.log(`📈 Extending call session ${sessionId}: ${session.maxDurationSeconds}s -> ${newMaxDurationSeconds}s`);
+
+      session.maxDurationSeconds = newMaxDurationSeconds;
+      await session.save();
+
+      // 1. Update the Service-level auto-end timeout
+      if (this.sessionTimers.has(sessionId)) {
+        clearTimeout(this.sessionTimers.get(sessionId)!);
+      }
+      this.setAutoEndTimer(sessionId, newMaxDurationSeconds);
+
+      // 2. Update the Gateway-level ticker
+      this.callGateway.updateSessionTimer(sessionId, newMaxDurationSeconds);
+
+      // 3. Update Busy status
+      const busyUntil = new Date(Date.now() + newMaxDurationSeconds * 1000);
+      await this.availabilityService.setBusy(session.astrologerId.toString(), busyUntil);
+
+      return {
+        success: true,
+        newMaxDurationSeconds
+      };
+    }
   }
 
   private setUserJoinTimeout(sessionId: string) {

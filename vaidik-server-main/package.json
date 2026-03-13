@@ -57,6 +57,7 @@
     "mongoose": "^8.18.1",
     "multer": "^2.0.2",
     "openai": "^6.27.0",
+    "node-apple-receipt-verify": "^1.15.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",

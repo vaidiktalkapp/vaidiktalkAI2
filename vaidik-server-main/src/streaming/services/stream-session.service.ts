@@ -518,7 +518,7 @@ export class StreamSessionService {
             durationMinutes: billedMin
           });
 
-          await this.earningsService.updateEarnings(transaction.astrologerId.toString(), cost, 'call');
+          await this.earningsService.updateEarnings(transaction.astrologerId.toString(), cost, 'call', billedMin);
 
           transaction.totalCharge = cost;
           transaction.status = 'completed';

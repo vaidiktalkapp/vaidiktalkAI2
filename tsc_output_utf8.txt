@@ -1,0 +1,92 @@
+﻿src/app.controller.spec.ts(4,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/app.controller.spec.ts(5,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/app.controller.spec.ts(11,5): error TS2304: Cannot find name 'expect'.
+src/app.controller.spec.ts(14,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/app.controller.spec.ts(20,5): error TS2304: Cannot find name 'expect'.
+src/astrologers/astrologers.controller.spec.ts(3,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/astrologers/astrologers.controller.spec.ts(4,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/astrologers/astrologers.controller.spec.ts(5,24): error TS2554: Expected 3 arguments, but got 1.
+src/astrologers/astrologers.controller.spec.ts(8,5): error TS2304: Cannot find name 'expect'.
+src/astrologers/astrologers.service.spec.ts(3,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/astrologers/astrologers.service.spec.ts(4,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/astrologers/astrologers.service.spec.ts(5,21): error TS2554: Expected 6 arguments, but got 1.
+src/astrologers/astrologers.service.spec.ts(8,5): error TS2304: Cannot find name 'expect'.
+src/auth/auth.controller.spec.ts(3,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/auth/auth.controller.spec.ts(4,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/auth/auth.controller.spec.ts(9,5): error TS2304: Cannot find name 'expect'.
+src/auth/auth.service.spec.ts(6,25): error TS2304: Cannot find name 'jest'.
+src/auth/auth.service.spec.ts(21,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/auth/auth.service.spec.ts(22,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/auth/auth.service.spec.ts(24,5): error TS2304: Cannot find name 'expect'.
+src/auth/auth.service.spec.ts(27,3): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/auth/auth.service.spec.ts(28,5): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/auth/auth.service.spec.ts(36,45): error TS2503: Cannot find namespace 'jest'.
+src/auth/auth.service.spec.ts(40,7): error TS2304: Cannot find name 'expect'.
+src/auth/auth.service.spec.ts(43,7): error TS2304: Cannot find name 'expect'.
+src/auth/auth.service.spec.ts(46,5): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/auth/auth.service.spec.ts(48,45): error TS2503: Cannot find namespace 'jest'.
+src/auth/auth.service.spec.ts(52,13): error TS2304: Cannot find name 'expect'.
+src/auth/services/jwt-auth/jwt-auth.service.spec.ts(3,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/auth/services/jwt-auth/jwt-auth.service.spec.ts(4,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/auth/services/jwt-auth/jwt-auth.service.spec.ts(9,5): error TS2304: Cannot find name 'expect'.
+src/auth/services/otp/otp.service.spec.ts(3,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/auth/services/otp/otp.service.spec.ts(4,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/auth/services/otp/otp.service.spec.ts(9,5): error TS2304: Cannot find name 'expect'.
+src/calls/calls.controller.spec.ts(3,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/calls/calls.controller.spec.ts(4,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/calls/calls.controller.spec.ts(5,24): error TS2554: Expected 3 arguments, but got 2.
+src/calls/calls.controller.spec.ts(9,5): error TS2304: Cannot find name 'expect'.
+src/calls/calls.gateway.spec.ts(3,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/calls/calls.gateway.spec.ts(4,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/calls/calls.gateway.spec.ts(11,5): error TS2304: Cannot find name 'expect'.
+src/calls/calls.service.spec.ts(1,30): error TS2307: Cannot find module './calls.service' or its corresponding type declarations.
+src/calls/calls.service.spec.ts(3,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/calls/calls.service.spec.ts(4,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/calls/calls.service.spec.ts(6,5): error TS2304: Cannot find name 'expect'.
+src/calls/services/call-billing.service.spec.ts(11,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/calls/services/call-billing.service.spec.ts(12,3): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/calls/services/call-billing.service.spec.ts(13,5): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/calls/services/call-billing.service.spec.ts(19,7): error TS2304: Cannot find name 'expect'.
+src/calls/services/call-billing.service.spec.ts(20,7): error TS2304: Cannot find name 'expect'.
+src/calls/services/call-billing.service.spec.ts(21,7): error TS2304: Cannot find name 'expect'.
+src/calls/services/call-billing.service.spec.ts(23,7): error TS2304: Cannot find name 'expect'.
+src/calls/services/call-billing.service.spec.ts(24,7): error TS2304: Cannot find name 'expect'.
+src/calls/services/call-billing.service.spec.ts(25,7): error TS2304: Cannot find name 'expect'.
+src/calls/services/call-billing.service.spec.ts(28,5): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/calls/services/call-billing.service.spec.ts(33,7): error TS2304: Cannot find name 'expect'.
+src/calls/services/call-billing.service.spec.ts(34,7): error TS2304: Cannot find name 'expect'.
+src/calls/services/call-billing.service.spec.ts(35,7): error TS2304: Cannot find name 'expect'.
+src/chat/chat.gateway.spec.ts(3,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/chat/chat.gateway.spec.ts(4,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/chat/chat.gateway.spec.ts(5,21): error TS2554: Expected 3 arguments, but got 2.
+src/chat/chat.gateway.spec.ts(9,5): error TS2304: Cannot find name 'expect'.
+src/payments/services/wallet.service.spec.ts(5,11): error TS2304: Cannot find name 'jest'.
+src/payments/services/wallet.service.spec.ts(6,9): error TS2304: Cannot find name 'jest'.
+src/payments/services/wallet.service.spec.ts(11,25): error TS2304: Cannot find name 'jest'.
+src/payments/services/wallet.service.spec.ts(15,15): error TS2304: Cannot find name 'jest'.
+src/payments/services/wallet.service.spec.ts(23,52): error TS2304: Cannot find name 'jest'.
+src/payments/services/wallet.service.spec.ts(38,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/payments/services/wallet.service.spec.ts(39,3): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/payments/services/wallet.service.spec.ts(40,5): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/payments/services/wallet.service.spec.ts(42,30): error TS2503: Cannot find namespace 'jest'.
+src/payments/services/wallet.service.spec.ts(47,7): error TS2304: Cannot find name 'expect'.
+src/payments/services/wallet.service.spec.ts(48,7): error TS2304: Cannot find name 'expect'.
+src/payments/services/wallet.service.spec.ts(52,3): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/payments/services/wallet.service.spec.ts(53,5): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/payments/services/wallet.service.spec.ts(55,30): error TS2503: Cannot find namespace 'jest'.
+src/payments/services/wallet.service.spec.ts(59,13): error TS2304: Cannot find name 'expect'.
+src/payments/services/wallet.service.spec.ts(62,5): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/payments/services/wallet.service.spec.ts(64,30): error TS2503: Cannot find namespace 'jest'.
+src/payments/services/wallet.service.spec.ts(68,13): error TS2304: Cannot find name 'expect'.
+src/users/users.controller.spec.ts(3,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/users/users.controller.spec.ts(4,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/users/users.controller.spec.ts(8,5): error TS2304: Cannot find name 'expect'.
+src/users/users.service.spec.ts(3,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/users/users.service.spec.ts(4,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+src/users/users.service.spec.ts(5,21): error TS2554: Expected 4 arguments, but got 1.
+src/users/users.service.spec.ts(8,5): error TS2304: Cannot find name 'expect'.
+test/app.e2e-spec.ts(7,1): error TS2593: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+test/app.e2e-spec.ts(10,3): error TS2304: Cannot find name 'beforeEach'.
+test/app.e2e-spec.ts(19,3): error TS2593: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha` and then add 'jest' or 'mocha' to the types field in your tsconfig.
+test/app.e2e-spec.ts(20,12): error TS2349: This expression is not callable.
+  Type '{ default: SuperTestStatic; Test: typeof Test; agent: typeof TestAgent & ((app?: App | undefined, options?: AgentOptions | undefined) => TestAgent<...>); }' has no call signatures.

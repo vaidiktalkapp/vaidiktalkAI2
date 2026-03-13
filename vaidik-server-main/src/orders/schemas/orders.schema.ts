@@ -23,8 +23,8 @@ export class Order {
   @Prop({ required: true })
   astrologerName: string;
 
-  @Prop({ 
-    required: true, 
+  @Prop({
+    required: true,
     enum: ['chat', 'call', 'conversation'], // ❌ REMOVED index: true
   })
   type: string;
@@ -61,18 +61,18 @@ export class Order {
   @Prop({ enum: ['chat', 'audio_call', 'video_call', 'none'], default: 'none' })
   currentSessionType?: string;
 
-  @Prop({ 
+  @Prop({
     required: true,
     enum: [
-      'pending',           
-      'waiting',           
-      'waiting_in_queue',  
+      'pending',
+      'waiting',
+      'waiting_in_queue',
       'active',
-      'completed',         
-      'cancelled',         
-      'refund_requested',  
-      'refund_approved',   
-      'refund_rejected',   
+      'completed',
+      'cancelled',
+      'refund_requested',
+      'refund_approved',
+      'refund_rejected',
       'refunded'
     ],
     default: 'pending',
@@ -115,7 +115,7 @@ export class Order {
 
   @Prop({
     type: {
-      status: { 
+      status: {
         type: String,
         enum: ['hold', 'charged', 'refunded', 'failed', 'none'],
         default: 'none'
@@ -189,6 +189,7 @@ export class Order {
       chargedAmount: Number,
       recordingUrl: String,
       recordingType: String,
+      endedBy: String,
       status: { type: String, enum: ['completed', 'cancelled', 'failed'], default: 'completed' }
     }],
     default: []
@@ -203,6 +204,7 @@ export class Order {
     chargedAmount: number;
     recordingUrl?: string;
     recordingType?: string;
+    endedBy?: string;
     status?: string;
   }>;
 
@@ -237,20 +239,20 @@ export class Order {
   lastSessionEndTime?: Date;
 
   @Prop({ default: false })
-reviewGiven: boolean; // Just track if review was submitted
+  reviewGiven: boolean; // Just track if review was submitted
 
-@Prop()
-reviewGivenAt?: Date;
+  @Prop()
+  reviewGivenAt?: Date;
 
-@Prop({ type: Types.ObjectId, ref: 'Review' })
-reviewId?: Types.ObjectId; 
+  @Prop({ type: Types.ObjectId, ref: 'Review' })
+  reviewId?: Types.ObjectId;
 
   @Prop({
     type: {
       requestedAt: Date,
       requestedBy: { type: Types.ObjectId, ref: 'User' },
       reason: String,
-      status: { 
+      status: {
         type: String,
         enum: ['pending', 'approved', 'rejected'],
         default: 'pending'

@@ -1,6 +1,6 @@
 // src/orders/services/order-payment.service.ts
 
-import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger, forwardRef, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Order, OrderDocument } from '../schemas/orders.schema';
@@ -17,8 +17,9 @@ export class OrderPaymentService {
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
     @InjectModel(WalletTransaction.name) private transactionModel: Model<WalletTransactionDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @Inject(forwardRef(() => WalletService))
     private walletService: WalletService
-  ) {}
+  ) { }
 
   // ✅ ADDED: Helper method
   private generateTransactionId(prefix: string = 'TXN'): string {
@@ -201,12 +202,12 @@ export class OrderPaymentService {
       // Release hold (refund)
       let refundTransaction: WalletTransactionDocument | null = null;
       refundTransaction = await this.walletService.refundToWallet(
-          userId,
-          holdAmount,
-          orderId,
-          `Refund: ${reason}`,
-          undefined, // ✅ Add optional session parameter
-        );
+        userId,
+        holdAmount,
+        orderId,
+        `Refund: ${reason}`,
+        undefined, // ✅ Add optional session parameter
+      );
 
       // Update order
       order.payment.status = 'refunded';
@@ -299,16 +300,16 @@ export class OrderPaymentService {
   /**
  * ✅ Check if order still has hold payment (not yet charged)
  */
-async hasHold(orderId: string): Promise<boolean> {
-  try {
-    const order = await this.orderModel.findOne({ orderId });
-    if (!order || !order.payment) {
+  async hasHold(orderId: string): Promise<boolean> {
+    try {
+      const order = await this.orderModel.findOne({ orderId });
+      if (!order || !order.payment) {
+        return false;
+      }
+      return order.payment.status === 'hold';
+    } catch (error: any) {
+      this.logger.error(`Error checking hold status: ${error.message}`);
       return false;
     }
-    return order.payment.status === 'hold';
-  } catch (error: any) {
-    this.logger.error(`Error checking hold status: ${error.message}`);
-    return false;
   }
-}
 }

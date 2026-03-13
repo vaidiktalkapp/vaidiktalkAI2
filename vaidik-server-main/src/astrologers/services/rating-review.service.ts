@@ -46,23 +46,33 @@ export class RatingReviewService {
     }
 
     // Find the order
-    const order = await this.orderModel.findOne({ orderId, userId });
+    const order = await this.orderModel.findOne({ 
+      orderId, 
+      userId: new Types.ObjectId(userId) 
+    });
+    
     if (!order) {
+      console.error(`❌ [RatingReviewService] NotFound (404): Order or User mismatch. Query: { orderId: "${orderId}", userId: "${userId}" }`);
       throw new NotFoundException('Order not found');
     }
 
     // Verify order belongs to astrologer
     if (order.astrologerId.toString() !== astrologerId) {
+      console.error(`❌ [RatingReviewService] Order mismatch: order.astrologerId=${order.astrologerId}, astrologerId=${astrologerId}`);
       throw new BadRequestException('Order does not belong to this astrologer');
     }
 
     // Check if order is completed
-    if (order.status !== 'active') {
-      throw new BadRequestException('Can only review active sessions');
+    // Relaxed: allow reviews for 'active', 'completed', or 'ended' sessions
+    const allowedStatuses = ['active', 'completed', 'ended'];
+    if (!allowedStatuses.includes(order.status)) {
+      console.error(`❌ [RatingReviewService] Invalid order status for review: ${order.status}`);
+      throw new BadRequestException(`Cannot review session with status: ${order.status}`);
     }
 
     // Check if already reviewed
     if (order.reviewGiven) {
+      console.error(`❌ [RatingReviewService] BadRequest (400): Order ${orderId} already marked reviewGiven=true`);
       throw new BadRequestException('This session has already been reviewed');
     }
 
@@ -489,7 +499,7 @@ async getAstrologerReviews(
       { orderId: review.orderId },
       { 
         $set: { 
-          reviewSubmitted: false,
+          reviewGiven: false,
           reviewId: null
         } 
       }
