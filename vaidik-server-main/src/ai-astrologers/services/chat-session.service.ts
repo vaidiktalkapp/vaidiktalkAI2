@@ -314,6 +314,18 @@ export class AiChatSessionService implements OnModuleInit {
             session.platformCommission = 0; // AI doesn't have "commission", it's direct revenue
             session.status = 'ended';
             session.endReason = reason;
+
+            // Set endedBy based on reason
+            if (reason === 'user_ended' || reason === 'user_cancelled') {
+                session.endedBy = 'user';
+            } else if (reason === 'timeout' || reason === 'inactivity_timeout' || reason === 'max_duration_reached') {
+                session.endedBy = 'system';
+            } else if (reason === 'ai_ended') {
+                session.endedBy = 'ai';
+            } else {
+                session.endedBy = 'system';
+            }
+
             if (userRating) session.userSatisfactionRating = userRating;
             await session.save();
 

@@ -555,9 +555,9 @@ const AiChatHistoryPage = () => {
                                                         {selectedSession.astrologer?.name || 'AI Astrologer'}
                                                     </div>
                                                 )}
-                                                <p className="leading-relaxed whitespace-pre-wrap break-words">
+                                                <div className="leading-relaxed whitespace-pre-wrap break-words">
                                                     {renderMessageContent(msg.content)}
-                                                </p>
+                                                </div>
                                                 <div className={`text-xs mt-2 opacity-60 flex items-center gap-2 ${msg.senderModel === 'User' ? 'justify-end' : 'justify-start'
                                                     }`}>
                                                     <Clock className="w-3 h-3" />

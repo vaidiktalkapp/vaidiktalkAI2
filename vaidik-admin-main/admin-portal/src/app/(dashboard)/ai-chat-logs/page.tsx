@@ -175,12 +175,12 @@ export default function AdminChats() {
                                     {isLoadingDetails ? (
                                         <div className="text-center text-xs text-slate-400">Loading messages...</div>
                                     ) : messages.map((msg: any, i: number) => (
-                                        <div key={i} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
-                                            <div className={`max-w-[85%] p-3 rounded-2xl text-[11px] leading-relaxed font-medium ${msg.sender === 'user' ? 'bg-slate-900 text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none shadow-sm'}`}>
-                                                {msg.message}
+                                        <div key={i} className={`flex flex-col ${msg.senderModel?.toLowerCase() === 'user' ? 'items-end' : 'items-start'}`}>
+                                            <div className={`max-w-[85%] p-3 rounded-2xl text-[11px] leading-relaxed font-medium ${msg.senderModel?.toLowerCase() === 'user' ? 'bg-slate-900 text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none shadow-sm'}`}>
+                                                {msg.content}
                                             </div>
                                             <span className="text-[8px] font-bold text-slate-500 mt-1 uppercase tracking-tighter">
-                                                {msg.sender} · {new Date(msg.timestamp || msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {msg.senderModel} · {new Date(msg.timestamp || msg.sentAt || msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         </div>
                                     ))}

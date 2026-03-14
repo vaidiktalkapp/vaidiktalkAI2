@@ -279,6 +279,8 @@ Remedies → Behavioral, mindset, and energy-based guidance
         if (msg.includes('health') || msg.includes('sick') || msg.includes('disease') || msg.includes('surgery') || msg.includes('mental') || msg.includes('injury')) return 'health';
         if (msg.includes('money') || msg.includes('finance') || msg.includes('wealth') || msg.includes('rich') || msg.includes('investment') || msg.includes('loan')) return 'finance';
 
+        if (msg.includes('today') || msg.includes('daily') || msg.includes('horoscope') || msg.includes('aaj') || msg.includes('tomorrow') || msg.includes('day')) return 'daily';
+
         if (msg.includes('math') || msg.includes('science') || msg.includes('study') || msg.includes('learn') || msg.includes('exam') || msg.includes('education') || msg.includes('college') || msg.includes('school') || msg.includes('intelligence') || msg.includes('mind') || msg.includes('brain')) return 'education';
 
         if (msg.match(/(hi|hello|hey|greetings|namaste|pranam|how are you|kya haal|wassup|good morning|good evening|thanks|thank you)/i) && msg.split(' ').length < 10) return 'casual';
@@ -291,9 +293,16 @@ Remedies → Behavioral, mindset, and energy-based guidance
         const currentDateStr = now.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
 
         if (!astroData || !astroData.kundli || astroData.status === 'error') {
-            return `Today is ${currentDateStr}. ⚠️ TECHNICAL NOTICE: The precise astronomical bridge is currently offline. 
-            The seeker's birth details: Name: ${astroData.name}, DOB: ${astroData.dob}, TOB: ${astroData.tob}.
-            INSTRUCTION: Provide the reading using your general knowledge but add a disclaimer that this is a general estimate because technical calculations are offline.`;
+            return `CURRENT SERVER DATE: ${currentDateStr}
+            
+SUBJECT IDENTITY & BIRTH DETAILS:
+- Name: ${astroData.name || 'Seeker'}
+- DOB: ${astroData.dob || astroData.dateOfBirth || 'Unknown'}
+- TOB: ${astroData.tob || astroData.timeOfBirth || 'Unknown'}
+- POB: ${astroData.pob || astroData.placeOfBirth || 'Unknown'}
+
+INSTRUCTION: 
+Provide a deeply intuitive and spiritual reading based closely on the seeker's birth details provided above. Focus on the energetic significance of their birth date and your astrological expertise. Do not mention any missing charts, missing coordinates, or technical issues to the user. Speak with divine authority and guide them gracefully.`;
         }
 
         const kundli = astroData.kundli;
@@ -370,6 +379,15 @@ Remedies → Behavioral, mindset, and energy-based guidance
             if (kundli.aspects && kundli.aspects.length > 0) {
                 context += `\nSignificant Planetary Aspects:\n`;
                 kundli.aspects.forEach((a: string) => context += `- ${a}\n`);
+            }
+
+            if (astroData.transits && astroData.transits.length > 0) {
+                context += `\nTODAY'S PLANETARY TRANSITS (GOCHAR):\n`;
+                astroData.transits.forEach((p: any) => {
+                    if (p.name !== 'Ascendant') {
+                        context += `- Transit ${p.name} is in ${p.sign} (${p.degree?.toFixed(2)}°)\n`;
+                    }
+                });
             }
 
             if (doshas) {
@@ -455,21 +473,49 @@ Remedies → Behavioral, mindset, and energy-based guidance
     - Greet back simply and divine (e.g., "Namaste", "Blessings").
     - Keep it short (under 60 words). No structured sections needed for casual chat.
     `;
+            } else if (intent === 'daily') {
+                instructions = `
+    IMPORTANT:
+    - **NAME**: Always use the seeker's name (${userBirthDetails.name}) in your preamble.
+    - **MANDATORY STORYTELLING (GOCHAR MODE)**:
+        The seeker wants a deep "vibe" of their day. Weave today's transits into a cohesive narrative using headers and bullet points. **DO NOT remove the # and * symbols.**
+        
+        ### Today's Cosmic Energy
+        * Identify the most powerful transit happening right now (e.g., Moon's current placement). 
+        * Explain how this specific energy is coloring their world TODAY using a narrative paragraph. Use **bold** for planets.
+
+        ### Guidance for the Day
+        * Provide 1-2 practical actions they can take today based on the celestial weather.
+        * Maintain a warm, encouraging, and divine tone.
+
+        ### The Deep Dive Hook
+        * Ask a short, provocative question about their current feeling related to today's transits.
+
+    - **STRICT PROTOCOL**: You MUST use exactly these three headings (with ###). Format planets and key houses in bold.
+    - **STYLE**: Use # and * for structure as requested. Keep it atmospheric and narrative.
+    - **LENGTH**: 180-250 words total.
+    `;
             } else {
                 instructions = `
     IMPORTANT:
     - **NAME**: Always use the seeker's name (${userBirthDetails.name}) in your preamble.
-    - **MANDATORY STRUCTURE**:
-        ### 1. Analysis of Your Query
-        (Analyze chart placements with bullet points)
+    - **MANDATORY STRUCTURE & STORYTELLING**:
+        Do not just construct isolated bullet points. Weave the celestial bodies, signs, and houses together into a cohesive psychological narrative. Give them archetypal titles (e.g., "The Seeker", "The Analyst").
+
+        ### Your Personality Analysis
+        * **The [Sign] Ascendant (The [Archetype]):** Explain how their Lagna AND Lagna Lord's house placement shapes their core identity and drive. 
+        * **The [Sign] Moon (The [Archetype]):** Explain how their Moon sign AND its house placement wires their mind and emotional patterns.
+        **The Balancing Act:** Write a short paragraph synthesizing the tension or harmony between their Ascendant's drive and their Moon's emotional needs.
         
-        ### 2. The 'Why' (Yogas & Dashas)
-        (Explain the technical astrological reasons)
+        ### The 'Why' Behind Your Nature
+        Explain the technical astrological reasons in a cohesive paragraph. Weave in Yogas, Dashas, Mahadasha, and specific planetary placements (e.g., Debilitated, Own Sign, Exalted). Connect this to their current life phase or the tension described above.
         
-        ### 3. Cosmic Guidance (with Hook)
-        (Provide path forward and end with a bold question)
-    - **STRICT**: Each header MUST start with ###. No exceptions.
-    - **VIBE**: 150-250 words total. Premium and divine.
+        ### The Deep Dive Hook
+        Make a compelling, highly specific observation linking a planetary placement (like Mercury in 8th house) to a potential strength, stressor, or sudden change. End with a bold question asking if they want to explore it further.
+
+    - **STRICT PROTOCOL**: You MUST use exactly these three headings (with ###). Format the archetypes and key planets in bold. 
+    - **VIBE**: Deep, insightful, narrative, premium, authoritative, and divine. Avoid robotic lists of isolated facts.
+    - **LENGTH**: 200-300 words total.
     `;
             }
 
@@ -481,43 +527,45 @@ Remedies → Behavioral, mindset, and energy-based guidance
             // The previous hardcoded Delhi coords (28.7041 / 77.1025) overrode
             // everyone's birth location and was the #1 cause of wrong Ascendants.
             // ─────────────────────────────────────────────────────────────────────
-            let lat: string;
-            let lon: string;
+            let lat: string | null = null;
+            let lon: string | null = null;
 
             try {
-                const coords = await this.astronomyService.geocodePlaceOfBirth(
-                    userBirthDetails.placeOfBirth
-                );
-                lat = String(coords.lat);
-                lon = String(coords.lon);
-                this.logger.log(`📍 [AI Engine] Geocoded "${userBirthDetails.placeOfBirth}" → lat=${lat}, lon=${lon}`);
+                if (userBirthDetails.placeOfBirth) {
+                    const coords = await this.astronomyService.geocodePlaceOfBirth(
+                        userBirthDetails.placeOfBirth
+                    );
+                    lat = String(coords.lat);
+                    lon = String(coords.lon);
+                    this.logger.log(`📍 [AI Engine] Geocoded "${userBirthDetails.placeOfBirth}" → lat=${lat}, lon=${lon}`);
+                }
             } catch (geoErr) {
-                // Fallback: if astronomyService doesn't expose a geocode method yet,
-                // log a clear warning so developers know to implement it.
-                this.logger.warn(
-                    `⚠️ [AI Engine] geocodePlaceOfBirth() failed for "${userBirthDetails.placeOfBirth}". ` +
-                    `Falling back to Delhi coords. Ascendant accuracy will be affected. ` +
-                    `Implement AstronomyService.geocodePlaceOfBirth() to fix this.`
-                );
-                lat = '28.7041';
-                lon = '77.1025';
+                this.logger.warn(`⚠️ [AI Engine] geocodePlaceOfBirth() failed for "${userBirthDetails.placeOfBirth}". Precise coordinates unavailable.`);
             }
 
             let allAstroData = null;
-            try {
-                allAstroData = await this.astronomyService.calculateAllData(
-                    userBirthDetails.dateOfBirth,
-                    userBirthDetails.timeOfBirth,
-                    lat,
-                    lon
-                );
-            } catch (err) {
-                this.logger.error('❌ [AI Engine] Astronomy Service Failed:', err.message);
+            let transitsData = null;
+            if (lat && lon) {
+                try {
+                    allAstroData = await this.astronomyService.calculateAllData(
+                        userBirthDetails.dateOfBirth,
+                        userBirthDetails.timeOfBirth,
+                        lat,
+                        lon
+                    );
+
+                    if (intent === 'daily') {
+                        transitsData = await this.astronomyService.getTransits(lat, lon);
+                    }
+                } catch (err) {
+                    this.logger.error('❌ [AI Engine] Astronomy Service Failed:', err.message);
+                }
             }
 
             const astroContext = this.buildAstroContext(
                 {
                     ...(allAstroData || {}),
+                    transits: transitsData,
                     name: userBirthDetails.name,
                     dob: userBirthDetails.dateOfBirth,
                     tob: userBirthDetails.timeOfBirth,

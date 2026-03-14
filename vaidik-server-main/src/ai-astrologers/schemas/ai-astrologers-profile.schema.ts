@@ -29,6 +29,7 @@ export class AiAstrologerProfile {
     @Prop({ default: 'Certified Astrologer' })
     education: string;
 
+
     @Prop({ default: 'Love, Career, Relationship' })
     focusArea: string;
 

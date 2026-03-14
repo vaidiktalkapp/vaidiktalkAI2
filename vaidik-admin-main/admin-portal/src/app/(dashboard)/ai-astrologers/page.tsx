@@ -47,7 +47,6 @@ const AdminAstrologers = () => {
     ratePerMinute: 10,
     languages: 'English, Hindi',
     experience: 5,
-    education: '',
     focusArea: '',
     isAvailable: true,
     tone: 'Professional and caring',
@@ -132,7 +131,6 @@ const AdminAstrologers = () => {
         ratePerMinute: Number(rateValue),
         languages: Array.isArray(astrologer.languages) ? astrologer.languages.join(', ') : 'English',
         experience: astrologer.experience || 5,
-        education: astrologer.education || '',
         focusArea: astrologer.focusArea || '',
         isAvailable: astrologer.isAvailable ?? astrologer.availability?.isAvailable ?? true,
         tone: astrologer.tone || '',
@@ -149,7 +147,6 @@ const AdminAstrologers = () => {
         ratePerMinute: 10,
         languages: 'English, Hindi',
         experience: 5,
-        education: '',
         focusArea: '',
         isAvailable: true,
         tone: 'Professional and caring',
@@ -176,7 +173,6 @@ const AdminAstrologers = () => {
       personality: formData.personalityType,
       personalityType: formData.personalityType,
       experience: formData.experience,
-      education: formData.education,
       focusArea: formData.focusArea,
       tone: formData.tone,
       styleGuide: formData.styleGuide,
@@ -472,10 +468,6 @@ const AdminAstrologers = () => {
                   <div>
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-tight">Exp (Yrs)</label>
                     <input type="number" value={formData.experience} onChange={(e) => setFormData({ ...formData, experience: Number(e.target.value) })} className="w-full mt-1.5 px-4 py-2.5 border border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-tight">Education</label>
-                    <input type="text" value={formData.education} onChange={(e) => setFormData({ ...formData, education: e.target.value })} className="w-full mt-1.5 px-4 py-2.5 border border-gray-200 bg-gray-50 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="e.g. PhD" />
                   </div>
                   <div>
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-tight">Focus Area</label>

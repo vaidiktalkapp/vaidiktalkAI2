@@ -27,5 +27,13 @@ export class StartAiChatDto {
 
     @IsOptional()
     @IsString()
+    lat?: string;
+
+    @IsOptional()
+    @IsString()
+    lon?: string;
+
+    @IsOptional()
+    @IsString()
     language?: string;
 }

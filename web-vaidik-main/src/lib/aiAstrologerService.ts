@@ -16,6 +16,7 @@ export interface AiAstrologer {
     rate?: number;
     experienceYears?: number;
     languages?: string[];
+    education?: string;
 }
 
 export interface AiChatMessage {
@@ -119,7 +120,8 @@ class AiAstrologerService {
                     Array.isArray(a.spokenLanguages) ? a.spokenLanguages :
                         (a.languages ? a.languages.split(',').map((l: any) => l.trim()) :
                             (a.spokenLanguages ? a.spokenLanguages.split(',').map((l: any) => l.trim()) :
-                                ['English', 'Hindi', 'Tamil', 'Telugu', 'Bengali', 'Marathi']))
+                                ['English', 'Hindi', 'Tamil', 'Telugu', 'Bengali', 'Marathi'])),
+                education: a.education || 'Certified Astrologer'
             }));
 
             // Log specific rate info for debugging
@@ -193,7 +195,8 @@ class AiAstrologerService {
                     Array.isArray(a.spokenLanguages) ? a.spokenLanguages :
                         (a.languages ? a.languages.split(',').map((l: any) => l.trim()) :
                             (a.spokenLanguages ? a.spokenLanguages.split(',').map((l: any) => l.trim()) :
-                                ['English', 'Hindi', 'Tamil', 'Telugu', 'Bengali', 'Marathi']))
+                                ['English', 'Hindi', 'Tamil', 'Telugu', 'Bengali', 'Marathi'])),
+                education: a.education || 'Certified Astrologer'
             };
 
             return normalized;
@@ -233,6 +236,8 @@ class AiAstrologerService {
             dateOfBirth: string;
             timeOfBirth: string;
             placeOfBirth: string;
+            lat?: string;
+            lon?: string;
             query: string;
             language: string;
         }
@@ -254,6 +259,8 @@ class AiAstrologerService {
                 payload.dateOfBirth = intakeData.dateOfBirth;
                 payload.timeOfBirth = intakeData.timeOfBirth;
                 payload.placeOfBirth = intakeData.placeOfBirth;
+                if (intakeData.lat) payload.lat = intakeData.lat;
+                if (intakeData.lon) payload.lon = intakeData.lon;
                 payload.language = (intakeData as any).language || 'English';
                 payload.message = intakeData.query; // Backend uses 'message' not 'query'
             }

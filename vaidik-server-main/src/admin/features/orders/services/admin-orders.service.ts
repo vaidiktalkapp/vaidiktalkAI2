@@ -24,7 +24,7 @@ export class AdminOrdersService {
     private walletService: WalletService,
     private activityLogService: AdminActivityLogService,
     private notificationService: NotificationService,
-  ) {}
+  ) { }
 
   private toObjectId(id: string): Types.ObjectId {
     try {
@@ -235,7 +235,7 @@ export class AdminOrdersService {
     if (order.payment?.status === 'hold' && order.payment?.heldAmount > 0) {
       try {
         const refundAmount = order.payment.heldAmount;
-        
+
         await this.walletService.refundToWallet(
           order.userId.toString(),
           refundAmount,
@@ -262,9 +262,9 @@ export class AdminOrdersService {
       targetId: orderId,
       targetType: 'Order',
       status: 'success',
-      details: { 
-        reason, 
-        refunded: order.payment?.status === 'refunded' 
+      details: {
+        reason,
+        refunded: order.payment?.status === 'refunded'
       },
     });
 
@@ -274,9 +274,8 @@ export class AdminOrdersService {
       recipientModel: 'User',
       type: 'order_cancelled',
       title: 'Order Cancelled',
-      message: `Your order ${orderId} has been cancelled by admin. ${
-        order.payment?.status === 'refunded' ? 'Hold amount has been released.' : ''
-      }`,
+      message: `Your order ${orderId} has been cancelled by admin. ${order.payment?.status === 'refunded' ? 'Hold amount has been released.' : ''
+        }`,
       priority: 'high',
     });
 
@@ -650,7 +649,7 @@ export class AdminOrdersService {
       }
     };
   }
-async getAllCalls(query: any) {
+  async getAllCalls(query: any) {
     const { page = 1, limit = 20, status } = query;
     const skip = (page - 1) * limit;
     const filter: any = {};
@@ -689,7 +688,7 @@ async getAllCalls(query: any) {
       this.chatSessionModel
         .find(filter)
         .populate('userId', 'name phoneNumber profileImage')
-        .populate('astrologerId', 'name profilePicture')
+        .populate('astrologerId', 'name profilePicture image')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)

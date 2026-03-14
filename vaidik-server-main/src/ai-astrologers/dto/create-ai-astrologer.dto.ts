@@ -32,6 +32,7 @@ export class CreateAiAstrologerDto {
     @IsOptional()
     education?: string;
 
+
     @IsString()
     @IsOptional()
     focusArea?: string;

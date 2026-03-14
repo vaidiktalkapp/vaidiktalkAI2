@@ -65,6 +65,7 @@ export interface Astrologer {
   };
   realStatus?: string; // Added to match Home.js logic
   tier?: string;
+  education?: string;
 }
 
 export interface WalletTransaction {

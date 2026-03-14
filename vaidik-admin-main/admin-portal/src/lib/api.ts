@@ -1119,11 +1119,29 @@ Send full-screen notification to a single User or Astrologer
     apiClient.get('/admin/ai-astrologers/chat-stats'),
 
   getAIRevenueAnalytics: (params: { timeRange: string }) =>
-    apiClient.get('/admin/ai-astrologers/revenue-analytics', { params }),
+    apiClient.get('/admin/ai-astrologers/analytics/revenue', { params }),
 
   getAIAstrologerChatLogDetails: (id: string) =>
     apiClient.get(`/admin/ai-astrologers/chat-logs/${id}`),
 
   createAIAstrologer: (data: any) =>
     apiClient.post('/admin/ai-astrologers', data),
+
+  getAIAstrologersStats: () =>
+    apiClient.get('/admin/ai-astrologers/stats'),
+
+  getAIAstrologerPerformanceMetrics: (params: { limit?: number; timeRange?: string }) =>
+    apiClient.get('/admin/ai-astrologers/performance-metrics', { params }),
+
+  getAIAstrologerOverallStats: (timeRange: string) =>
+    apiClient.get('/admin/ai-astrologers/overall-stats', { params: { timeRange } }),
+
+  exportAIAstrologersData: (format: string = 'csv') =>
+    apiClient.get('/admin/ai-astrologers/export', { params: { format }, responseType: 'blob' }),
+
+  getAIAstrologerWalletStats: () =>
+    apiClient.get('/admin/ai-astrologers/wallet-stats'),
+
+  getAIAstrologerTransactions: (params: any) =>
+    apiClient.get('/admin/ai-astrologers/transactions', { params }),
 };

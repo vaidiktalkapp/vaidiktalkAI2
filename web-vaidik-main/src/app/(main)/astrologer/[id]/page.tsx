@@ -290,6 +290,9 @@ export default function AstrologerProfilePage() {
                             {astrologer.name}
                           </h1>
                           <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 fill-blue-50 shrink-0" />
+                          <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm ml-1 whitespace-nowrap">
+                            {astrologer.education || 'Certified Astrologer'}
+                          </span>
                         </div>
                         <p className="text-sm sm:text-base text-gray-700 font-medium mb-2 truncate">
                           {astrologer.specializations?.join(', ') || 'Expert Astrologer'}

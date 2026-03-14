@@ -9,6 +9,8 @@ import aiAstrologerService from '@/lib/aiAstrologerService';
 import { useAuth } from '@/context/AuthContext';
 import { AuthService } from '@/lib/AuthService';
 import { toast } from 'react-hot-toast';
+import { GeoapifyGeocoderAutocomplete, GeoapifyContext } from '@geoapify/react-geocoder-autocomplete';
+import '@geoapify/geocoder-autocomplete/styles/minimal.css';
 
 interface AiChatIntakeModalProps {
     isOpen: boolean;
@@ -32,6 +34,8 @@ const AiChatIntakeModal = ({ isOpen, onClose, astrologer }: AiChatIntakeModalPro
         date: '',
         time: '',
         place: '',
+        lat: '',
+        lon: '',
         maritalStatus: 'Single',
         occupation: 'Employee',
         language: 'English'
@@ -64,6 +68,8 @@ const AiChatIntakeModal = ({ isOpen, onClose, astrologer }: AiChatIntakeModalPro
                 date: pickerDate,
                 time: u.timeOfBirth || '',
                 place: u.placeOfBirth || '',
+                lat: '',
+                lon: '',
                 maritalStatus: u.maritalStatus || 'Single',
                 occupation: u.occupation || 'Employee',
                 language: astrologer.languages?.[0] || 'English'
@@ -107,6 +113,8 @@ const AiChatIntakeModal = ({ isOpen, onClose, astrologer }: AiChatIntakeModalPro
                     dateOfBirth: formattedDate,
                     timeOfBirth: intakeData.time,
                     placeOfBirth: intakeData.place,
+                    lat: intakeData.lat,
+                    lon: intakeData.lon,
                     query: '',
                     language: intakeData.language
                 }
@@ -270,15 +278,26 @@ const AiChatIntakeModal = ({ isOpen, onClose, astrologer }: AiChatIntakeModalPro
                                     {/* Birth Place */}
                                     <div>
                                         <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">Place of Birth</label>
-                                        <div className="relative">
-                                            <input
-                                                type="text" required disabled={loading}
-                                                value={intakeData.place}
-                                                onChange={e => setIntakeData({ ...intakeData, place: e.target.value })}
-                                                className="w-full px-4 pr-10 py-2.5 bg-white border-2 border-orange-200 rounded-xl text-sm font-black text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none shadow-sm placeholder-gray-400"
-                                                placeholder="Enter city"
-                                            />
-                                            <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-500" />
+                                        <div className="relative z-50">
+                                            <GeoapifyContext apiKey="47b4a8afc7734a12bd28b482d3dbff76">
+                                                <div className="w-full bg-white border-2 border-orange-200 rounded-xl text-sm font-black text-gray-900 focus-within:ring-2 focus-within:ring-orange-500 focus-within:border-transparent transition-all shadow-sm relative pl-1">
+                                                    <GeoapifyGeocoderAutocomplete
+                                                        placeholder="Search city..."
+                                                        value={intakeData.place}
+                                                        placeSelect={(value: any) => {
+                                                            if (value && value.properties) {
+                                                                setIntakeData({
+                                                                    ...intakeData,
+                                                                    place: value.properties.formatted,
+                                                                    lat: value.properties.lat,
+                                                                    lon: value.properties.lon
+                                                                });
+                                                            }
+                                                        }}
+                                                    />
+                                                    <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-500 pointer-events-none" />
+                                                </div>
+                                            </GeoapifyContext>
                                         </div>
                                     </div>
 

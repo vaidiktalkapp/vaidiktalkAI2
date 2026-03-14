@@ -512,6 +512,9 @@ const AstrologerListing = () => {
                           {astrologer.name}
                         </h3>
                         <BadgeCheck className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                        <span className="bg-blue-600 text-white text-[8px] md:text-[9px] px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap">
+                          {astrologer.education || 'Certified Astrologer'}
+                        </span>
 
                         {/* LIVE Badge */}
                         <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-[8px] md:text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm border border-emerald-400/50 animate-pulse shrink-0">

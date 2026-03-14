@@ -124,10 +124,15 @@ const AstrologerCard: React.FC<Props> = ({ astrologer, mode }) => {
 
       {/* Info Section */}
       <div className="flex-1 ml-1 flex flex-col justify-center">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <p className="font-bold text-[15px] truncate text-slate-800 group-hover:text-[#102C57] transition-colors">
             {astrologer.name}
           </p>
+          {(astrologer.education || (astrologer as any).isAI) && (
+            <span className="bg-blue-600 text-white text-[9px] px-2 py-0.5 rounded-full font-bold shadow-sm whitespace-nowrap">
+              {astrologer.education || 'Certified Astrologer'}
+            </span>
+          )}
         </div>
 
         <p className="text-[12px] text-gray-500 mt-0.5 truncate">{skills}</p>

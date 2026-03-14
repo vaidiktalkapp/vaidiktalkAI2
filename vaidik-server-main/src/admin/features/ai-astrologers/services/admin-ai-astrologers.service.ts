@@ -170,12 +170,33 @@ export class AdminAiAstrologersService {
     // ===== 2. ANALYTICS & PERFORMANCE =====
 
     async getQuickStats(): Promise<any> {
-        // Calculate growth rate (Current vs Previous period)
-        const now = new Date();
-        const startOfToday = new Date(now.getTime());
-        startOfToday.setHours(0, 0, 0, 0);
-        const startOfYesterday = new Date(startOfToday.getTime());
-        startOfYesterday.setDate(startOfToday.getDate() - 1);
+        // Use Asia/Kolkata timezone for "Today" vs "Yesterday"
+        const getISTNow = () => {
+            const now = new Date();
+            const istString = now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+            return new Date(istString);
+        };
+
+        const istNow = getISTNow();
+        const istNowTime = istNow.getTime();
+        
+        // Boundaries in IST
+        const startOfTodayIST = new Date(istNow);
+        startOfTodayIST.setHours(0, 0, 0, 0);
+
+        const startOfYesterdayIST = new Date(startOfTodayIST);
+        startOfYesterdayIST.setDate(startOfTodayIST.getDate() - 1);
+
+        const sameTimeYesterdayIST = new Date(istNow);
+        sameTimeYesterdayIST.setDate(istNow.getDate() - 1);
+
+        // Convert IST boundaries back to UTC for MongoDB queries
+        const istOffset = 5.5 * 60 * 60 * 1000;
+        const startOfTodayUtc = new Date(startOfTodayIST.getTime() - istOffset);
+        const endOfTodayUtc = new Date(istNowTime - istOffset);
+        
+        const startOfYesterdayUtc = new Date(startOfYesterdayIST.getTime() - istOffset);
+        const sameTimeYesterdayUtc = new Date(sameTimeYesterdayIST.getTime() - istOffset);
 
         const [
             totalAI,
@@ -199,15 +220,19 @@ export class AdminAiAstrologersService {
                 { $group: { _id: null, avgDuration: { $avg: "$duration" } } }
             ]),
             this.sessionModel.distinct('userId', { orderId: /AI-/ }),
-            this.sessionModel.countDocuments({ orderId: /AI-/, createdAt: { $gte: startOfToday } }),
-            this.sessionModel.countDocuments({ orderId: /AI-/, createdAt: { $gte: startOfYesterday, $lt: startOfToday } })
+            // Today so far
+            this.sessionModel.countDocuments({ orderId: /AI-/, createdAt: { $gte: startOfTodayUtc, $lte: endOfTodayUtc } }),
+            // Yesterday UP TO THE SAME TIME (Fair comparison)
+            this.sessionModel.countDocuments({ orderId: /AI-/, createdAt: { $gte: startOfYesterdayUtc, $lt: sameTimeYesterdayUtc } })
         ]);
 
         let growthRate = 0;
         if (yesterdaySessions > 0) {
             growthRate = ((todaySessions - yesterdaySessions) / yesterdaySessions) * 100;
         } else if (todaySessions > 0) {
-            growthRate = 100; // 100% growth if we had 0 yesterday
+            growthRate = 100; // 100% growth if we had 0 yesterday so far
+        } else {
+            growthRate = 0;
         }
 
         return {
@@ -519,65 +544,68 @@ export class AdminAiAstrologersService {
     }
 
     private getTimeRangeDates(timeRange: string, startDate?: string, endDate?: string) {
-        // Use Asia/Kolkata timezone for starting/ending dates
+        const istOffset = 5.5 * 60 * 60 * 1000;
+        
+        // Get current time in IST
         const getISTNow = () => {
             const now = new Date();
-            const istString = now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
-            return new Date(istString);
+            return new Date(now.getTime() + istOffset);
         };
 
         const istNow = getISTNow();
-        let start: Date;
-        let end: Date = new Date(istNow);
+        let startIST: Date;
+        let endIST: Date = new Date(istNow);
         let groupByFormat: string;
 
         if (timeRange === 'custom' && startDate && endDate) {
-            start = new Date(startDate);
-            end = new Date(endDate);
+            startIST = new Date(new Date(startDate).getTime() + istOffset);
+            endIST = new Date(new Date(endDate).getTime() + istOffset);
             groupByFormat = '%Y-%m-%d';
         } else {
             switch (timeRange) {
                 case 'daily':
-                    start = new Date(istNow);
-                    start.setHours(0, 0, 0, 0);
+                    startIST = new Date(istNow);
+                    startIST.setUTCHours(0, 0, 0, 0); // Using setUTCHours because we are working with offset-adjusted "fake UTC"
                     groupByFormat = '%Y-%m-%d %H:00';
                     break;
                 case 'weekly':
                 case 'last7days':
-                    start = new Date(istNow);
-                    start.setDate(istNow.getDate() - 7);
+                    startIST = new Date(istNow);
+                    startIST.setUTCDate(istNow.getUTCDate() - 7);
+                    startIST.setUTCHours(0, 0, 0, 0);
                     groupByFormat = '%Y-%m-%d';
                     break;
                 case 'last30days':
-                    start = new Date(istNow);
-                    start.setDate(istNow.getDate() - 30);
+                    startIST = new Date(istNow);
+                    startIST.setUTCDate(istNow.getUTCDate() - 30);
+                    startIST.setUTCHours(0, 0, 0, 0);
                     groupByFormat = '%Y-%m-%d';
                     break;
                 case 'monthly':
-                    start = new Date(istNow);
-                    start.setDate(1);
-                    start.setHours(0, 0, 0, 0);
+                    startIST = new Date(istNow);
+                    startIST.setUTCDate(1);
+                    startIST.setUTCHours(0, 0, 0, 0);
                     groupByFormat = '%Y-%m-%d';
                     break;
                 case 'yearly':
-                    start = new Date(istNow);
-                    start.setMonth(0, 1);
-                    start.setHours(0, 0, 0, 0);
+                    startIST = new Date(istNow);
+                    startIST.setUTCMonth(0, 1);
+                    startIST.setUTCHours(0, 0, 0, 0);
                     groupByFormat = '%Y-%m';
                     break;
                 default:
-                    start = new Date(istNow);
-                    start.setMonth(istNow.getMonth() - 1);
+                    startIST = new Date(istNow);
+                    startIST.setUTCDate(istNow.getUTCDate() - 30);
+                    startIST.setUTCHours(0, 0, 0, 0);
                     groupByFormat = '%Y-%m-%d';
             }
         }
 
-        end.setHours(23, 59, 59, 999);
+        endIST.setUTCHours(23, 59, 59, 999);
 
-        // Shift back to UTC based on IST offset for DB queries
-        const istOffset = 5.5 * 60 * 60 * 1000;
-        const startUtc = new Date(start.getTime() - istOffset);
-        const endUtc = new Date(end.getTime() - istOffset);
+        // Convert back to real UTC for DB
+        const startUtc = new Date(startIST.getTime() - istOffset);
+        const endUtc = new Date(endIST.getTime() - istOffset);
 
         return { start: startUtc, end: endUtc, groupByFormat };
     }

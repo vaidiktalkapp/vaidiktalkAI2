@@ -50,6 +50,36 @@ export default function AdminWallet() {
     refetchInterval: 5000,
   });
 
+  // Fetch daily revenue
+  const { data: dailyRevenue } = useQuery({
+    queryKey: ['ai-revenue-daily'],
+    queryFn: async () => {
+      const response = await adminApi.getAIRevenueAnalytics({ timeRange: 'daily' });
+      return response.data?.data || response.data;
+    },
+    refetchInterval: 10000,
+  });
+
+  // Fetch weekly revenue
+  const { data: weeklyRevenue } = useQuery({
+    queryKey: ['ai-revenue-weekly'],
+    queryFn: async () => {
+      const response = await adminApi.getAIRevenueAnalytics({ timeRange: 'weekly' });
+      return response.data?.data || response.data;
+    },
+    refetchInterval: 10000,
+  });
+
+  // Fetch monthly revenue
+  const { data: monthlyRevenue } = useQuery({
+    queryKey: ['ai-revenue-monthly'],
+    queryFn: async () => {
+      const response = await adminApi.getAIRevenueAnalytics({ timeRange: 'monthly' });
+      return response.data?.data || response.data;
+    },
+    refetchInterval: 10000,
+  });
+
   // Grant Credit Mutation
   const grantCreditMutation = useMutation({
     mutationFn: async ({ userId, amount }: { userId: string; amount: number }) => {
@@ -135,6 +165,109 @@ export default function AdminWallet() {
               className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600"
             />
           </div>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+        <div className="bg-indigo-600 p-6 rounded-3xl text-white shadow-xl shadow-indigo-100 flex flex-col justify-between min-h-[160px]">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">
+                Total Float
+              </p>
+              <h2 className="text-2xl font-bold tracking-tighter flex items-center gap-1">
+                <IndianRupee className="w-5 h-5" />
+                {totalPlatformFloat.toLocaleString()}
+              </h2>
+            </div>
+            <div className="p-2 bg-white/20 rounded-xl">
+              <Wallet className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-[10px] opacity-80 leading-tight font-medium">
+            Active user wallet balances currently held.
+          </p>
+        </div>
+
+        <div className="bg-emerald-600 p-6 rounded-3xl text-white shadow-xl shadow-emerald-100 flex flex-col justify-between min-h-[160px]">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">
+                Today Revenue
+              </p>
+              <h2 className="text-2xl font-bold tracking-tighter flex items-center gap-1">
+                <IndianRupee className="w-5 h-5" />
+                {(dailyRevenue?.totals?.totalRevenue || dailyRevenue?.totalRevenue || 0).toLocaleString()}
+              </h2>
+            </div>
+            <div className="p-2 bg-white/20 rounded-xl">
+              <ArrowUpRight className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-[10px] opacity-80 leading-tight font-medium">
+            {dailyRevenue?.totals?.totalSessions || dailyRevenue?.totalSessions || 0} sessions today.
+          </p>
+        </div>
+
+        <div className="bg-indigo-500 p-6 rounded-3xl text-white shadow-xl shadow-indigo-100 flex flex-col justify-between min-h-[160px]">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">
+                Weekly Revenue
+              </p>
+              <h2 className="text-2xl font-bold tracking-tighter flex items-center gap-1">
+                <IndianRupee className="w-5 h-5" />
+                {(weeklyRevenue?.totals?.totalRevenue || weeklyRevenue?.totalRevenue || 0).toLocaleString()}
+              </h2>
+            </div>
+            <div className="p-2 bg-white/20 rounded-xl">
+              <CreditCard className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-[10px] opacity-80 leading-tight font-medium">
+            Last 7 days earnings.
+          </p>
+        </div>
+
+        <div className="bg-violet-600 p-6 rounded-3xl text-white shadow-xl shadow-violet-100 flex flex-col justify-between min-h-[160px]">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">
+                Monthly Revenue
+              </p>
+              <h2 className="text-2xl font-bold tracking-tighter flex items-center gap-1">
+                <IndianRupee className="w-5 h-5" />
+                {(monthlyRevenue?.totals?.totalRevenue || monthlyRevenue?.totalRevenue || 0).toLocaleString()}
+              </h2>
+            </div>
+            <div className="p-2 bg-white/20 rounded-xl">
+              <User className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-[10px] opacity-80 leading-tight font-medium">
+            Last 30 days earnings.
+          </p>
+        </div>
+
+        <div className="bg-slate-800 p-6 rounded-3xl text-white shadow-xl shadow-slate-200 flex flex-col justify-between min-h-[160px]">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">
+                Total AI Revenue
+              </p>
+              <h2 className="text-2xl font-bold tracking-tighter flex items-center gap-1">
+                <IndianRupee className="w-5 h-5" />
+                {(statsData?.find((s: any) => s._id === 'deduction')?.total || 0).toLocaleString()}
+              </h2>
+            </div>
+            <div className="p-2 bg-white/10 rounded-xl">
+              <IndianRupee className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-[10px] opacity-80 leading-tight font-medium">
+            Platform all-time AI income.
+          </p>
         </div>
       </div>
 
@@ -226,26 +359,6 @@ export default function AdminWallet() {
 
         {/* Transaction Summary / Stats */}
         <div className="space-y-6">
-          <div className="bg-indigo-600 p-8 rounded-3xl text-white shadow-xl shadow-indigo-100">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <p className="text-xs font-bold opacity-60 uppercase tracking-widest mb-1">
-                  Total Platform Float
-                </p>
-                <h2 className="text-4xl font-bold tracking-tighter flex items-center gap-2">
-                  <IndianRupee className="w-8 h-8" />
-                  {totalPlatformFloat.toLocaleString()}
-                </h2>
-              </div>
-              <div className="p-3 bg-white/20 rounded-2xl">
-                <Wallet className="w-6 h-6" />
-              </div>
-            </div>
-            <p className="text-xs opacity-80 leading-relaxed font-medium">
-              Sum of all active user wallet balances currently held by the platform.
-            </p>
-          </div>
-
           <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm">
             <h3 className="font-bold text-sm mb-4 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-gray-900">
@@ -279,7 +392,7 @@ export default function AdminWallet() {
                     </div>
                     <div>
                       <div className="text-[10px] font-bold text-gray-900 capitalize">
-                        {tx.userId?.name ? `${tx.userId.name}: ` : ''}
+                        {tx.userName ? `${tx.userName}: ` : ''}
                         {tx.description || 'AI Session Payment'}
                       </div>
                       <div className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">

@@ -13,8 +13,10 @@ interface ChatSession {
     orderId: string;
     sessionId: string;
     userId: { name: string; phoneNumber?: string; profileImage?: string };
-    astrologerId: { name: string; profilePicture?: string };
+    astrologerId: { name: string; profilePicture?: string; image?: string };
     status: string;
+    endedBy?: string;
+    endReason?: string;
     createdAt: string;
     messageCount?: number;
 }
@@ -87,11 +89,20 @@ export default function AiTractionPage() {
             header: 'Status',
             accessorKey: 'status',
             cell: (row) => (
-                <span className={`px-2 py-1 rounded-full text-xs capitalize ${row.status === 'active' ? 'bg-indigo-100 text-indigo-700 animate-pulse' :
-                    row.status === 'ended' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100'
-                    }`}>
-                    {row.status}
-                </span>
+                <div className="flex flex-col gap-1">
+                    <span className={`px-2 py-1 rounded-full text-xs capitalize inline-block w-fit ${row.status === 'active' ? 'bg-indigo-100 text-indigo-700 animate-pulse' :
+                        row.status === 'ended' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100'
+                        }`}>
+                        {row.status}
+                    </span>
+                    {row.status === 'ended' && (
+                        <span className="text-[10px] text-gray-500 font-medium">
+                            {row.endedBy 
+                                ? `Ended by ${row.endedBy === 'user' ? 'User' : row.endedBy === 'ai' ? 'AI' : 'System'}` 
+                                : row.endReason ? `Reason: ${row.endReason.replace(/_/g, ' ')}` : 'Ended'}
+                        </span>
+                    )}
+                </div>
             )
         },
         {
