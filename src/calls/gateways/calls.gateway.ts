@@ -256,7 +256,7 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // ✅ Update Online Status in DB back to TRUE to prevent cleanup trigger
     this.callSessionService.updateParticipantStatus(
       data.sessionId, data.userId, data.role as 'user' | 'astrologer',
-      { isOnline: true, connectionQuality: 'online' }
+      { isOnline: true, connectionQuality: 'good' }
     ).catch(e => { });
 
     client.to(data.sessionId).emit('participant_joined', {
