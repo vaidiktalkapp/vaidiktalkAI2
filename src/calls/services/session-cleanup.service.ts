@@ -53,7 +53,7 @@ export class SessionCleanupService {
       // 2. Clean up initiated requests (Astrologer did not accept in 3 mins)
       const hangingInitiated = await this.callModel.find({
         status: 'initiated',
-        createdAt: { $lt: new Date(now.getTime() - INITIATED_THRESHOLD) }
+        requestCreatedAt: { $lt: new Date(now.getTime() - INITIATED_THRESHOLD) }
       });
 
       for (const call of hangingInitiated) {
@@ -113,7 +113,7 @@ export class SessionCleanupService {
       // 2. Clean up initiated requests (Astrologer did not accept in 3 mins)
       const hangingInitiated = await this.chatModel.find({
         status: 'initiated',
-        createdAt: { $lt: new Date(now.getTime() - INITIATED_THRESHOLD) }
+        requestCreatedAt: { $lt: new Date(now.getTime() - INITIATED_THRESHOLD) }
       });
 
       for (const chat of hangingInitiated) {

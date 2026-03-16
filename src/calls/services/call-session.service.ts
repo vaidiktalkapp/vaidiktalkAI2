@@ -656,6 +656,8 @@ export class CallSessionService {
         const session = await this.sessionModel.findOne({ sessionId });
         if (!session || (session.status !== 'initiated' && session.status !== 'waiting')) return;
 
+        this.logger.warn(`[Timeout] Cancelling initiated/waiting Call ${sessionId} due to no response`);
+
         session.status = 'cancelled';
         session.endReason = 'astrologer_no_response';
         session.endTime = new Date();
