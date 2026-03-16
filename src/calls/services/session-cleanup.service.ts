@@ -32,7 +32,7 @@ export class SessionCleanupService {
   private async cleanupCalls() {
     const OFFLINE_THRESHOLD = 2 * 60 * 1000; // 2 minutes offline threshold
     const INITIATED_THRESHOLD = 3 * 60 * 1000; // 3 minutes timeout for acceptance
-    const WAITING_THRESHOLD = 1 * 60 * 1000; // 1 minute timeout for joining
+    const WAITING_THRESHOLD = 3 * 60 * 1000; // 3 minutes timeout for joining
     const now = new Date();
 
     try {
@@ -92,7 +92,7 @@ export class SessionCleanupService {
   private async cleanupChats() {
     const OFFLINE_THRESHOLD = 2 * 60 * 1000; // 2 minutes offline threshold
     const INITIATED_THRESHOLD = 3 * 60 * 1000; // 3 minutes timeout for acceptance
-    const WAITING_THRESHOLD = 1 * 60 * 1000; // 1 minute timeout for joining
+    const WAITING_THRESHOLD = 3 * 60 * 1000; // 3 minutes timeout for joining
     const now = new Date();
 
     try {
