@@ -20,7 +20,7 @@ export class SessionCleanupService {
     @InjectModel(ChatSession.name) private chatModel: Model<ChatSessionDocument>,
   ) {}
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  // @Cron(CronExpression.EVERY_MINUTE)
   async cleanupStaleSessions() {
     this.logger.log('Checking for stale call and chat sessions...');
     await Promise.all([

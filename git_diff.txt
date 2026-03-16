@@ -1,0 +1,690 @@
+commit f482e3543060297d5e720c51bb11c66f690dd27a
+Author: Kunal Bhadana <130590476+Kunal-5020@users.noreply.github.com>
+Date:   Tue Mar 17 00:52:36 2026 +0530
+
+    new
+
+diff --git a/src/calls/services/call-session.service.ts b/src/calls/services/call-session.service.ts
+index 7cef302..48e1bb8 100644
+--- a/src/calls/services/call-session.service.ts
++++ b/src/calls/services/call-session.service.ts
+@@ -656,6 +656,8 @@ export class CallSessionService {
+         const session = await this.sessionModel.findOne({ sessionId });
+         if (!session || (session.status !== 'initiated' && session.status !== 'waiting')) return;
+ 
++        this.logger.warn(`[Timeout] Cancelling initiated/waiting Call ${sessionId} due to no response`);
++
+         session.status = 'cancelled';
+         session.endReason = 'astrologer_no_response';
+         session.endTime = new Date();
+diff --git a/src/calls/services/session-cleanup.service.ts b/src/calls/services/session-cleanup.service.ts
+index fa406da..1c851f9 100644
+--- a/src/calls/services/session-cleanup.service.ts
++++ b/src/calls/services/session-cleanup.service.ts
+@@ -53,7 +53,7 @@ export class SessionCleanupService {
+       // 2. Clean up initiated requests (Astrologer did not accept in 3 mins)
+       const hangingInitiated = await this.callModel.find({
+         status: 'initiated',
+-        createdAt: { $lt: new Date(now.getTime() - INITIATED_THRESHOLD) }
++        requestCreatedAt: { $lt: new Date(now.getTime() - INITIATED_THRESHOLD) }
+       });
+ 
+       for (const call of hangingInitiated) {
+@@ -113,7 +113,7 @@ export class SessionCleanupService {
+       // 2. Clean up initiated requests (Astrologer did not accept in 3 mins)
+       const hangingInitiated = await this.chatModel.find({
+         status: 'initiated',
+-        createdAt: { $lt: new Date(now.getTime() - INITIATED_THRESHOLD) }
++        requestCreatedAt: { $lt: new Date(now.getTime() - INITIATED_THRESHOLD) }
+       });
+ 
+       for (const chat of hangingInitiated) {
+
+commit 44cff1d6cfd757ff7fe07d1133efe220b89578f0
+Author: Kunal Bhadana <130590476+Kunal-5020@users.noreply.github.com>
+Date:   Tue Mar 17 00:48:21 2026 +0530
+
+    new
+
+diff --git a/src/calls/gateways/calls.gateway.ts b/src/calls/gateways/calls.gateway.ts
+index b82783a..c8043ea 100644
+--- a/src/calls/gateways/calls.gateway.ts
++++ b/src/calls/gateways/calls.gateway.ts
+@@ -253,6 +253,12 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
+ 
+     this.logger.log(`👥 ${data.role} (${data.userId}) joined call room: ${data.sessionId} via socket ${client.id}`);
+ 
++    // ✅ Update Online Status in DB back to TRUE to prevent cleanup trigger
++    this.callSessionService.updateParticipantStatus(
++      data.sessionId, data.userId, data.role as 'user' | 'astrologer',
++      { isOnline: true, connectionQuality: 'online' }
++    ).catch(e => { });
++
+     client.to(data.sessionId).emit('participant_joined', {
+       userId: data.userId,
+       role: data.role,
+diff --git a/src/calls/services/session-cleanup.service.ts b/src/calls/services/session-cleanup.service.ts
+index 42a2221..fa406da 100644
+--- a/src/calls/services/session-cleanup.service.ts
++++ b/src/calls/services/session-cleanup.service.ts
+@@ -32,7 +32,7 @@ export class SessionCleanupService {
+   private async cleanupCalls() {
+     const OFFLINE_THRESHOLD = 2 * 60 * 1000; // 2 minutes offline threshold
+     const INITIATED_THRESHOLD = 3 * 60 * 1000; // 3 minutes timeout for acceptance
+-    const WAITING_THRESHOLD = 1 * 60 * 1000; // 1 minute timeout for joining
++    const WAITING_THRESHOLD = 3 * 60 * 1000; // 3 minutes timeout for joining
+     const now = new Date();
+ 
+     try {
+@@ -92,7 +92,7 @@ export class SessionCleanupService {
+   private async cleanupChats() {
+     const OFFLINE_THRESHOLD = 2 * 60 * 1000; // 2 minutes offline threshold
+     const INITIATED_THRESHOLD = 3 * 60 * 1000; // 3 minutes timeout for acceptance
+-    const WAITING_THRESHOLD = 1 * 60 * 1000; // 1 minute timeout for joining
++    const WAITING_THRESHOLD = 3 * 60 * 1000; // 3 minutes timeout for joining
+     const now = new Date();
+ 
+     try {
+
+commit cd3e224a1a7d6a56ddc3105c56668ef189dcbb5c
+Author: Kunal Bhadana <130590476+Kunal-5020@users.noreply.github.com>
+Date:   Tue Mar 17 00:21:31 2026 +0530
+
+    fixes
+
+diff --git a/src/calls/gateways/calls.gateway.ts b/src/calls/gateways/calls.gateway.ts
+index 101f581..b82783a 100644
+--- a/src/calls/gateways/calls.gateway.ts
++++ b/src/calls/gateways/calls.gateway.ts
+@@ -120,7 +120,8 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
+   }
+ 
+   @SubscribeMessage('accept_call')
+-  async handleAcceptCall(@ConnectedSocket() client: Socket, @MessageBody() data: any) {
++  async handleAcceptCall(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
++    const data = Array.isArray(payload) ? payload[0] : payload;
+     try {
+       const result = await this.callSessionService.acceptCall(data.sessionId, data.astrologerId);
+ 
+@@ -156,17 +157,13 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
+   }
+ 
+   @SubscribeMessage('user_joined_agora')
+-  async handleUserJoinedAgora(@ConnectedSocket() client: Socket, @MessageBody() data: { sessionId: string; role: string }) {
++  async handleUserJoinedAgora(@ConnectedSocket() client: Socket, @MessageBody() payload: { sessionId: string; role: string }) {
++    const data = Array.isArray(payload) ? payload[0] : (payload as any);
+     this.logger.log(`✅ ${data.role} joined Agora for ${data.sessionId}`);
+ 
+-    const session = await this.callSessionService.getSession(data.sessionId);
++    const session = await this.callSessionService.setJoinedAgora(data.sessionId, data.role);
+     if (!session) return;
+ 
+-    if (data.role === 'user') session.userJoinedAgora = true;
+-    else if (data.role === 'astrologer') session.astrologerJoinedAgora = true;
+-
+-    await session.save();
+-
+     // STRICT CHECK: Both must be in Agora to start timer
+     if (session.userJoinedAgora === true && session.astrologerJoinedAgora === true && session.status !== 'active') {
+       this.logger.log(`🚀 Both parties explicitly joined Agora for ${data.sessionId}. Starting timer NOW!`);
+@@ -177,7 +174,8 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
+   }
+ 
+   @SubscribeMessage('reject_call')
+-  async handleRejectCall(@ConnectedSocket() client: Socket, @MessageBody() data: any) {
++  async handleRejectCall(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
++    const data = Array.isArray(payload) ? payload[0] : payload;
+     try {
+       const session = await this.callSessionService.getSession(data.sessionId);
+       if (!session) return { success: false, message: 'Session not found' };
+@@ -207,8 +205,9 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
+   @SubscribeMessage('cancel_call')
+   async handleCancelCall(
+     @ConnectedSocket() client: Socket,
+-    @MessageBody() data: { sessionId: string; userId: string; reason?: string }
++    @MessageBody() payload: { sessionId: string; userId: string; reason?: string }
+   ) {
++    const data = Array.isArray(payload) ? payload[0] : (payload as any);
+     try {
+       this.logger.log(`📡 [CallGateway] cancel_call received for ${data.sessionId}`);
+       const result = await this.callSessionService.cancelCall(
+@@ -508,7 +507,8 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
+   }
+ 
+   @SubscribeMessage('end_call')
+-  async handleEndCall(@ConnectedSocket() client: Socket, @MessageBody() data: { sessionId: string; endedBy: string; reason: string }) {
++  async handleEndCall(@ConnectedSocket() client: Socket, @MessageBody() payload: { sessionId: string; endedBy: string; reason: string }) {
++    const data = Array.isArray(payload) ? payload[0] : (payload as any);
+     return await this.endCallInternal(data.sessionId, data.endedBy, data.reason);
+   }
+ 
+diff --git a/src/calls/services/call-session.service.ts b/src/calls/services/call-session.service.ts
+index ee7e360..7cef302 100644
+--- a/src/calls/services/call-session.service.ts
++++ b/src/calls/services/call-session.service.ts
+@@ -734,6 +734,11 @@ export class CallSessionService {
+     }
+   }
+ 
++  async setJoinedAgora(sessionId: string, role: string): Promise<any> {
++    const update = role === 'user' ? { userJoinedAgora: true } : { astrologerJoinedAgora: true };
++    return this.sessionModel.findOneAndUpdate({ sessionId }, { $set: update }, { new: true });
++  }
++
+   private setUserJoinTimeout(sessionId: string) {
+     if (this.joinTimers.has(sessionId)) {
+       clearTimeout(this.joinTimers.get(sessionId)!);
+diff --git a/src/chat/gateways/chat.gateway.ts b/src/chat/gateways/chat.gateway.ts
+index 2dcab76..89b5929 100644
+--- a/src/chat/gateways/chat.gateway.ts
++++ b/src/chat/gateways/chat.gateway.ts
+@@ -131,13 +131,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+   @SubscribeMessage('initiate_chat')
+   async handleInitiateChat(
+     @ConnectedSocket() client: Socket,
+-    @MessageBody() data: {
+-      astrologerId: string;
+-      astrologerName: string;
+-      ratePerMinute: number;
+-      userId: string;
+-    }
++    @MessageBody() payload: any
+   ) {
++    const data = Array.isArray(payload) ? payload[0] : payload;
+     try {
+       const result = await this.chatSessionService.initiateChat({
+         userId: data.userId,
+@@ -179,7 +175,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+ 
+   // ===== ACCEPT CHAT =====
+   @SubscribeMessage('accept_chat')
+-  async handleAcceptChat(@ConnectedSocket() client: Socket, @MessageBody() data: any) {
++  async handleAcceptChat(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
++    const data = Array.isArray(payload) ? payload[0] : payload;
+     try {
+       const result = await this.chatSessionService.acceptChat(data.sessionId, data.astrologerId);
+ 
+@@ -210,12 +207,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+   @SubscribeMessage('reject_chat')
+   async handleRejectChat(
+     @ConnectedSocket() client: Socket,
+-    @MessageBody() data: {
+-      sessionId: string;
+-      astrologerId?: string;
+-      reason?: string;
+-    }
++    @MessageBody() payload: any
+   ) {
++    const data = Array.isArray(payload) ? payload[0] : payload;
+     try {
+       const session = await this.chatSessionService.getSession(data.sessionId);
+       if (!session) {
+@@ -261,12 +255,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+   @SubscribeMessage('cancel_chat')
+   async handleCancelChat(
+     @ConnectedSocket() client: Socket,
+-    @MessageBody() data: {
+-      sessionId: string;
+-      userId: string;
+-      reason?: string;
+-    }
++    @MessageBody() payload: any
+   ) {
++    const data = Array.isArray(payload) ? payload[0] : payload;
+     try {
+       const result = await this.chatSessionService.cancelChat(
+         data.sessionId,
+@@ -297,13 +288,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+   @SubscribeMessage('continue_chat')
+   async handleContinueChat(
+     @ConnectedSocket() client: Socket,
+-    @MessageBody() data: {
+-      userId: string;
+-      astrologerId: string;
+-      previousSessionId: string;
+-      ratePerMinute: number;
+-    }
++    @MessageBody() payload: any
+   ) {
++    const data = Array.isArray(payload) ? payload[0] : payload;
+     try {
+       const result = await this.chatSessionService.continueChat({
+         userId: data.userId,
+
+commit c0ba230e8976409a1ab6666b228c30ad961d761b
+Author: Kunal Bhadana <130590476+Kunal-5020@users.noreply.github.com>
+Date:   Mon Mar 16 19:59:51 2026 +0530
+
+    fixes
+
+diff --git a/errors.txt b/errors.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/job_output.txt b/job_output.txt
+new file mode 100644
+index 0000000..854f8fd
+Binary files /dev/null and b/job_output.txt differ
+diff --git a/src/astrologers/services/availability.service.ts b/src/astrologers/services/availability.service.ts
+index 85b1fbc..e07b7f0 100644
+--- a/src/astrologers/services/availability.service.ts
++++ b/src/astrologers/services/availability.service.ts
+@@ -18,18 +18,21 @@ export class AvailabilityService {
+   /**
+    * ✅ NEW: Check if astrologer has any active/initiated session
+    */
+-  public async hasActiveSession(astrologerId: string | Types.ObjectId): Promise<boolean> {
++  public async hasActiveSession(astrologerId: string | Types.ObjectId, exceptUserId?: string): Promise<boolean> {
+     const activeStatuses = ['initiated', 'ringing', 'waiting', 'waiting_in_queue', 'active'];
+ 
++    const query: any = {
++      astrologerId,
++      status: { $in: activeStatuses }
++    };
++
++    if (exceptUserId) {
++      query.userId = { $ne: new Types.ObjectId(exceptUserId) };
++    }
++
+     const [activeCall, activeChat] = await Promise.all([
+-      this.callSessionModel.exists({
+-        astrologerId,
+-        status: { $in: activeStatuses }
+-      }),
+-      this.chatSessionModel.exists({
+-        astrologerId,
+-        status: { $in: activeStatuses }
+-      })
++      this.callSessionModel.exists(query),
++      this.chatSessionModel.exists(query)
+     ]);
+ 
+     return !!(activeCall || activeChat);
+@@ -187,7 +190,7 @@ export class AvailabilityService {
+    * ✅ FIXED: Robust check for initiating calls/chats
+    * Ensures no request is sent if already Live, Busy, or Offline
+    */
+-  async isAvailableNow(astrologerId: string): Promise<boolean> {
++  async isAvailableNow(astrologerId: string, exceptUserId?: string): Promise<boolean> {
+     const astrologer = await this.astrologerModel.findById(astrologerId).select('availability accountStatus').lean();
+     if (!astrologer || astrologer.accountStatus !== 'active') return false;
+ 
+@@ -199,8 +202,8 @@ export class AvailabilityService {
+     if (av.busyUntil && new Date(av.busyUntil) > now) return false;
+     if (av.isAvailable === false) return false;
+ 
+-    // ✅ NEW: One User at a Time Enforcement
+-    const hasSession = await this.hasActiveSession(astrologerId);
++    // ✅ NEW: One User at a Time Enforcement (Bypass Self-induced lock)
++    const hasSession = await this.hasActiveSession(astrologerId, exceptUserId);
+     if (hasSession) return false;
+ 
+     // 2. Priority Logic
+diff --git a/src/calls/calls.module.ts b/src/calls/calls.module.ts
+index 84bc7dd..57b6b9d 100644
+--- a/src/calls/calls.module.ts
++++ b/src/calls/calls.module.ts
+@@ -6,9 +6,11 @@ import { CallController } from './controllers/calls.controller';
+ import { CallGateway } from './gateways/calls.gateway';
+ import { CallSessionService } from './services/call-session.service';
+ import { CallRecordingService } from './services/call-recording.service';
+-import { AgoraService } from './services/agora.service'; // ✅ ADD
+-import { CallBillingService } from './services/call-billing.service'; // ✅ ADD
++import { SessionCleanupService } from './services/session-cleanup.service';
++import { AgoraService } from './services/agora.service'; 
++import { CallBillingService } from './services/call-billing.service'; 
+ import { CallSession, CallSessionSchema } from './schemas/call-session.schema';
++import { ChatSession, ChatSessionSchema } from '../chat/schemas/chat-session.schema';
+ import { OrdersModule } from '../orders/orders.module';
+ import { PaymentsModule } from '../payments/payments.module';
+ import { AstrologersModule } from '../astrologers/astrologers.module';
+@@ -23,6 +25,7 @@ import { UsersModule } from '../users/users.module';
+   imports: [
+     MongooseModule.forFeature([
+       { name: CallSession.name, schema: CallSessionSchema },
++      { name: ChatSession.name, schema: ChatSessionSchema },
+       { name: User.name, schema: UserSchema },
+       { name: Astrologer.name, schema: AstrologerSchema },
+     ]),
+@@ -38,8 +41,9 @@ import { UsersModule } from '../users/users.module';
+     CallGateway,
+     CallSessionService,
+     CallRecordingService,
+-    AgoraService, // ✅ ADD
+-    CallBillingService, // ✅ ADD
++    SessionCleanupService,
++    AgoraService, 
++    CallBillingService, 
+     EarningsService,
+   ],
+   exports: [CallSessionService, CallRecordingService, AgoraService, CallBillingService],
+diff --git a/src/calls/services/call-session.service.ts b/src/calls/services/call-session.service.ts
+index 0ac1970..ee7e360 100644
+--- a/src/calls/services/call-session.service.ts
++++ b/src/calls/services/call-session.service.ts
+@@ -69,7 +69,8 @@ export class CallSessionService {
+     // ✅ PREVENT DOUBLE CALLS: Check if user already has an active/pending session
+     const existingSession = await this.sessionModel.findOne({
+       userId: this.toObjectId(sessionData.userId),
+-      status: { $in: ['initiated', 'waiting', 'waiting_in_queue', 'active'] }
++      status: { $in: ['initiated', 'ringing', 'waiting', 'waiting_in_queue', 'active'] },
++      astrologerId: { $ne: this.toObjectId(sessionData.astrologerId) }
+     });
+ 
+     if (existingSession) {
+@@ -77,7 +78,7 @@ export class CallSessionService {
+     }
+ 
+     // ✅ PREVENT DOUBLE BOOKING: Strict check against astrologer's Real-Time Availability
+-    const isAvailable = await this.availabilityService.isAvailableNow(sessionData.astrologerId);
++    const isAvailable = await this.availabilityService.isAvailableNow(sessionData.astrologerId, sessionData.userId);
+     if (!isAvailable) {
+       throw new BadRequestException('Astrologer is currently busy or offline. Please try again later.');
+     }
+@@ -778,6 +779,14 @@ export class CallSessionService {
+     Object.keys(statusUpdate).forEach(key => {
+       updateObj[`${updateField}.${key}`] = statusUpdate[key];
+     });
++
++    // ✅ Track lastSeen when user/astrologer goes offline
++    if (statusUpdate.isOnline === false) {
++      updateObj[`${updateField}.lastSeen`] = new Date();
++    } else if (statusUpdate.isOnline === true) {
++      updateObj[`${updateField}.lastSeen`] = null;
++    }
++
+     await this.sessionModel.findOneAndUpdate({ sessionId }, { $set: updateObj });
+   }
+ 
+diff --git a/src/calls/services/session-cleanup.service.ts b/src/calls/services/session-cleanup.service.ts
+new file mode 100644
+index 0000000..42a2221
+--- /dev/null
++++ b/src/calls/services/session-cleanup.service.ts
+@@ -0,0 +1,151 @@
++import { Injectable, Logger } from '@nestjs/common';
++import { Cron, CronExpression } from '@nestjs/schedule';
++import { CallSessionService } from './call-session.service';
++import { ChatSessionService } from '../../chat/services/chat-session.service';
++import { InjectModel } from '@nestjs/mongoose';
++import { Model } from 'mongoose';
++import { CallSession, CallSessionDocument } from '../schemas/call-session.schema';
++import { ChatSession, ChatSessionDocument } from '../../chat/schemas/chat-session.schema';
++import { AvailabilityService } from '../../astrologers/services/availability.service';
++
++@Injectable()
++export class SessionCleanupService {
++  private readonly logger = new Logger(SessionCleanupService.name);
++
++  constructor(
++    private readonly callSessionService: CallSessionService,
++    private readonly chatSessionService: ChatSessionService,
++    private readonly availabilityService: AvailabilityService,
++    @InjectModel(CallSession.name) private callModel: Model<CallSessionDocument>,
++    @InjectModel(ChatSession.name) private chatModel: Model<ChatSessionDocument>,
++  ) {}
++
++  @Cron(CronExpression.EVERY_MINUTE)
++  async cleanupStaleSessions() {
++    this.logger.log('Checking for stale call and chat sessions...');
++    await Promise.all([
++      this.cleanupCalls(),
++      this.cleanupChats(),
++    ]);
++  }
++
++  private async cleanupCalls() {
++    const OFFLINE_THRESHOLD = 2 * 60 * 1000; // 2 minutes offline threshold
++    const INITIATED_THRESHOLD = 3 * 60 * 1000; // 3 minutes timeout for acceptance
++    const WAITING_THRESHOLD = 1 * 60 * 1000; // 1 minute timeout for joining
++    const now = new Date();
++
++    try {
++      // 1. Clean up active calls where a party triggers offline threshold
++      const staleCalls = await this.callModel.find({
++        status: 'active',
++        $or: [
++          { 'astrologerStatus.isOnline': false, 'astrologerStatus.lastSeen': { $lt: new Date(now.getTime() - OFFLINE_THRESHOLD) } },
++          { 'userStatus.isOnline': false, 'userStatus.lastSeen': { $lt: new Date(now.getTime() - OFFLINE_THRESHOLD) } },
++        ]
++      });
++
++      for (const call of staleCalls) {
++        this.logger.warn(`[Cleanup] Ending stale active Call: ${call.sessionId} due to offline participant`);
++        await this.callSessionService.endSession(call.sessionId, 'system', 'stale_timeout');
++      }
++
++      // 2. Clean up initiated requests (Astrologer did not accept in 3 mins)
++      const hangingInitiated = await this.callModel.find({
++        status: 'initiated',
++        createdAt: { $lt: new Date(now.getTime() - INITIATED_THRESHOLD) }
++      });
++
++      for (const call of hangingInitiated) {
++        this.logger.warn(`[Cleanup] Cancelling initiated Call request: ${call.sessionId} due to no response`);
++        await this.callModel.updateOne({ sessionId: call.sessionId }, { 
++          status: 'cancelled', 
++          endReason: 'astrologer_no_response_timeout', 
++          endTime: new Date(),
++          endedBy: 'system'
++        });
++        await this.availabilityService.setAvailable(call.astrologerId.toString());
++      }
++
++      // 3. Clean up waiting requests (User did not join in 60s)
++      const hangingWaiting = await this.callModel.find({
++        status: { $in: ['waiting', 'waiting_in_queue'] },
++        acceptedAt: { $lt: new Date(now.getTime() - WAITING_THRESHOLD) }
++      });
++
++      for (const call of hangingWaiting) {
++        this.logger.warn(`[Cleanup] Cancelling waiting Call: ${call.sessionId} due to user no-show`);
++        await this.callModel.updateOne({ sessionId: call.sessionId }, { 
++          status: 'cancelled', 
++          endReason: 'user_no_show_timeout', 
++          endTime: new Date(),
++          endedBy: 'system'
++        });
++        await this.availabilityService.setAvailable(call.astrologerId.toString());
++      }
++
++    } catch (e: any) {
++      this.logger.error(`Error during Call cleanup: ${e.message}`);
++    }
++  }
++
++  private async cleanupChats() {
++    const OFFLINE_THRESHOLD = 2 * 60 * 1000; // 2 minutes offline threshold
++    const INITIATED_THRESHOLD = 3 * 60 * 1000; // 3 minutes timeout for acceptance
++    const WAITING_THRESHOLD = 1 * 60 * 1000; // 1 minute timeout for joining
++    const now = new Date();
++
++    try {
++      // 1. Clean up active chats where a party triggers offline threshold
++      const staleChats = await this.chatModel.find({
++        status: 'active',
++        $or: [
++          { 'astrologerStatus.isOnline': false, 'astrologerStatus.lastSeen': { $lt: new Date(now.getTime() - OFFLINE_THRESHOLD) } },
++          { 'userStatus.isOnline': false, 'userStatus.lastSeen': { $lt: new Date(now.getTime() - OFFLINE_THRESHOLD) } },
++        ]
++      });
++
++      for (const chat of staleChats) {
++        this.logger.warn(`[Cleanup] Ending stale active Chat: ${chat.sessionId} due to offline participant`);
++        await this.chatSessionService.endSession(chat.sessionId, 'system', 'stale_timeout');
++      }
++
++      // 2. Clean up initiated requests (Astrologer did not accept in 3 mins)
++      const hangingInitiated = await this.chatModel.find({
++        status: 'initiated',
++        createdAt: { $lt: new Date(now.getTime() - INITIATED_THRESHOLD) }
++      });
++
++      for (const chat of hangingInitiated) {
++        this.logger.warn(`[Cleanup] Cancelling initiated Chat request: ${chat.sessionId} due to no response`);
++        await this.chatModel.updateOne({ sessionId: chat.sessionId }, { 
++          status: 'cancelled', 
++          endReason: 'astrologer_no_response_timeout', 
++          endTime: new Date(),
++          endedBy: 'system'
++        });
++        await this.availabilityService.setAvailable(chat.astrologerId.toString());
++      }
++
++      // 3. Clean up waiting requests (User did not join in 60s)
++      const hangingWaiting = await this.chatModel.find({
++        status: { $in: ['waiting', 'waiting_in_queue'] },
++        acceptedAt: { $lt: new Date(now.getTime() - WAITING_THRESHOLD) }
++      });
++
++      for (const chat of hangingWaiting) {
++        this.logger.warn(`[Cleanup] Cancelling waiting Chat: ${chat.sessionId} due to user no-show`);
++        await this.chatModel.updateOne({ sessionId: chat.sessionId }, { 
++          status: 'cancelled', 
++          endReason: 'user_no_show_timeout', 
++          endTime: new Date(),
++          endedBy: 'system'
++        });
++        await this.availabilityService.setAvailable(chat.astrologerId.toString());
++      }
++
++    } catch (e: any) {
++      this.logger.error(`Error during Chat cleanup: ${e.message}`);
++    }
++  }
++}
+diff --git a/src/chat/controllers/chat.controller.ts b/src/chat/controllers/chat.controller.ts
+index 72a8fc2..8fdd678 100644
+--- a/src/chat/controllers/chat.controller.ts
++++ b/src/chat/controllers/chat.controller.ts
+@@ -133,6 +133,7 @@ export class ChatController {
+     @Req() req: AuthenticatedRequest,
+     @Body() body: {
+       astrologerId: string;
++      astrologerName: string;
+       previousSessionId: string;
+       ratePerMinute: number;
+     }
+@@ -140,6 +141,7 @@ export class ChatController {
+     return this.chatSessionService.continueChat({
+       userId: req.user._id,
+       astrologerId: body.astrologerId,
++      astrologerName: body.astrologerName,
+       previousSessionId: body.previousSessionId,
+       ratePerMinute: body.ratePerMinute,
+     });
+diff --git a/src/chat/services/chat-session.service.ts b/src/chat/services/chat-session.service.ts
+index fc881b3..0342a13 100644
+--- a/src/chat/services/chat-session.service.ts
++++ b/src/chat/services/chat-session.service.ts
+@@ -68,7 +68,8 @@ export class ChatSessionService {
+     // ✅ PREVENT DOUBLE CHATS: Check if user already has an active/pending session
+     const existingSession = await this.sessionModel.findOne({
+       userId: this.toObjectId(sessionData.userId),
+-      status: { $in: ['initiated', 'waiting', 'waiting_in_queue', 'active'] }
++      status: { $in: ['initiated', 'waiting', 'waiting_in_queue', 'active'] },
++      astrologerId: { $ne: this.toObjectId(sessionData.astrologerId) }
+     });
+ 
+     if (existingSession) {
+@@ -76,7 +77,7 @@ export class ChatSessionService {
+     }
+ 
+     // ✅ PREVENT DOUBLE BOOKING: Strict check against astrologer's Real-Time Availability
+-    const isAvailable = await this.availabilityService.isAvailableNow(sessionData.astrologerId);
++    const isAvailable = await this.availabilityService.isAvailableNow(sessionData.astrologerId, sessionData.userId);
+     if (!isAvailable) {
+       throw new BadRequestException('Astrologer is currently busy or offline. Please try again later.');
+     }
+@@ -982,6 +983,7 @@ export class ChatSessionService {
+   async continueChat(data: {
+     userId: string;
+     astrologerId: string;
++    astrologerName?: string;
+     previousSessionId: string;
+     ratePerMinute: number;
+   }): Promise<any> {
+@@ -995,11 +997,17 @@ export class ChatSessionService {
+       );
+     }
+ 
++    let nameToUse = data.astrologerName;
++    if (!nameToUse) {
++      const astrologer = await this.astrologerModel.findById(data.astrologerId).select('name').lean();
++      nameToUse = astrologer?.name || 'Astrologer';
++    }
++
+     // FIND CONVERSATION THREAD
+     const conversationThread = await this.ordersService.findOrCreateConversationThread(
+       data.userId,
+       data.astrologerId,
+-      '', // Will get from existing thread
++      nameToUse,
+       data.ratePerMinute
+     );
+ 
+diff --git a/src/payments/payments.module.ts b/src/payments/payments.module.ts
+index 9d21c3a..4d62bd6 100644
+--- a/src/payments/payments.module.ts
++++ b/src/payments/payments.module.ts
+@@ -21,6 +21,7 @@ import { RechargePack, RechargePackSchema } from './schemas/recharge-pack.schema
+ import { ChatModule } from '../chat/chat.module';
+ import { CallsModule } from '../calls/calls.module';
+ import { StreamingModule } from '../streaming/streaming.module';
++import { NotificationsModule } from '../notifications/notifications.module';
+ 
+ 
+ @Module({
+@@ -39,6 +40,7 @@ import { StreamingModule } from '../streaming/streaming.module';
+     forwardRef(() => ChatModule),
+     forwardRef(() => CallsModule),
+     forwardRef(() => StreamingModule),
++    NotificationsModule,
+   ],
+   controllers: [
+     WalletController,
+diff --git a/src/payments/services/gift.service.ts b/src/payments/services/gift.service.ts
+index c6b0a93..0ba9833 100644
+--- a/src/payments/services/gift.service.ts
++++ b/src/payments/services/gift.service.ts
+@@ -11,6 +11,7 @@ import { StreamSession, StreamSessionDocument } from '../../streaming/schemas/st
+ import { WalletTransaction, WalletTransactionDocument } from '../schemas/wallet-transaction.schema';
+ import { StreamGateway } from '../../streaming/gateways/streaming.gateway';
+ import { Inject, forwardRef } from '@nestjs/common';
++import { NotificationService } from '../../notifications/services/notification.service';
+ 
+ export type GiftContext = 'direct' | 'stream';
+ 
+@@ -36,6 +37,8 @@ export class GiftService {
+     @InjectModel(WalletTransaction.name) private readonly transactionModel: Model<WalletTransactionDocument>,
+     @Inject(forwardRef(() => StreamGateway))
+     private readonly streamGateway: StreamGateway,
++    @Inject(forwardRef(() => NotificationService))
++    private readonly notificationService: NotificationService,
+   ) { }
+ 
+   /**
+@@ -249,6 +252,24 @@ export class GiftService {
+         } catch (err) {
+           this.logger.error(`❌ Failed to emit gift notification: ${err.message}`);
+         }
++      } else if (context === 'direct') {
++        try {
++          await this.notificationService.sendNotification({
++            recipientId: astrologerId,
++            recipientModel: 'Astrologer',
++            type: 'gift_received',
++            title: '🎁 Gift Received!',
++            message: `${userName} sent you a ${giftType}!`,
++            data: {
++              giftType,
++              amount,
++              userName,
++              userId,
++            }
++          });
++        } catch (err) {
++          this.logger.error(`❌ Failed to send gift notification: ${err.message}`);
++        }
+       }
+ 
+       return {
