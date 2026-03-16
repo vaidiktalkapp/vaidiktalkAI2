@@ -736,11 +736,6 @@ export class CallSessionService {
     }
   }
 
-  async setJoinedAgora(sessionId: string, role: string): Promise<any> {
-    const update = role === 'user' ? { userJoinedAgora: true } : { astrologerJoinedAgora: true };
-    return this.sessionModel.findOneAndUpdate({ sessionId }, { $set: update }, { new: true });
-  }
-
   private setUserJoinTimeout(sessionId: string) {
     if (this.joinTimers.has(sessionId)) {
       clearTimeout(this.joinTimers.get(sessionId)!);
