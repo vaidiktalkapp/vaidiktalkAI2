@@ -18,18 +18,21 @@ export class AvailabilityService {
   /**
    * ✅ NEW: Check if astrologer has any active/initiated session
    */
-  public async hasActiveSession(astrologerId: string | Types.ObjectId): Promise<boolean> {
+  public async hasActiveSession(astrologerId: string | Types.ObjectId, exceptUserId?: string): Promise<boolean> {
     const activeStatuses = ['initiated', 'ringing', 'waiting', 'waiting_in_queue', 'active'];
 
+    const query: any = {
+      astrologerId,
+      status: { $in: activeStatuses }
+    };
+
+    if (exceptUserId) {
+      query.userId = { $ne: new Types.ObjectId(exceptUserId) };
+    }
+
     const [activeCall, activeChat] = await Promise.all([
-      this.callSessionModel.exists({
-        astrologerId,
-        status: { $in: activeStatuses }
-      }),
-      this.chatSessionModel.exists({
-        astrologerId,
-        status: { $in: activeStatuses }
-      })
+      this.callSessionModel.exists(query),
+      this.chatSessionModel.exists(query)
     ]);
 
     return !!(activeCall || activeChat);
@@ -187,7 +190,7 @@ export class AvailabilityService {
    * ✅ FIXED: Robust check for initiating calls/chats
    * Ensures no request is sent if already Live, Busy, or Offline
    */
-  async isAvailableNow(astrologerId: string): Promise<boolean> {
+  async isAvailableNow(astrologerId: string, exceptUserId?: string): Promise<boolean> {
     const astrologer = await this.astrologerModel.findById(astrologerId).select('availability accountStatus').lean();
     if (!astrologer || astrologer.accountStatus !== 'active') return false;
 
@@ -199,8 +202,8 @@ export class AvailabilityService {
     if (av.busyUntil && new Date(av.busyUntil) > now) return false;
     if (av.isAvailable === false) return false;
 
-    // ✅ NEW: One User at a Time Enforcement
-    const hasSession = await this.hasActiveSession(astrologerId);
+    // ✅ NEW: One User at a Time Enforcement (Bypass Self-induced lock)
+    const hasSession = await this.hasActiveSession(astrologerId, exceptUserId);
     if (hasSession) return false;
 
     // 2. Priority Logic

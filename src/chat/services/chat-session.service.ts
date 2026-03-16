@@ -68,7 +68,8 @@ export class ChatSessionService {
     // ✅ PREVENT DOUBLE CHATS: Check if user already has an active/pending session
     const existingSession = await this.sessionModel.findOne({
       userId: this.toObjectId(sessionData.userId),
-      status: { $in: ['initiated', 'waiting', 'waiting_in_queue', 'active'] }
+      status: { $in: ['initiated', 'waiting', 'waiting_in_queue', 'active'] },
+      astrologerId: { $ne: this.toObjectId(sessionData.astrologerId) }
     });
 
     if (existingSession) {
@@ -76,7 +77,7 @@ export class ChatSessionService {
     }
 
     // ✅ PREVENT DOUBLE BOOKING: Strict check against astrologer's Real-Time Availability
-    const isAvailable = await this.availabilityService.isAvailableNow(sessionData.astrologerId);
+    const isAvailable = await this.availabilityService.isAvailableNow(sessionData.astrologerId, sessionData.userId);
     if (!isAvailable) {
       throw new BadRequestException('Astrologer is currently busy or offline. Please try again later.');
     }
@@ -982,6 +983,7 @@ export class ChatSessionService {
   async continueChat(data: {
     userId: string;
     astrologerId: string;
+    astrologerName?: string;
     previousSessionId: string;
     ratePerMinute: number;
   }): Promise<any> {
@@ -995,11 +997,17 @@ export class ChatSessionService {
       );
     }
 
+    let nameToUse = data.astrologerName;
+    if (!nameToUse) {
+      const astrologer = await this.astrologerModel.findById(data.astrologerId).select('name').lean();
+      nameToUse = astrologer?.name || 'Astrologer';
+    }
+
     // FIND CONVERSATION THREAD
     const conversationThread = await this.ordersService.findOrCreateConversationThread(
       data.userId,
       data.astrologerId,
-      '', // Will get from existing thread
+      nameToUse,
       data.ratePerMinute
     );
 

@@ -21,6 +21,7 @@ import { RechargePack, RechargePackSchema } from './schemas/recharge-pack.schema
 import { ChatModule } from '../chat/chat.module';
 import { CallsModule } from '../calls/calls.module';
 import { StreamingModule } from '../streaming/streaming.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 
 @Module({
@@ -39,6 +40,7 @@ import { StreamingModule } from '../streaming/streaming.module';
     forwardRef(() => ChatModule),
     forwardRef(() => CallsModule),
     forwardRef(() => StreamingModule),
+    NotificationsModule,
   ],
   controllers: [
     WalletController,

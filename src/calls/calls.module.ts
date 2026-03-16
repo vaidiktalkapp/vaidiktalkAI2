@@ -6,9 +6,11 @@ import { CallController } from './controllers/calls.controller';
 import { CallGateway } from './gateways/calls.gateway';
 import { CallSessionService } from './services/call-session.service';
 import { CallRecordingService } from './services/call-recording.service';
-import { AgoraService } from './services/agora.service'; // ✅ ADD
-import { CallBillingService } from './services/call-billing.service'; // ✅ ADD
+import { SessionCleanupService } from './services/session-cleanup.service';
+import { AgoraService } from './services/agora.service'; 
+import { CallBillingService } from './services/call-billing.service'; 
 import { CallSession, CallSessionSchema } from './schemas/call-session.schema';
+import { ChatSession, ChatSessionSchema } from '../chat/schemas/chat-session.schema';
 import { OrdersModule } from '../orders/orders.module';
 import { PaymentsModule } from '../payments/payments.module';
 import { AstrologersModule } from '../astrologers/astrologers.module';
@@ -23,6 +25,7 @@ import { UsersModule } from '../users/users.module';
   imports: [
     MongooseModule.forFeature([
       { name: CallSession.name, schema: CallSessionSchema },
+      { name: ChatSession.name, schema: ChatSessionSchema },
       { name: User.name, schema: UserSchema },
       { name: Astrologer.name, schema: AstrologerSchema },
     ]),
@@ -38,8 +41,9 @@ import { UsersModule } from '../users/users.module';
     CallGateway,
     CallSessionService,
     CallRecordingService,
-    AgoraService, // ✅ ADD
-    CallBillingService, // ✅ ADD
+    SessionCleanupService,
+    AgoraService, 
+    CallBillingService, 
     EarningsService,
   ],
   exports: [CallSessionService, CallRecordingService, AgoraService, CallBillingService],
