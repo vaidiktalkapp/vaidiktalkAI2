@@ -254,12 +254,6 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.logger.log(`👥 ${data.role} (${data.userId}) joined call room: ${data.sessionId} via socket ${client.id}`);
 
-    // ✅ Update Online Status in DB back to TRUE to prevent cleanup trigger
-    this.callSessionService.updateParticipantStatus(
-      data.sessionId, data.userId, data.role as 'user' | 'astrologer',
-      { isOnline: true, connectionQuality: 'online' }
-    ).catch(e => { });
-
     client.to(data.sessionId).emit('participant_joined', {
       userId: data.userId,
       role: data.role,
