@@ -120,7 +120,8 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('accept_call')
-  async handleAcceptCall(@ConnectedSocket() client: Socket, @MessageBody() data: any) {
+  async handleAcceptCall(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
+    const data = Array.isArray(payload) ? payload[0] : payload;
     try {
       const result = await this.callSessionService.acceptCall(data.sessionId, data.astrologerId);
 
@@ -156,16 +157,12 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('user_joined_agora')
-  async handleUserJoinedAgora(@ConnectedSocket() client: Socket, @MessageBody() data: { sessionId: string; role: string }) {
+  async handleUserJoinedAgora(@ConnectedSocket() client: Socket, @MessageBody() payload: { sessionId: string; role: string }) {
+    const data = Array.isArray(payload) ? payload[0] : (payload as any);
     this.logger.log(`✅ ${data.role} joined Agora for ${data.sessionId}`);
 
-    const session = await this.callSessionService.getSession(data.sessionId);
+    const session = await this.callSessionService.setJoinedAgora(data.sessionId, data.role);
     if (!session) return;
-
-    if (data.role === 'user') session.userJoinedAgora = true;
-    else if (data.role === 'astrologer') session.astrologerJoinedAgora = true;
-
-    await session.save();
 
     // STRICT CHECK: Both must be in Agora to start timer
     if (session.userJoinedAgora === true && session.astrologerJoinedAgora === true && session.status !== 'active') {
@@ -177,7 +174,8 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('reject_call')
-  async handleRejectCall(@ConnectedSocket() client: Socket, @MessageBody() data: any) {
+  async handleRejectCall(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
+    const data = Array.isArray(payload) ? payload[0] : payload;
     try {
       const session = await this.callSessionService.getSession(data.sessionId);
       if (!session) return { success: false, message: 'Session not found' };
@@ -207,8 +205,9 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('cancel_call')
   async handleCancelCall(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { sessionId: string; userId: string; reason?: string }
+    @MessageBody() payload: { sessionId: string; userId: string; reason?: string }
   ) {
+    const data = Array.isArray(payload) ? payload[0] : (payload as any);
     try {
       this.logger.log(`📡 [CallGateway] cancel_call received for ${data.sessionId}`);
       const result = await this.callSessionService.cancelCall(
@@ -508,7 +507,8 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('end_call')
-  async handleEndCall(@ConnectedSocket() client: Socket, @MessageBody() data: { sessionId: string; endedBy: string; reason: string }) {
+  async handleEndCall(@ConnectedSocket() client: Socket, @MessageBody() payload: { sessionId: string; endedBy: string; reason: string }) {
+    const data = Array.isArray(payload) ? payload[0] : (payload as any);
     return await this.endCallInternal(data.sessionId, data.endedBy, data.reason);
   }
 

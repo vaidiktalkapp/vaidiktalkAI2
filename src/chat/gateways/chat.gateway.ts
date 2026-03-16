@@ -131,13 +131,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('initiate_chat')
   async handleInitiateChat(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: {
-      astrologerId: string;
-      astrologerName: string;
-      ratePerMinute: number;
-      userId: string;
-    }
+    @MessageBody() payload: any
   ) {
+    const data = Array.isArray(payload) ? payload[0] : payload;
     try {
       const result = await this.chatSessionService.initiateChat({
         userId: data.userId,
@@ -179,7 +175,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   // ===== ACCEPT CHAT =====
   @SubscribeMessage('accept_chat')
-  async handleAcceptChat(@ConnectedSocket() client: Socket, @MessageBody() data: any) {
+  async handleAcceptChat(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
+    const data = Array.isArray(payload) ? payload[0] : payload;
     try {
       const result = await this.chatSessionService.acceptChat(data.sessionId, data.astrologerId);
 
@@ -210,12 +207,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('reject_chat')
   async handleRejectChat(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: {
-      sessionId: string;
-      astrologerId?: string;
-      reason?: string;
-    }
+    @MessageBody() payload: any
   ) {
+    const data = Array.isArray(payload) ? payload[0] : payload;
     try {
       const session = await this.chatSessionService.getSession(data.sessionId);
       if (!session) {
@@ -261,12 +255,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('cancel_chat')
   async handleCancelChat(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: {
-      sessionId: string;
-      userId: string;
-      reason?: string;
-    }
+    @MessageBody() payload: any
   ) {
+    const data = Array.isArray(payload) ? payload[0] : payload;
     try {
       const result = await this.chatSessionService.cancelChat(
         data.sessionId,
@@ -297,13 +288,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('continue_chat')
   async handleContinueChat(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: {
-      userId: string;
-      astrologerId: string;
-      previousSessionId: string;
-      ratePerMinute: number;
-    }
+    @MessageBody() payload: any
   ) {
+    const data = Array.isArray(payload) ? payload[0] : payload;
     try {
       const result = await this.chatSessionService.continueChat({
         userId: data.userId,
