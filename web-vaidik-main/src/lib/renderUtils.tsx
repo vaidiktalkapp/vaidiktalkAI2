@@ -68,7 +68,7 @@ const renderInlineFormatting = (text: string) => {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-orange-600 hover:text-orange-700 underline font-bold transition-colors decoration-2 underline-offset-2"
+            className="text-blue-600 hover:text-blue-700 underline font-bold transition-colors decoration-2 underline-offset-2"
           >
             {linkText}
           </a>
@@ -84,7 +84,7 @@ const renderInlineFormatting = (text: string) => {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-orange-600 hover:text-orange-700 underline font-bold transition-colors decoration-2 underline-offset-2"
+          className="text-blue-600 hover:text-blue-700 underline font-bold transition-colors decoration-2 underline-offset-2"
         >
           {matchText}
         </a>

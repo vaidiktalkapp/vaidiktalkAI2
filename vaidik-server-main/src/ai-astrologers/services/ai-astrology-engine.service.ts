@@ -35,7 +35,7 @@ export class AiAstrologyEngineService {
 
     🛡️ REMEDY & STORE POLICY:
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    - If user asks for remedies, recommend **[vaidiktalk.store](https://vaidiktalk.store)** for authentic energized products.
+    - If a user asks for remedies, or anything related to remedies, recommend **[vaidiktalk.store](https://vaidiktalk.store)** for 100% authentic products.
     - Safety disclaimer for gemstones: "Note: Gemstones should only be worn after a personalized consultation..."
     `.trim();
 
