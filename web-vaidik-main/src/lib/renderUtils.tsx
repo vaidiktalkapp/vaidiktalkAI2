@@ -16,7 +16,7 @@ export const renderMessageContent = (content: string) => {
     // We treat every line as a simple paragraph to preserve the raw look
     // and keep all Markdown symbols (#, *, etc.) visible as requested.
     renderedElements.push(
-      <div key={`line-${index}`} className="mb-1 leading-relaxed text-gray-800 text-sm md:text-base">
+      <div key={`line-${index}`} className="mb-1 leading-relaxed text-sm md:text-base">
         {renderInlineFormatting(line)}
       </div>
     );
@@ -52,7 +52,7 @@ const renderInlineFormatting = (text: string) => {
     // Handle Bold - keep ** symbols visible as requested
     if (matchText.startsWith('**') && matchText.endsWith('**')) {
       parts.push(
-        <strong key={`bold-${match.index}`} className="font-bold text-gray-950">
+        <strong key={`bold-${match.index}`} className="font-bold">
           {matchText}
         </strong>
       );
