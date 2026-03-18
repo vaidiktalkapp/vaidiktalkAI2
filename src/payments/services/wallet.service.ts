@@ -460,6 +460,9 @@ export class WalletService {
       await user.save({ session });
 
       await session.commitTransaction();
+      
+      // ✅ Dynamically extend active sessions after recharge
+      this.triggerSessionExtension(userId);
 
       return {
         success: true,
