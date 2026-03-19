@@ -157,7 +157,7 @@ export class AiVoiceService {
         const end = new Date(endedAt || new Date());
         const durationSeconds = Math.floor((end.getTime() - start.getTime()) / 1000);
         const billedMinutes = Math.max(1, Math.ceil(durationSeconds / 60));
-        const ratePerMinute = session.perMinuteRate || 10; // Use perMinuteRate from session
+        const ratePerMinute = session.ratePerMinute || 10; // Use ratePerMinute from session
         const totalAmount = billedMinutes * ratePerMinute;
 
         this.logger.log(`💰 AI Voice call ended: Session=${session.sessionId}, Duration=${durationSeconds}s, Billed=${billedMinutes}m, Amount=₹${totalAmount}`);
