@@ -62,31 +62,23 @@ export class AiVoiceService {
       throw new BadRequestException(`Insufficient balance. Minimum ₹${minBalanceRequired} required.`);
     }
 
-    // 3. Setup Agora Channel
-    const channelName = `AI_CALL_${Date.now()}_${userId.substring(18)}`;
-    const userUid = this.agoraService.generateUid();
-    const botUid = userUid + 1000; // Unique UID for the AI bot
+    // 3. Create Unique Channel/Session ID
+    const channelName = `AI_VOICE_${Date.now()}_${userId.substring(18)}`;
 
-    const userToken = this.agoraService.generateRtcToken(channelName, userUid);
-    const botToken = this.agoraService.generateRtcToken(channelName, botUid);
-
-    // 4. Create Call Session Record
+    // 4. Create Call Session Record in Database
     const session = await this.sessionModel.create({
       sessionId: channelName,
       userId: new Types.ObjectId(userId),
       astrologerId: new Types.ObjectId(aiId),
       orderId: `AI_ORDER_${Date.now()}_${userId.substring(20)}`,
       callType: 'audio',
-      status: 'active', // AI calls start immediately
+      status: 'active',
       isAi: true,
       ratePerMinute: ratePerMinute,
       startTime: new Date(),
-      channelName,
-      userStatus: { userId: new Types.ObjectId(userId), isOnline: true },
-      astrologerStatus: { astrologerId: new Types.ObjectId(aiId), isOnline: true },
     });
 
-    // 5. Trigger Vapi.ai to join the Agora Channel
+    // 5. Trigger Vapi.ai Web Call Configuration
     try {
       const vapiResponse = await axios.post(
         `${this.vapiBaseUrl}/call`,
@@ -96,8 +88,6 @@ export class AiVoiceService {
             model: {
               provider: 'google', 
               model: 'gemini-2.5-flash',
-              // Use key from environment if provided, otherwise Vapi uses their dashboard key
-              googleApiKey: this.configService.get<string>('GEMINI_API_KEY'),
               messages: [
                 {
                   role: 'system',
@@ -106,17 +96,9 @@ export class AiVoiceService {
               ],
             },
             voice: {
-              provider: 'google', // Switch to cheaper Google Cloud TTS
-              voiceId: 'en-IN-Wavenet-A', // High-quality Indian English
+              provider: '11labs',
+              voiceId: aiProfile.voiceId || 'vJ4HEJ2r9hMd3EsmSExR', 
             },
-          },
-          // ✅ FIX: 'transport' must be at the ROOT level of the request or assistant body
-          transport: {
-            provider: 'agora',
-            channelName,
-            appId: this.agoraService.getAppId(),
-            token: botToken,
-            uid: botUid,
           },
         },
         {
@@ -124,22 +106,25 @@ export class AiVoiceService {
         }
       );
 
+      // Save the actual Vapi Call ID for webhook tracking
+      await this.sessionModel.updateOne(
+        { sessionId: channelName },
+        { vapiCallId: vapiResponse.data.id }
+      );
+
       return {
         success: true,
         sessionId: channelName,
-        agora: {
-          channelName,
-          token: userToken,
-          uid: userUid,
-          appId: this.agoraService.getAppId(),
+        vapi: {
+          vapiCallId: vapiResponse.data.id,
+          vapiWebToken: vapiResponse.data.webToken || null,
+          assistantId: vapiResponse.data.assistantId,
         },
-        vapiCallId: vapiResponse.data.id,
       };
     } catch (error: any) {
-      this.logger.error(`Failed to trigger Vapi: ${error.response?.data?.message || error.message}`);
-      // Cleanup session if AI fails to join
+      this.logger.error(`❌ Failed to trigger Vapi: ${error.response?.data?.message || JSON.stringify(error.response?.data) || error.message}`);
       await this.sessionModel.deleteOne({ sessionId: channelName });
-      throw new InternalServerErrorException('Celestial voice connection failed. Please try again.');
+      throw new InternalServerErrorException('AI Voice connection failed. Please check Vapi/Gemini keys.');
     }
   }
 
@@ -147,11 +132,18 @@ export class AiVoiceService {
    * Handle Webhooks from Vapi.ai (e.g., when call ends)
    */
   async handleVapiWebhook(payload: any): Promise<void> {
-    const { type, call } = payload;
+    const { message } = payload;
+    const { type, call } = message || payload;
 
     if (type === 'call.ended') {
-      const { channelName, startedAt, endedAt } = call;
-      const session = await this.sessionModel.findOne({ channelName, status: 'active' });
+      const { id: vapiCallId, startedAt, endedAt } = call;
+      const session = await this.sessionModel.findOne({ 
+        $or: [
+          { vapiCallId: vapiCallId },
+          { sessionId: call.customer?.number } // Fallback for some vapi types
+        ],
+        status: 'active' 
+      });
 
       if (session) {
         const start = new Date(startedAt || session.startTime);
