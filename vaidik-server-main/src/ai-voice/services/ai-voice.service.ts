@@ -84,7 +84,7 @@ export class AiVoiceService {
       name: aiProfile.name,
       model: {
         provider: 'openai',
-        model: 'gpt-4o',
+        model: 'gpt-5.2',
         messages: [
           {
             role: 'system',
