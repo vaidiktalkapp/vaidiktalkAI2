@@ -36,7 +36,15 @@ export class AiVoiceService {
    * ✅ Initiate an AI Voice Call into an Agora Channel
    */
   async initiateAiVoiceCall(userId: string, aiId: string, language: string = 'English'): Promise<any> {
-    // 1. Validate User & AI Profile
+    // 1. Validate ID formats
+    if (!Types.ObjectId.isValid(userId)) {
+      throw new BadRequestException('Invalid userId format. Must be a 24-character hex string.');
+    }
+    if (!Types.ObjectId.isValid(aiId)) {
+      throw new BadRequestException('Invalid aiId format. Must be a 24-character hex string.');
+    }
+
+    // 2. Validate User & AI Profile
     const [user, aiProfile] = await Promise.all([
       this.userModel.findById(userId),
       this.aiProfileModel.findById(aiId),
