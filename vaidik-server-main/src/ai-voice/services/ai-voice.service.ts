@@ -83,9 +83,8 @@ export class AiVoiceService {
     const vapiConfig = {
       name: aiProfile.name,
       model: {
-        provider: 'google',
-        // 🔄 LOGS PROVE: 'gemini-2.5-flash' works in Vapi while 1.5 is 404ing! 
-        model: 'gemini-2.5-flash', 
+        provider: 'openai',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
