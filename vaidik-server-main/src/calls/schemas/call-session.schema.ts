@@ -23,6 +23,12 @@ export class CallSession {
 @Prop()
 conversationThreadId?: string;
 
+@Prop({ default: false })
+isAi: boolean;
+
+@Prop()
+vapiCallId?: string;
+
 // ✅ NEW: Session sequence number
 @Prop({ default: 1 })
 sessionNumber: number;

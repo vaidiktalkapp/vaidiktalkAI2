@@ -60,6 +60,9 @@ export class AiAstrologerProfile {
     @Prop({ required: true, min: 0 })
     ratePerMinute: number;
 
+    @Prop({ default: 'pMSpe79Vf0vVp3n37rV6' }) // Default Indian/Neutral voice
+    voiceId: string;
+
     @Prop({ type: [String], default: ['English'] })
     languages: string[];
 

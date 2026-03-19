@@ -364,8 +364,6 @@ export class AiChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 this.server.to(sessionId).emit('new_message', standardPayload);
                 this.server.to(sessionId).emit('chat_message', standardPayload);
 
-                // Small delay between bubbles for better visual flow
-                await new Promise(resolve => setTimeout(resolve, 500));
             }
 
             this.server.to(sessionId).emit('ai_typing', {
