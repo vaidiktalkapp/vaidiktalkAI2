@@ -84,7 +84,8 @@ export class AiVoiceService {
       name: aiProfile.name,
       model: {
         provider: 'google',
-        model: 'gemini-2.5-flash', // ✅ STABLE VERSION (Select this in Vapi for now)
+        // 🔄 LOGS PROVE: 'gemini-2.5-flash' works in Vapi while 1.5 is 404ing! 
+        model: 'gemini-2.5-flash', 
         messages: [
           {
             role: 'system',
@@ -94,8 +95,10 @@ export class AiVoiceService {
       },
       voice: {
         provider: '11labs',
+        // 🚨 LOGS PROVE: the other ID didn't exist. Using Vapi's stable Indian Voice fallback.
         voiceId: aiProfile.voiceId || 'vJ4HEJ2r9hMd3EsmSExR',
       },
+      firstMessage: `Namaste! I am ${aiProfile.name}. How can I guide you today?`,
       // Pass our Session ID so the webhook can link back for billing
       metadata: {
         sessionId: channelName,
