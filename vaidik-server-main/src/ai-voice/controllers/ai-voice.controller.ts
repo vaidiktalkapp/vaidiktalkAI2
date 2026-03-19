@@ -28,7 +28,8 @@ export class AiVoiceController {
   @Post('webhook/vapi')
   @HttpCode(HttpStatus.OK)
   async handleVapiWebhook(@Body() payload: any) {
-    this.logger.log(`📥 Received Vapi.ai Webhook: Type=${payload.type}`);
+    const type = payload?.type || payload?.message?.type;
+    this.logger.log(`📥 Received Vapi.ai Webhook: Type=${type}`);
     return this.aiVoiceService.handleVapiWebhook(payload);
   }
 }

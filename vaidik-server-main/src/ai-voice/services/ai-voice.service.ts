@@ -121,12 +121,12 @@ export class AiVoiceService {
 
     if (type === 'call.ended') {
       const { id: vapiCallId, startedAt, endedAt } = call;
-      const session = await this.sessionModel.findOne({ 
+      const session = await this.sessionModel.findOne({
         $or: [
           { vapiCallId: vapiCallId },
           { sessionId: call.customer?.number } // Fallback for some vapi types
         ],
-        status: 'active' 
+        status: 'active'
       });
 
       if (session) {
@@ -168,7 +168,7 @@ export class AiVoiceService {
               },
               aiName
             );
-            
+
             session.isPaid = true;
             await session.save();
           } catch (error: any) {
