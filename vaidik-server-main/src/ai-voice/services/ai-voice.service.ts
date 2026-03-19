@@ -78,54 +78,38 @@ export class AiVoiceService {
       startTime: new Date(),
     });
 
-    // 5. Trigger Vapi.ai Web Call Configuration
-    try {
-      const vapiResponse = await axios.post(
-        `${this.vapiBaseUrl}/call`,
-        {
-          assistant: {
-            name: aiProfile.name,
-            model: {
-              provider: 'google', 
-              model: 'gemini-2.5-flash',
-              messages: [
-                {
-                  role: 'system',
-                  content: `${aiProfile.systemPromptAddition || ''}\n\nLanguage: ${language}. Keep responses short and conversational.`,
-                },
-              ],
-            },
-            voice: {
-              provider: '11labs',
-              voiceId: aiProfile.voiceId || 'vJ4HEJ2r9hMd3EsmSExR', 
-            },
+    // 5. Prepare Vapi.ai Configuration for Frontend
+    // We return this to the App, and the App uses Vapi Web SDK to start the call.
+    const vapiConfig = {
+      name: aiProfile.name,
+      model: {
+        provider: 'google',
+        model: 'gemini-2.5-flash', // ✅ STABLE VERSION (Select this in Vapi for now)
+        messages: [
+          {
+            role: 'system',
+            content: `${aiProfile.systemPromptAddition || ''}\n\nLanguage: ${language}. Keep responses short and conversational.`,
           },
-        },
-        {
-          headers: { Authorization: `Bearer ${this.vapiApiKey}` },
-        }
-      );
-
-      // Save the actual Vapi Call ID for webhook tracking
-      await this.sessionModel.updateOne(
-        { sessionId: channelName },
-        { vapiCallId: vapiResponse.data.id }
-      );
-
-      return {
-        success: true,
+        ],
+      },
+      voice: {
+        provider: '11labs',
+        voiceId: aiProfile.voiceId || 'vJ4HEJ2r9hMd3EsmSExR',
+      },
+      // Pass our Session ID so the webhook can link back for billing
+      metadata: {
         sessionId: channelName,
-        vapi: {
-          vapiCallId: vapiResponse.data.id,
-          vapiWebToken: vapiResponse.data.webToken || null,
-          assistantId: vapiResponse.data.assistantId,
-        },
-      };
-    } catch (error: any) {
-      this.logger.error(`❌ Failed to trigger Vapi: ${error.response?.data?.message || JSON.stringify(error.response?.data) || error.message}`);
-      await this.sessionModel.deleteOne({ sessionId: channelName });
-      throw new InternalServerErrorException('AI Voice connection failed. Please check Vapi/Gemini keys.');
-    }
+      },
+      customer: {
+        number: channelName, // Fallback for webhook lookup
+      }
+    };
+
+    return {
+      success: true,
+      sessionId: channelName,
+      vapiConfig, // The App uses this with vapi.start(vapiConfig)
+    };
   }
 
   /**
