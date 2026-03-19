@@ -94,8 +94,10 @@ export class AiVoiceService {
           assistant: {
             name: aiProfile.name,
             model: {
-              provider: 'openai',
-              model: 'gpt-4o',
+              provider: 'google', 
+              model: 'gemini-2.5-flash',
+              // Use key from environment if provided, otherwise Vapi uses their dashboard key
+              googleApiKey: this.configService.get<string>('GEMINI_API_KEY'),
               messages: [
                 {
                   role: 'system',
@@ -104,19 +106,18 @@ export class AiVoiceService {
               ],
             },
             voice: {
-              provider: 'elevenlabs',
-              voiceId: aiProfile.voiceId || 'pMSpe79Vf0vVp3n37rV6', // Default Indian/Neutral voice
-            },
-            // Vapi native Agora integration
-            transport: {
-              provider: 'agora',
-              channelName,
-              appId: this.agoraService.getAppId(),
-              token: botToken,
-              uid: botUid,
+              provider: 'google', // Switch to cheaper Google Cloud TTS
+              voiceId: 'en-IN-Wavenet-A', // High-quality Indian English
             },
           },
-          phoneNumberId: null, // This is a web/SDK call via Agora
+          // ✅ FIX: 'transport' must be at the ROOT level of the request or assistant body
+          transport: {
+            provider: 'agora',
+            channelName,
+            appId: this.agoraService.getAppId(),
+            token: botToken,
+            uid: botUid,
+          },
         },
         {
           headers: { Authorization: `Bearer ${this.vapiApiKey}` },
