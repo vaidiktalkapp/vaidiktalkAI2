@@ -100,9 +100,6 @@ export class AiVoiceService {
       metadata: {
         sessionId: channelName,
       },
-      customer: {
-        number: channelName, // Fallback for webhook lookup
-      }
     };
 
     return {
