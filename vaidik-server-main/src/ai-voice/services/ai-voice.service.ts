@@ -70,22 +70,21 @@ export class AiVoiceService {
     const userToken = this.agoraService.generateRtcToken(channelName, userUid);
     const botToken = this.agoraService.generateRtcToken(channelName, botUid);
 
-    // 4. Create Session Record
-    const sessionId = `AI_VOICE_${Date.now()}`;
-    const session = new this.sessionModel({
-      sessionId,
+    // 4. Create Call Session Record
+    const session = await this.sessionModel.create({
+      sessionId: channelName,
       userId: new Types.ObjectId(userId),
-      astrologerId: new Types.ObjectId(aiId), // Using AI ID as astrologerId
-      isAi: true,
+      astrologerId: new Types.ObjectId(aiId),
+      orderId: `AI_ORDER_${Date.now()}_${userId.substring(20)}`,
       callType: 'audio',
-      ratePerMinute,
       status: 'active', // AI calls start immediately
+      isAi: true,
+      ratePerMinute: ratePerMinute,
       startTime: new Date(),
       channelName,
       userStatus: { userId: new Types.ObjectId(userId), isOnline: true },
       astrologerStatus: { astrologerId: new Types.ObjectId(aiId), isOnline: true },
     });
-    await session.save();
 
     // 5. Trigger Vapi.ai to join the Agora Channel
     try {
@@ -126,7 +125,7 @@ export class AiVoiceService {
 
       return {
         success: true,
-        sessionId,
+        sessionId: channelName,
         agora: {
           channelName,
           token: userToken,
@@ -138,7 +137,7 @@ export class AiVoiceService {
     } catch (error: any) {
       this.logger.error(`Failed to trigger Vapi: ${error.response?.data?.message || error.message}`);
       // Cleanup session if AI fails to join
-      await this.sessionModel.deleteOne({ sessionId });
+      await this.sessionModel.deleteOne({ sessionId: channelName });
       throw new InternalServerErrorException('Celestial voice connection failed. Please try again.');
     }
   }
@@ -158,7 +157,8 @@ export class AiVoiceService {
         const end = new Date(endedAt || new Date());
         const durationSeconds = Math.floor((end.getTime() - start.getTime()) / 1000);
         const billedMinutes = Math.max(1, Math.ceil(durationSeconds / 60));
-        const totalAmount = billedMinutes * session.ratePerMinute;
+        const ratePerMinute = session.perMinuteRate || 10; // Use perMinuteRate from session
+        const totalAmount = billedMinutes * ratePerMinute;
 
         this.logger.log(`💰 AI Voice call ended: Session=${session.sessionId}, Duration=${durationSeconds}s, Billed=${billedMinutes}m, Amount=₹${totalAmount}`);
 
