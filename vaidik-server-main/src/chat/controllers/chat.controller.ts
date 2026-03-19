@@ -133,6 +133,7 @@ export class ChatController {
     @Req() req: AuthenticatedRequest,
     @Body() body: {
       astrologerId: string;
+      astrologerName: string;
       previousSessionId: string;
       ratePerMinute: number;
     }
@@ -140,6 +141,7 @@ export class ChatController {
     return this.chatSessionService.continueChat({
       userId: req.user._id,
       astrologerId: body.astrologerId,
+      astrologerName: body.astrologerName,
       previousSessionId: body.previousSessionId,
       ratePerMinute: body.ratePerMinute,
     });

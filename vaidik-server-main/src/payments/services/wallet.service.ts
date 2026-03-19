@@ -376,6 +376,11 @@ export class WalletService {
       // 2. Verify with Apple Service
       const applePurchase = await this.appleIapService.verifyReceipt(dto.receipt);
 
+      // Protect against empty receipt arrays causing TypeErrors
+      if (!applePurchase) {
+        throw new BadRequestException('No matching products found in the provided Apple receipt. It may be empty, consumed, or invalid.');
+      }
+
       // Verify Product ID matches
       if (applePurchase.productId !== dto.productId) {
         throw new BadRequestException('Product ID mismatch');
@@ -455,6 +460,9 @@ export class WalletService {
       await user.save({ session });
 
       await session.commitTransaction();
+      
+      // ✅ Dynamically extend active sessions after recharge
+      this.triggerSessionExtension(userId);
 
       return {
         success: true,
@@ -468,6 +476,12 @@ export class WalletService {
     } catch (error: any) {
       await session.abortTransaction();
       this.logger.error(`Apple Verification failed: ${error.message}`);
+      
+      // Preserve existing HTTP Exception status codes (like 400 BadRequest) from being masked as 500
+      if (error.getStatus && typeof error.getStatus === 'function') {
+        throw error;
+      }
+      
       throw new InternalServerErrorException(error.message);
     } finally {
       session.endSession();

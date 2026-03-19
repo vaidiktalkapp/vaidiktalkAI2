@@ -69,7 +69,8 @@ export class CallSessionService {
     // ✅ PREVENT DOUBLE CALLS: Check if user already has an active/pending session
     const existingSession = await this.sessionModel.findOne({
       userId: this.toObjectId(sessionData.userId),
-      status: { $in: ['initiated', 'waiting', 'waiting_in_queue', 'active'] }
+      status: { $in: ['initiated', 'ringing', 'waiting', 'waiting_in_queue', 'active'] },
+      astrologerId: { $ne: this.toObjectId(sessionData.astrologerId) }
     });
 
     if (existingSession) {
@@ -77,7 +78,7 @@ export class CallSessionService {
     }
 
     // ✅ PREVENT DOUBLE BOOKING: Strict check against astrologer's Real-Time Availability
-    const isAvailable = await this.availabilityService.isAvailableNow(sessionData.astrologerId);
+    const isAvailable = await this.availabilityService.isAvailableNow(sessionData.astrologerId, sessionData.userId);
     if (!isAvailable) {
       throw new BadRequestException('Astrologer is currently busy or offline. Please try again later.');
     }
@@ -158,6 +159,9 @@ export class CallSessionService {
     await session.save();
 
     this.setRequestTimeout(sessionId, order.orderId, sessionData.userId);
+
+    // ✅ MARK BUSY IMMEDIATELY: Show as busy in list while request is pending
+    await this.availabilityService.setBusy(sessionData.astrologerId, new Date(Date.now() + 3 * 60 * 1000));
 
     const astroNotifType = sessionData.callType === 'video' ? 'call_request_video' : 'call_request_audio';
 
@@ -291,8 +295,8 @@ export class CallSessionService {
 
     // ✅ FIX: Be specific about state. If cancelled, return 'already cancelled' logic instead of erroring 
     if (session.status === 'cancelled' || session.status === 'rejected') {
-      // Return success so controller doesn't throw 400
-      return { success: true, message: 'Call already cancelled' };
+      // ✅ SUCCESS: No penalty if already cancelled/rejected
+      return { success: true, message: 'Call already cancelled or rejected' };
     }
 
     if (session.status !== 'initiated' && session.status !== 'waiting') {
@@ -652,6 +656,8 @@ export class CallSessionService {
         const session = await this.sessionModel.findOne({ sessionId });
         if (!session || (session.status !== 'initiated' && session.status !== 'waiting')) return;
 
+        this.logger.warn(`[Timeout] Cancelling initiated/waiting Call ${sessionId} due to no response`);
+
         session.status = 'cancelled';
         session.endReason = 'astrologer_no_response';
         session.endTime = new Date();
@@ -775,6 +781,14 @@ export class CallSessionService {
     Object.keys(statusUpdate).forEach(key => {
       updateObj[`${updateField}.${key}`] = statusUpdate[key];
     });
+
+    // ✅ Track lastSeen when user/astrologer goes offline
+    if (statusUpdate.isOnline === false) {
+      updateObj[`${updateField}.lastSeen`] = new Date();
+    } else if (statusUpdate.isOnline === true) {
+      updateObj[`${updateField}.lastSeen`] = null;
+    }
+
     await this.sessionModel.findOneAndUpdate({ sessionId }, { $set: updateObj });
   }
 

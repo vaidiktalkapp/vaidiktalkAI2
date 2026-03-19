@@ -68,7 +68,8 @@ export class ChatSessionService {
     // ✅ PREVENT DOUBLE CHATS: Check if user already has an active/pending session
     const existingSession = await this.sessionModel.findOne({
       userId: this.toObjectId(sessionData.userId),
-      status: { $in: ['initiated', 'waiting', 'waiting_in_queue', 'active'] }
+      status: { $in: ['initiated', 'waiting', 'waiting_in_queue', 'active'] },
+      astrologerId: { $ne: this.toObjectId(sessionData.astrologerId) }
     });
 
     if (existingSession) {
@@ -76,7 +77,7 @@ export class ChatSessionService {
     }
 
     // ✅ PREVENT DOUBLE BOOKING: Strict check against astrologer's Real-Time Availability
-    const isAvailable = await this.availabilityService.isAvailableNow(sessionData.astrologerId);
+    const isAvailable = await this.availabilityService.isAvailableNow(sessionData.astrologerId, sessionData.userId);
     if (!isAvailable) {
       throw new BadRequestException('Astrologer is currently busy or offline. Please try again later.');
     }
@@ -158,6 +159,9 @@ export class ChatSessionService {
 
     // Set 3-min timeout
     this.setRequestTimeout(sessionId, order.orderId, sessionData.userId);
+
+    // ✅ MARK BUSY IMMEDIATELY: Show as busy in list while request is pending
+    await this.availabilityService.setBusy(sessionData.astrologerId, new Date(Date.now() + 3 * 60 * 1000));
 
     // ✅ Fire-and-forget notification to astrologer
     // ✅ Notify astrologer (incoming chat request) – type MUST be "chat_request"
@@ -285,6 +289,11 @@ export class ChatSessionService {
     const session = await this.sessionModel.findOne({ sessionId });
     if (!session) {
       throw new NotFoundException('Session not found');
+    }
+
+    if (session.status === 'cancelled' || session.status === 'rejected') {
+      // ✅ SUCCESS: No penalty if already cancelled/rejected
+      return { success: true, message: 'Chat already cancelled or rejected' };
     }
 
     if (session.status !== 'initiated' && session.status !== 'waiting') {
@@ -974,6 +983,7 @@ export class ChatSessionService {
   async continueChat(data: {
     userId: string;
     astrologerId: string;
+    astrologerName?: string;
     previousSessionId: string;
     ratePerMinute: number;
   }): Promise<any> {
@@ -987,11 +997,17 @@ export class ChatSessionService {
       );
     }
 
+    let nameToUse = data.astrologerName;
+    if (!nameToUse) {
+      const astrologer = await this.astrologerModel.findById(data.astrologerId).select('name').lean();
+      nameToUse = astrologer?.name || 'Astrologer';
+    }
+
     // FIND CONVERSATION THREAD
     const conversationThread = await this.ordersService.findOrCreateConversationThread(
       data.userId,
       data.astrologerId,
-      '', // Will get from existing thread
+      nameToUse,
       data.ratePerMinute
     );
 

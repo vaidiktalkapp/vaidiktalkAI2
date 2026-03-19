@@ -11,6 +11,7 @@ import { StreamSession, StreamSessionDocument } from '../../streaming/schemas/st
 import { WalletTransaction, WalletTransactionDocument } from '../schemas/wallet-transaction.schema';
 import { StreamGateway } from '../../streaming/gateways/streaming.gateway';
 import { Inject, forwardRef } from '@nestjs/common';
+import { NotificationService } from '../../notifications/services/notification.service';
 
 export type GiftContext = 'direct' | 'stream';
 
@@ -36,6 +37,8 @@ export class GiftService {
     @InjectModel(WalletTransaction.name) private readonly transactionModel: Model<WalletTransactionDocument>,
     @Inject(forwardRef(() => StreamGateway))
     private readonly streamGateway: StreamGateway,
+    @Inject(forwardRef(() => NotificationService))
+    private readonly notificationService: NotificationService,
   ) { }
 
   /**
@@ -248,6 +251,24 @@ export class GiftService {
           });
         } catch (err) {
           this.logger.error(`❌ Failed to emit gift notification: ${err.message}`);
+        }
+      } else if (context === 'direct') {
+        try {
+          await this.notificationService.sendNotification({
+            recipientId: astrologerId,
+            recipientModel: 'Astrologer',
+            type: 'gift_received',
+            title: '🎁 Gift Received!',
+            message: `${userName} sent you a ${giftType}!`,
+            data: {
+              giftType,
+              amount,
+              userName,
+              userId,
+            }
+          });
+        } catch (err) {
+          this.logger.error(`❌ Failed to send gift notification: ${err.message}`);
         }
       }
 

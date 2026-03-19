@@ -216,6 +216,40 @@ export class CallGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (error: any) { return { success: false, message: error.message }; }
   }
 
+  @SubscribeMessage('cancel_call')
+  async handleCancelCall(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { sessionId: string; userId: string; reason?: string }
+  ) {
+    try {
+      this.logger.log(`📡 [CallGateway] cancel_call received for ${data.sessionId}`);
+      const result = await this.callSessionService.cancelCall(
+        data.sessionId,
+        data.userId,
+        data.reason || 'user_cancelled',
+        'user'
+      );
+
+      // Notify the astrologer that the request was cancelled
+      const session = await this.callSessionService.getSession(data.sessionId);
+      if (session) {
+        const astrologerSocketId = this.astrologerSockets.get(session.astrologerId.toString());
+        if (astrologerSocketId) {
+          this.server.to(astrologerSocketId).emit('call_request_cancelled', {
+            sessionId: data.sessionId,
+            reason: data.reason || 'User cancelled the request',
+            timestamp: new Date()
+          });
+        }
+      }
+
+      return result;
+    } catch (error: any) {
+      this.logger.error(`❌ [CallGateway] Cancel error: ${error.message}`);
+      return { success: false, message: error.message };
+    }
+  }
+
   @SubscribeMessage('join_session')
   async handleJoinSession(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
     const data = Array.isArray(payload) ? payload[0] : payload;
