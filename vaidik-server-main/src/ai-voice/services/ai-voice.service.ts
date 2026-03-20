@@ -8,6 +8,7 @@ import { CallSession, CallSessionDocument } from '../../calls/schemas/call-sessi
 import { User, UserDocument } from '../../users/schemas/user.schema';
 import { AgoraService } from '../../calls/services/agora.service';
 import { WalletService } from '../../payments/services/wallet.service';
+import { AstronomyService } from '../../ai-astrologers/services/astronomy.service';
 
 @Injectable()
 export class AiVoiceService {
@@ -19,6 +20,7 @@ export class AiVoiceService {
     private configService: ConfigService,
     private agoraService: AgoraService,
     private walletService: WalletService,
+    private astronomyService: AstronomyService,
     @InjectModel(AiAstrologerProfile.name)
     private aiProfileModel: Model<AiAstrologerProfileDocument>,
     @InjectModel(CallSession.name)
@@ -78,12 +80,44 @@ export class AiVoiceService {
       startTime: new Date(),
     });
 
-    // 5. Prepare Vapi.ai Configuration for Frontend
-    // We return this to the App, and the App uses Vapi Web SDK to start the call.
+    // 5. Calculate Astrological Context (The "Base" for AI Response)
+    let astroDataContext = '';
+    try {
+      if (user.dateOfBirth && user.timeOfBirth && user.placeOfBirth) {
+        this.logger.log(`🔭 Calculating birth chart for user: ${user.name || userId}`);
+        const dob = user.dateOfBirth.toISOString().split('T')[0];
+        const { lat, lon } = await this.astronomyService.geocodePlaceOfBirth(user.placeOfBirth);
+        const astroData = await this.astronomyService.calculateAllData(dob, user.timeOfBirth, lat.toString(), lon.toString());
+
+        astroDataContext = `
+ASTRO_DATA (SEEKER CHART):
+- Name: ${user.name || 'Seeker'}
+- DOB: ${dob}
+- TOB: ${user.timeOfBirth}
+- POB: ${user.placeOfBirth}
+- Lagna: ${astroData.kundli?.main_chart?.Lagna || 'Unknown'}
+- Moon Sign: ${astroData.kundli?.main_chart?.Moon || 'Unknown'}
+- Current Dasha: ${astroData.dasha?.current_mahadasha || 'Unknown'}
+- Planetary Placements: ${JSON.stringify(astroData.kundli?.planets || {})}
+        `.trim();
+      } else {
+        astroDataContext = `
+ASTRO_DATA: Birth details incomplete for ${user.name || 'Seeker'}. 
+Please ask the user for their Date, Time, and Place of birth if they want a precise reading.
+        `.trim();
+      }
+    } catch (error) {
+      this.logger.error(`❌ Astrology calculation failed for Voice Call: ${error.message}`);
+      astroDataContext = 'ASTRO_DATA: Technical error fetching chart. Use intuitive guidance.';
+    }
+
+    // 6. Prepare Vapi.ai Configuration for Frontend
     const expertise = aiProfile.expertise || 'Vedic';
     const expertisePrompt = this.getExpertisePrompt(expertise);
 
     const masterPrompt = `
+    ${astroDataContext}
+
     IDENTITY: You are ${aiProfile.name}, a professional ${expertise} worker.
     TONE: ${aiProfile.tone || 'spiritual, authoritative yet empathetic'}.
     
@@ -119,6 +153,7 @@ export class AiVoiceService {
         voiceId: language === 'Hindi' ? 'hi-IN-Wavenet-B' : 'en-IN-Wavenet-B',
       },
       firstMessage: `Namaste! I am ${aiProfile.name}. How can I guide you today?`,
+      maxDurationSeconds: Math.floor((user.wallet?.balance || 0) / ratePerMinute) * 60, // Safety net based on balance
       metadata: {
         sessionId: channelName,
       },
@@ -145,6 +180,7 @@ export class AiVoiceService {
       const session = await this.sessionModel.findOne({
         $or: [
           { vapiCallId: vapiCallId },
+          { sessionId: call.metadata?.sessionId }, // Use metadata we passed at start
           { sessionId: call.customer?.number } // Fallback for some vapi types
         ],
         status: 'active'
