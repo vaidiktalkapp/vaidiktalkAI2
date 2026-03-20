@@ -92,6 +92,11 @@ export class AiVoiceService {
           },
         ],
       },
+      transcriber: {
+        provider: 'deepgram',
+        model: 'nova-2',
+        language: language === 'Hindi' ? 'hi' : 'en',
+      },
       voice: {
         provider: '11labs',
         // 🚨 LOGS PROVE: the other ID didn't exist. Using Vapi's stable Indian Voice fallback.
@@ -102,6 +107,8 @@ export class AiVoiceService {
       metadata: {
         sessionId: channelName,
       },
+      recordingEnabled: true,
+      serverMessages: ['end-of-call-report', 'status-update', 'transcript'],
     };
 
     return {
