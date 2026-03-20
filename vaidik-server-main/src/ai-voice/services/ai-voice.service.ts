@@ -9,6 +9,7 @@ import { User, UserDocument } from '../../users/schemas/user.schema';
 import { AgoraService } from '../../calls/services/agora.service';
 import { WalletService } from '../../payments/services/wallet.service';
 import { AstronomyService } from '../../ai-astrologers/services/astronomy.service';
+import { AiAstrologyEngineService } from '../../ai-astrologers/services/ai-astrology-engine.service';
 
 @Injectable()
 export class AiVoiceService {
@@ -21,6 +22,7 @@ export class AiVoiceService {
     private agoraService: AgoraService,
     private walletService: WalletService,
     private astronomyService: AstronomyService,
+    private aiAstrologyEngine: AiAstrologyEngineService,
     @InjectModel(AiAstrologerProfile.name)
     private aiProfileModel: Model<AiAstrologerProfileDocument>,
     @InjectModel(CallSession.name)
@@ -111,31 +113,64 @@ Please ask the user for their Date, Time, and Place of birth if they want a prec
       astroDataContext = 'ASTRO_DATA: Technical error fetching chart. Use intuitive guidance.';
     }
 
-    // 6. Prepare Vapi.ai Configuration for Frontend
-    const expertise = aiProfile.expertise || 'Vedic';
-    const expertisePrompt = this.getExpertisePrompt(expertise);
+    // 6. Determine Language (Priority: Parameter > AI Profile > User Profile > Default)
+    let callLanguage = language;
+    
+    if (!callLanguage || callLanguage === 'English') {
+      if (aiProfile.languages && aiProfile.languages.length > 0) {
+        callLanguage = aiProfile.languages[0];
+      } else if (user.appLanguage) {
+        // Map ISO codes to full names if needed for our mapping
+        const isoToFull: Record<string, string> = { 'en': 'English', 'hi': 'Hindi' };
+        callLanguage = isoToFull[user.appLanguage] || user.appLanguage;
+      }
+    }
 
+    if (!callLanguage) callLanguage = 'English';
+
+    // 7. Generate Dynamic Greeting using AI Engine
+    const dynamicGreeting = await this.aiAstrologyEngine.generateDynamicGreeting(user.name || 'Seeker', callLanguage);
+
+    // 8. Build Master Prompt from Admin-Managed Profile
+    const expertise = aiProfile.expertise || 'Vedic';
+    const personalityType = aiProfile.personalityType || 'Traditional';
+    
     const masterPrompt = `
     ${astroDataContext}
 
-    IDENTITY: You are ${aiProfile.name}, a professional ${expertise} worker.
-    TONE: ${aiProfile.tone || 'spiritual, authoritative yet empathetic'}.
-    
-    ${expertisePrompt}
+    IDENTITY: You are ${aiProfile.name}, a ${personalityType} ${expertise} expert.
+    BIO: ${aiProfile.bio || 'Professional astrologer.'}
+    TONE: ${aiProfile.tone || 'calm, confident, and compassionate'}.
+    STYLE: ${aiProfile.styleGuide || 'Provide clear, spiritual guidance.'}
+    FOCUS: ${aiProfile.focusArea || 'Life guidance.'}
 
     CRITICAL RULES FOR VOICE:
-    1. **GREETING**: Always start with a warm "Namaste" or "Pranam".
+    1. **GREETING**: Greet the user warmly ONLY in the first message. Do NOT repeat greetings in every response.
     2. **CONVERSATIONAL**: Keep responses concise (under 2-3 sentences).
     3. **ASTROLOGY FOCUS**: Always steer the conversation back to planets, Dashas, or spiritual guidance.
     4. **NO MARKDOWN**: Do NOT use **bold** or *italics*. Speak in plain text.
     5. **STORE POLICY**: If asked for remedies, suggest vaidiktalk.store.
     `.trim();
 
-   const languageMapping: Record<string, { transcriber: string, voice: string }> = {
-  'English': { transcriber: 'en', voice: 'en-IN-NeerjaNeural' },
-  'Hindi': { transcriber: 'hi', voice: 'hi-IN-SwaraNeural' },
-};
-    const langConfig = languageMapping[language] || languageMapping['English'];
+    const languageMapping: Record<string, { transcriber: string, voice: string, provider: string }> = {
+      'English': { transcriber: 'en', voice: 'en-IN-NeerjaNeural', provider: 'azure' },
+      'en': { transcriber: 'en', voice: 'en-IN-NeerjaNeural', provider: 'azure' },
+      'Hindi': { transcriber: 'hi', voice: 'hi-IN-SwaraNeural', provider: 'azure' },
+      'hi': { transcriber: 'hi', voice: 'hi-IN-SwaraNeural', provider: 'azure' },
+    };
+
+    const langConfig = languageMapping[callLanguage] || languageMapping['English'];
+
+    // 9. Determine Voice and Provider (Admin Overrides)
+    let finalVoiceId = langConfig.voice;
+    let finalProvider = langConfig.provider;
+
+    if (aiProfile.voiceId && aiProfile.voiceId !== 'pMSpe79Vf0vVp3n37rV6') {
+      finalVoiceId = aiProfile.voiceId;
+      // Heuristic for provider: IDs with dashes are usually Azure/Google, 20-char alphanumeric are ElevenLabs
+      finalProvider = (finalVoiceId.includes('-') || finalVoiceId.includes('_')) ? 'azure' : 'elevenlabs';
+      this.logger.log(`🎭 Using Admin-configured voice: ${finalVoiceId} (Provider: ${finalProvider})`);
+    }
 
     const vapiConfig = {
       name: aiProfile.name,
@@ -145,7 +180,7 @@ Please ask the user for their Date, Time, and Place of birth if they want a prec
         messages: [
           {
             role: 'system',
-            content: `${masterPrompt}\n\n${aiProfile.systemPromptAddition || ''}\n\nLanguage: ${language}. Speak ONLY in ${language}.`,
+            content: `${masterPrompt}\n\n${aiProfile.systemPromptAddition || ''}\n\nLanguage: ${callLanguage}. Speak ONLY in ${callLanguage}.`,
           },
         ],
       },
@@ -155,11 +190,11 @@ Please ask the user for their Date, Time, and Place of birth if they want a prec
         language: langConfig.transcriber,
       },
       voice: {
-       provider: 'azure',   // ✅ FIXED
-    voiceId: langConfig.voice,
+        provider: finalProvider as any,
+        voiceId: finalVoiceId,
       },
-      firstMessage: `Namaste! I am ${aiProfile.name}. How can I guide you today?`,
-      maxDurationSeconds: Math.floor((user.wallet?.balance || 0) / ratePerMinute) * 60, // Safety net based on balance
+      firstMessage: dynamicGreeting,
+      maxDurationSeconds: Math.floor((user.wallet?.balance || 0) / ratePerMinute) * 60,
       metadata: {
         sessionId: channelName,
       },
@@ -242,34 +277,4 @@ Please ask the user for their Date, Time, and Place of birth if they want a prec
     }
   }
 
-  private getExpertisePrompt(expertise: string): string {
-    const expertiseInstructions = {
-      Vedic: `
-IDENTITY: You are a professional Vedic Astrologer (Jyotish).
-RULES:
-1. Identify Lagna (Ascendant) and Moon Sign from ASTRO_DATA.
-2. Analyze the house relevant to the question (Career: 10th, Marriage: 7th, Health: 6th).
-3. Reference Mahadasha/Antardasha from ASTRO_DATA.
-4. Suggest Vedic remedies (Mantras, Gemstones).
-5. Terminology: Use Sanskrit + English (e.g., "Shani (Saturn)").
-`,
-      Tarot: `
-IDENTITY: You are an intuitive Master Tarot Reader.
-RULES:
-1. VISUALIZATION: Describe the visual imagery of the cards you "draw" (e.g., "I see the Three of Swords...").
-2. INTUITION: Focus on feelings and hidden energies.
-3. NO VEDIC TERMS: Do NOT use "Houses", "Dasha", or "Nakshatras".
-`,
-      Numerology: `
-IDENTITY: You are an expert Numerologist.
-RULES:
-1. CORE NUMBERS: Refer to Life Path, Destiny, or Soul Urge numbers.
-2. CYCLES: Mention Personal Year Cycles to explain timing.
-3. VIBRATION: Explain the energy of numbers.
-`
-    };
-
-    const exp = (expertise || 'Vedic').charAt(0).toUpperCase() + (expertise || 'Vedic').slice(1).toLowerCase();
-    return expertiseInstructions[exp as keyof typeof expertiseInstructions] || expertiseInstructions.Vedic;
-  }
 }
