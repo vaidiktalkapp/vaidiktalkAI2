@@ -106,6 +106,10 @@ export class CreateAiAstrologerDto {
     @IsOptional()
     isPromoted?: boolean;
 
+    @IsString()
+    @IsOptional()
+    voiceId?: string;
+
     @IsOptional()
     pricing?: {
         chat?: number;

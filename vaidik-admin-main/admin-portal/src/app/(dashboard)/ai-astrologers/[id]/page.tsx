@@ -169,8 +169,8 @@ export default function AIAstrologerDetailPage() {
                     <span className="font-medium">{astrologer.aiModel}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Response Style:</span>
-                    <span className="font-medium">{astrologer.responseStyle}</span>
+                    <span className="text-gray-600">Voice ID:</span>
+                    <span className="font-medium">{astrologer.voiceId || 'Default'}</span>
                   </div>
                 </div>
               </div>

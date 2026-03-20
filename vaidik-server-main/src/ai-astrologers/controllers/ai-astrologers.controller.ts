@@ -262,6 +262,7 @@ export class AiAstrologersController {
         if (dto.styleGuide) profile.styleGuide = dto.styleGuide;
         if (dto.personalityDescription) profile.personalityDescription = dto.personalityDescription;
         if (dto.systemPromptAddition !== undefined) profile.systemPromptAddition = dto.systemPromptAddition;
+        if (dto.voiceId) profile.voiceId = dto.voiceId;
 
         if (dto.aiModelParams) {
             if (!profile.aiModelParams) {

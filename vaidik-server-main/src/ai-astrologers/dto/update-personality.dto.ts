@@ -32,6 +32,10 @@ export class UpdatePersonalityDto {
         topP?: number;
         maxOutputTokens?: number;
     };
+
+    @IsOptional()
+    @IsString()
+    voiceId?: string;
 }
 
 export class PersonalityPreset {

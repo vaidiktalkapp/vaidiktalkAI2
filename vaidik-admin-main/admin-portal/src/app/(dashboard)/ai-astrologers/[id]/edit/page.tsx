@@ -54,6 +54,7 @@ export default function EditAIAstrologerPage() {
     pricingVideoCall: '',
     expertise: 'Vedic',
     accountStatus: 'active',
+    voiceId: '',
   });
 
   const [imagePreview, setImagePreview] = useState('');
@@ -86,6 +87,7 @@ export default function EditAIAstrologerPage() {
         pricingVideoCall: astrologer.pricing?.videoCall?.toString() || '',
         expertise: astrologer.expertise || 'Vedic',
         accountStatus: astrologer.accountStatus || 'active',
+        voiceId: astrologer.voiceId || '',
       });
       if (astrologer.profilePicture) {
         setImagePreview(astrologer.profilePicture);
@@ -126,6 +128,7 @@ export default function EditAIAstrologerPage() {
           videoCall: parseFloat(formData.pricingVideoCall) || 0,
         },
         accountStatus: formData.accountStatus,
+        voiceId: formData.voiceId,
       };
       const response = await adminApi.updateAIAstrologer(aiAstrologerId, payload);
       return response.data;
@@ -338,6 +341,21 @@ export default function EditAIAstrologerPage() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="pt-2">
+              <Label htmlFor="voiceId">Voice ID (Vapi AI Voice ID)</Label>
+              <Input
+                id="voiceId"
+                value={formData.voiceId}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, voiceId: e.target.value }))
+                }
+                placeholder="e.g., hi-IN-SwaraNeural or pMSpe79Vf0vVp3n37rV6"
+              />
+              <p className="text-xs text-gray-500 mt-1 italic">
+                Leave empty for language-based defaults (Swara/Neerja).
+              </p>
             </div>
 
             <div>
