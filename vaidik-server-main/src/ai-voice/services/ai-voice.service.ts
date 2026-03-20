@@ -80,15 +80,32 @@ export class AiVoiceService {
 
     // 5. Prepare Vapi.ai Configuration for Frontend
     // We return this to the App, and the App uses Vapi Web SDK to start the call.
+    const expertise = aiProfile.expertise || 'Vedic';
+    const expertisePrompt = this.getExpertisePrompt(expertise);
+
+    const masterPrompt = `
+    IDENTITY: You are ${aiProfile.name}, a professional ${expertise} worker.
+    TONE: ${aiProfile.tone || 'spiritual, authoritative yet empathetic'}.
+    
+    ${expertisePrompt}
+
+    CRITICAL RULES FOR VOICE:
+    1. **GREETING**: Always start with a warm "Namaste" or "Pranam".
+    2. **CONVERSATIONAL**: Keep responses concise (under 2-3 sentences).
+    3. **ASTROLOGY FOCUS**: Always steer the conversation back to planets, Dashas, or spiritual guidance.
+    4. **NO MARKDOWN**: Do NOT use **bold** or *italics*. Speak in plain text.
+    5. **STORE POLICY**: If asked for remedies, suggest vaidiktalk.store.
+    `.trim();
+
     const vapiConfig = {
       name: aiProfile.name,
       model: {
         provider: 'openai',
-        model: 'gpt-5.2',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: `${aiProfile.systemPromptAddition || ''}\n\nLanguage: ${language}. Keep responses short and conversational.`,
+            content: `${masterPrompt}\n\n${aiProfile.systemPromptAddition || ''}\n\nLanguage: ${language}. Speak ONLY in ${language}.`,
           },
         ],
       },
@@ -98,12 +115,10 @@ export class AiVoiceService {
         language: language === 'Hindi' ? 'hi' : 'en',
       },
       voice: {
-        provider: '11labs',
-        // 🚨 LOGS PROVE: the other ID didn't exist. Using Vapi's stable Indian Voice fallback.
-        voiceId: aiProfile.voiceId || 'vJ4HEJ2r9hMd3EsmSExR',
+        provider: 'google',
+        voiceId: language === 'Hindi' ? 'hi-IN-Wavenet-B' : 'en-IN-Wavenet-B',
       },
       firstMessage: `Namaste! I am ${aiProfile.name}. How can I guide you today?`,
-      // Pass our Session ID so the webhook can link back for billing
       metadata: {
         sessionId: channelName,
       },
@@ -183,5 +198,36 @@ export class AiVoiceService {
         }
       }
     }
+  }
+
+  private getExpertisePrompt(expertise: string): string {
+    const expertiseInstructions = {
+      Vedic: `
+IDENTITY: You are a professional Vedic Astrologer (Jyotish).
+RULES:
+1. Identify Lagna (Ascendant) and Moon Sign from ASTRO_DATA.
+2. Analyze the house relevant to the question (Career: 10th, Marriage: 7th, Health: 6th).
+3. Reference Mahadasha/Antardasha from ASTRO_DATA.
+4. Suggest Vedic remedies (Mantras, Gemstones).
+5. Terminology: Use Sanskrit + English (e.g., "Shani (Saturn)").
+`,
+      Tarot: `
+IDENTITY: You are an intuitive Master Tarot Reader.
+RULES:
+1. VISUALIZATION: Describe the visual imagery of the cards you "draw" (e.g., "I see the Three of Swords...").
+2. INTUITION: Focus on feelings and hidden energies.
+3. NO VEDIC TERMS: Do NOT use "Houses", "Dasha", or "Nakshatras".
+`,
+      Numerology: `
+IDENTITY: You are an expert Numerologist.
+RULES:
+1. CORE NUMBERS: Refer to Life Path, Destiny, or Soul Urge numbers.
+2. CYCLES: Mention Personal Year Cycles to explain timing.
+3. VIBRATION: Explain the energy of numbers.
+`
+    };
+
+    const exp = (expertise || 'Vedic').charAt(0).toUpperCase() + (expertise || 'Vedic').slice(1).toLowerCase();
+    return expertiseInstructions[exp as keyof typeof expertiseInstructions] || expertiseInstructions.Vedic;
   }
 }
