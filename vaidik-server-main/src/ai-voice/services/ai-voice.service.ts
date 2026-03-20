@@ -131,18 +131,10 @@ Please ask the user for their Date, Time, and Place of birth if they want a prec
     5. **STORE POLICY**: If asked for remedies, suggest vaidiktalk.store.
     `.trim();
 
-    const languageMapping: Record<string, { transcriber: string, voice: string }> = {
-      'English': { transcriber: 'en', voice: 'en-IN-Wavenet-B' },
-      'Hindi': { transcriber: 'hi', voice: 'hi-IN-Wavenet-B' },
-      'Marathi': { transcriber: 'mr', voice: 'mr-IN-Wavenet-B' },
-      'Tamil': { transcriber: 'ta', voice: 'ta-IN-Wavenet-B' },
-      'Telugu': { transcriber: 'te', voice: 'te-IN-Wavenet-B' },
-      'Bengali': { transcriber: 'bn', voice: 'bn-IN-Wavenet-B' },
-      'Kannada': { transcriber: 'kn', voice: 'kn-IN-Wavenet-B' },
-      'Gujarati': { transcriber: 'gu', voice: 'gu-IN-Wavenet-A' },
-      'Malayalam': { transcriber: 'ml', voice: 'ml-IN-Wavenet-B' },
-    };
-
+   const languageMapping: Record<string, { transcriber: string, voice: string }> = {
+  'English': { transcriber: 'en', voice: 'en-IN-NeerjaNeural' },
+  'Hindi': { transcriber: 'hi', voice: 'hi-IN-SwaraNeural' },
+};
     const langConfig = languageMapping[language] || languageMapping['English'];
 
     const vapiConfig = {
@@ -163,8 +155,8 @@ Please ask the user for their Date, Time, and Place of birth if they want a prec
         language: langConfig.transcriber,
       },
       voice: {
-        provider: 'google',
-        voiceId: langConfig.voice,
+       provider: 'azure',   // ✅ FIXED
+    voiceId: langConfig.voice,
       },
       firstMessage: `Namaste! I am ${aiProfile.name}. How can I guide you today?`,
       maxDurationSeconds: Math.floor((user.wallet?.balance || 0) / ratePerMinute) * 60, // Safety net based on balance
