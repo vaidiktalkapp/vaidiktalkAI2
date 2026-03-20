@@ -38,6 +38,6 @@ import { AstrologersModule } from '../astrologers/astrologers.module';
         AiChatGateway,
         AiAnalyticsService, // Added to providers list
     ],
-    exports: [AiChatSessionService, AiAstrologyEngineService, MongooseModule], // Export if needed by other modules
+    exports: [AiChatSessionService, AiAstrologyEngineService, AstronomyService, MongooseModule], // Export if needed by other modules
 })
 export class AiAstrologersModule { }
